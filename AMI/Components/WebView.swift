@@ -18,6 +18,9 @@ struct WebView: UIViewRepresentable {
     
     func makeUIView(context: Context) -> some UIView {
         let webView = WKWebView()
+        
+        webView.configuration.defaultWebpagePreferences.allowsContentJavaScript = true
+        
         webView.load(URLRequest(url: url))
         return webView
     }
