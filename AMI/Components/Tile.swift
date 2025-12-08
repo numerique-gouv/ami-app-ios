@@ -32,9 +32,9 @@ struct Tile: View {
             .border(width: 8, edges: [.bottom], color: .blueFranceSun113)
         }
         .padding(16)
-        .onTapGesture {
+        .simultaneousGesture(TapGesture().onEnded {
             action()
-        }
+        })
     }
 }
 

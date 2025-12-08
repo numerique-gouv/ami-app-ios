@@ -8,8 +8,29 @@
 import SwiftUI
 
 struct ReviewAppView: View {
+    @EnvironmentObject var webService: WebService
+    @State private var reviewApps = [ReviewApp]()
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationView {
+            ScrollView {
+                Text("Choix de la review")
+                ForEach(reviewApps, id: \.id) { reviewApp in
+                    NavigationLink(destination: HomeView()) {
+                        Tile(title: reviewApp.title, content: reviewApp.description ?? "") {
+                            BASE_URL = reviewApp.url
+                        }
+                    }
+                }
+            }
+            .padding(.top, 1)
+            .onAppear() {
+                Task {
+                    try await webService.getReviewApps()
+                    reviewApps = webService.reviewApps
+                }
+            }
+        }
     }
 }
 
