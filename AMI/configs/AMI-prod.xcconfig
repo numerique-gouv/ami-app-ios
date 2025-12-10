@@ -8,5 +8,5 @@
 // Configuration settings file format documentation can be found at:
 // https://help.apple.com/xcode/#/dev745c5c974
 
-BASE_URL = https:/$()/ami-back-staging.osc-fr1.scalingo.io
+BASE_URL = https:/$()/ami-back-prod.osc-secnum-fr1.scalingo.io
 CURRENT_ENV = PROD
