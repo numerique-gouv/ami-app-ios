@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ReviewAppView: View {
     @EnvironmentObject var webService: WebService
-    @State private var reviewApps = [ReviewApp]()
+    @State private var reviewApps = [ReviewApp(url: Config.shared.BASE_URL, title: "Staging", number: 0, description: nil)]
     
     var body: some View {
         NavigationView {
@@ -18,7 +18,7 @@ struct ReviewAppView: View {
                 ForEach(reviewApps, id: \.id) { reviewApp in
                     NavigationLink(destination: HomeView()) {
                         Tile(title: reviewApp.title, content: reviewApp.description ?? "") {
-                            BASE_URL = reviewApp.url
+                            Config.shared.BASE_URL = reviewApp.url
                         }
                     }
                 }
@@ -27,7 +27,7 @@ struct ReviewAppView: View {
             .onAppear() {
                 Task {
                     try await webService.getReviewApps()
-                    reviewApps = webService.reviewApps
+                    reviewApps.append(contentsOf: webService.reviewApps)
                 }
             }
         }
