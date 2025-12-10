@@ -1,0 +1,12 @@
+//
+//  AMI-staging.xcconfig
+//  AMI
+//
+//  Created by Aline Bonnet on 09/12/2025.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+
+BASE_URL = https:/$()/ami-back-staging.osc-fr1.scalingo.io
+CURRENT_ENV = STAGING

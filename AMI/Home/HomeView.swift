@@ -10,7 +10,7 @@ import SwiftUI
 struct HomeView: View {
     var body: some View {
         VStack {
-            WebView(URL(string: BASE_URL)!)
+            WebView(URL(string: Config.shared.BASE_URL)!)
         }
     }
 }

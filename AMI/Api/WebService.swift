@@ -13,11 +13,12 @@ enum NetworkError: Error {
     case badUrl
 }
 
+@MainActor
 class WebService: ObservableObject {
     @Published var reviewApps: [ReviewApp] = []
     
     func getReviewApps() async throws {
-        guard let url = URL(string: BASE_URL + "/dev-utils/review-apps") else {
+        guard let url = URL(string: Config.shared.BASE_URL + "/dev-utils/review-apps") else {
             throw NetworkError.badUrl
         }
                 
