@@ -11,7 +11,11 @@ import SwiftUI
 struct AMIApp: App {
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            if Config.shared.CURRENT_ENV == "STAGING" {
+                ReviewAppView().environmentObject(WebService())
+            } else {
+                HomeView()
+            }
         }
     }
 }
