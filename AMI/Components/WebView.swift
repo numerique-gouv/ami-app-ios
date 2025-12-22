@@ -10,19 +10,20 @@ import Foundation
 import WebKit
 
 struct WebView: UIViewRepresentable {
-    let url: URL
-    
-    init(_ url: URL) {
-        self.url = url
-    }
+    @Binding var isExternalProcess: Bool
     
     func makeUIView(context: Context) -> some UIView {
         let webView = WKWebView()
-        webView.load(URLRequest(url: url))
+        webView.navigationDelegate = context.coordinator
+        webView.load(URLRequest(url: URL(string: BASE_URL)!))
         return webView
     }
     
     func updateUIView(_ uiView: UIViewType, context: Context) {
         
+    }
+    
+    func makeCoordinator() -> WebViewCoordinator {
+        WebViewCoordinator(self)
     }
 }
