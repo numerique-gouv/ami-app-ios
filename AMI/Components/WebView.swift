@@ -20,6 +20,7 @@ struct WebView: UIViewRepresentable {
         let contentController = WKUserContentController()
         let configuration = WKWebViewConfiguration()
         configuration.userContentController = contentController
+        NativeEvents.attach(contentController, context)
 
         #if DEBUG
             ConsoleLog.attach(contentController, context)
