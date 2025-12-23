@@ -17,12 +17,13 @@ struct WebView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> some UIView {
         webView.navigationDelegate = context.coordinator
-        webView.load(URLRequest(url: URL(string: initialURL)!))
+        webView.configuration.defaultWebpagePreferences.allowsContentJavaScript = true
 
         DispatchQueue.main.async { // Do not modify the state during view update.
             webViewRef = webView
         }
-
+        
+        webView.load(URLRequest(url: URL(string: initialURL)!))
         return webView
     }
 
