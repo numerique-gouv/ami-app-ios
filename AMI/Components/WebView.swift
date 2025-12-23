@@ -16,6 +16,33 @@ struct WebView: UIViewRepresentable {
     @State var webView: WKWebView = WKWebView()
 
     func makeUIView(context: Context) -> some UIView {
+        let config = WKWebViewConfiguration()
+
+        // Add message handler for JavaScript bridge
+        let contentController = WKUserContentController()
+        contentController.add(context.coordinator, name: "NativeBridge")
+
+        // Inject JavaScript bridge to match Android interface
+        // This creates window.NativeBridge.onEvent() that wraps the iOS messaging
+        let bridgeScript = WKUserScript(
+            source: """
+            window.NativeBridge = {
+                onEvent: function(eventName, data) {
+                    window.webkit.messageHandlers.NativeBridge.postMessage({
+                        event: eventName,
+                        data: data
+                    });
+                }
+            };
+            console.log('NativeBridge initialized for iOS');
+            """,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false
+        )
+        contentController.addUserScript(bridgeScript)
+        config.userContentController = contentController
+
+        let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         webView.configuration.defaultWebpagePreferences.allowsContentJavaScript = true
 

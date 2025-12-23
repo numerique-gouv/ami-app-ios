@@ -9,6 +9,10 @@ import SwiftUI
 import FirebaseCore
 import FirebaseMessaging
 
+extension Notification.Name {
+    static let fcmTokenRefreshed = Notification.Name("fcmTokenRefreshed")
+}
+
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         // Determine which GoogleService-Info plist to use based on environment
@@ -60,12 +64,21 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         fetchFCMToken()
     }
 
+    private func storeAndNotifyFCMToken(_ token: String) {
+        print("AppDelegate: storing and notifying FCM token: \(token)")
+        // Store token in UserDefaults for WebView to access
+        UserDefaults.standard.set(token, forKey: "fcmToken")
+
+        // Notify observers that the token is available
+        NotificationCenter.default.post(name: .fcmTokenRefreshed, object: nil, userInfo: ["token": token])
+    }
+
     private func fetchFCMToken() {
         Task {
             do {
                 let token = try await Messaging.messaging().token()
                 print("AppDelegate: FCM token retrieved successfully!")
-                print("AppDelegate: Full FCM token: \(token)")
+                storeAndNotifyFCMToken(token)
             } catch {
                 print("AppDelegate: Error fetching FCM token: \(error)")
             }
@@ -110,7 +123,8 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         if let token = fcmToken {
-            print("AppDelegate: FCM token received (first 10 chars): \(token)")
+            print("AppDelegate: FCM token received/refreshed")
+            storeAndNotifyFCMToken(token)
         } else {
             print("AppDelegate: FCM token is nil")
         }
