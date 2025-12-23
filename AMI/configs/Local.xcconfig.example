@@ -1,0 +1,15 @@
+//
+//  Local.xcconfig.example
+//  AMI
+//
+//  Template for personal/local settings
+//  Copy this file to Local.xcconfig and set your own values
+//
+
+// Set this to your Apple Developer Team ID
+// You can find this in Xcode under Preferences > Accounts > Your Team
+DEVELOPMENT_TEAM = YOUR_TEAM_ID_HERE
+
+// Optionally override BASE_URL for local development
+// Uncomment and set your local backend URL:
+//BASE_URL = https:/$()/192.168.1.100:5173

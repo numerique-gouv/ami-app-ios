@@ -1,0 +1,6 @@
+# Xcode user settings
+xcuserdata/
+*.xcuserstate
+
+# Local configuration (developer-specific settings)
+AMI/configs/Local.xcconfig
