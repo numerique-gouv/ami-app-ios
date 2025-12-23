@@ -8,8 +8,6 @@
 // Configuration settings file format documentation can be found at:
 // https://help.apple.com/xcode/#/dev745c5c974
 
-#include "Local.xcconfig"
-
 BASE_URL = https:/$()/ami-back-prod.osc-secnum-fr1.scalingo.io
 CURRENT_ENV = PROD
 
