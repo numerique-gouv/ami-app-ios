@@ -10,12 +10,14 @@ import Foundation
 
 class WebViewCoordinator: NSObject, WKNavigationDelegate {
     var parent: WebView
+    private var urlObservation: NSKeyValueObservation?
     
     init(_ parent: WebView) {
         self.parent = parent
     }
     
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        parent.currentURL = navigationAction.request.url!.absoluteString
         if let urlStr = navigationAction.request.url?.absoluteString, !urlStr.contains(BASE_URL) {
             parent.isExternalProcess = true
         } else {
@@ -24,4 +26,14 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate {
         decisionHandler(.allow)
     }
     
+    func observeURL(of webView: WebView) {
+        urlObservation = webView.webView.observe(\.url, options: [.new]) { _, change in
+            guard let newURL = webView.webView.url?.absoluteString else { return }
+            if (newURL.contains(BASE_URL)) {
+                DispatchQueue.main.async {
+                    webView.lastURL = newURL
+                }
+            }
+        }
+    }
 }

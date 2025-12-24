@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct BackBar: View {
+    var action: () -> Void
     
     var body: some View {
         HStack(alignment: .center) {
@@ -17,11 +18,11 @@ struct BackBar: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .simultaneousGesture(TapGesture().onEnded {
-            
+            action()
         })
     }
 }
 
 #Preview {
-    BackBar()
+    BackBar(){}
 }
