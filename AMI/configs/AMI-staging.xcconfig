@@ -13,3 +13,4 @@ CURRENT_ENV = STAGING
 
 // Local.xcconfig can override any settings above
 #include? "Local.xcconfig"
+PRODUCT_BUNDLE_IDENTIFIER = fr.gouv.ami.staging
