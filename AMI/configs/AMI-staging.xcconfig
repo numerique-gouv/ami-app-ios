@@ -13,7 +13,8 @@
 BASE_URL = https:/$()/ami-back-staging.osc-fr1.scalingo.io
 CURRENT_ENV = STAGING
 
-// Local.xcconfig can override any settings above
-#include? "Local.xcconfig"
 PRODUCT_BUNDLE_IDENTIFIER = fr.gouv.ami.staging
 CODE_SIGN_ENTITLEMENTS = AMI/AMI.entitlements
+
+// Local.xcconfig can override any settings above
+#include? "Local.xcconfig"
