@@ -10,3 +10,4 @@
 
 BASE_URL = https:/$()/ami-back-prod.osc-secnum-fr1.scalingo.io
 CURRENT_ENV = PROD
+PRODUCT_BUNDLE_IDENTIFIER = fr.gouv.ami
