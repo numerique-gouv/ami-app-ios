@@ -8,9 +8,18 @@
 import SwiftUI
 
 struct HomeView: View {
+    @State var isExternalProcess = false
+    @State var currentURL = BASE_URL
+    @State var lastURL = BASE_URL
+    
     var body: some View {
         VStack {
-            WebView(URL(string: Config.shared.BASE_URL)!)
+            if(isExternalProcess){
+                BackBar() {
+                    currentURL = lastURL
+                }
+            }
+            WebView(isExternalProcess: $isExternalProcess, currentURL: $currentURL, lastURL: $lastURL)
         }
     }
 }
