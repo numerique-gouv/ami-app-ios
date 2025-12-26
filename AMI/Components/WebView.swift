@@ -13,10 +13,19 @@ struct WebView: UIViewRepresentable {
     let initialURL: String
     @Binding var isExternalProcess: Bool
     @Binding var webViewRef: WKWebView?
-    @State var webView: WKWebView = WKWebView()
 
     func makeUIView(context: Context) -> some UIView {
+        let contentController = WKUserContentController()
+        let configuration = WKWebViewConfiguration()
+        configuration.userContentController = contentController
+
+        #if DEBUG
+            ConsoleLog.attach(contentController, context)
+        #endif
+
+        let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
+
         webView.load(URLRequest(url: URL(string: initialURL)!))
 
         DispatchQueue.main.async { // Do not modify the state during view update.

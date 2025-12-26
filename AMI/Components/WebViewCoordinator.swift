@@ -8,7 +8,7 @@
 import Foundation
 @preconcurrency import WebKit
 
-class WebViewCoordinator: NSObject, WKNavigationDelegate {
+class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
     var parent: WebView
     
     init(_ parent: WebView) {
@@ -37,5 +37,13 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate {
 
         // In release builds, use default handling (reject invalid certificates)
         completionHandler(.performDefaultHandling, nil)
+    }
+
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        switch message.name {
+            case "consoleLog": return ConsoleLog.printLog(message)
+        default:
+            return
+        }
     }
 }
