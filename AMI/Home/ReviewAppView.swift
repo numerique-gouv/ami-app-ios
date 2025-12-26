@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ReviewAppView: View {
     @EnvironmentObject var webService: WebService
-    @State private var reviewApps = [ReviewApp(url: Config.shared.BASE_URL, title: "Staging", number: 0, description: nil)]
+    @State private var reviewApps: [ReviewApp] = []
     
     var body: some View {
         NavigationView {
