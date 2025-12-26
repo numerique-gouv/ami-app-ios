@@ -1,15 +1,15 @@
 //
-//  AMI-staging.xcconfig
+//  AMI-localdev.xcconfig
 //  AMI
 //
-//  Created by Aline Bonnet on 09/12/2025.
+//  Created for local development
 //
 
 // Configuration settings file format documentation can be found at:
 // https://help.apple.com/xcode/#/dev745c5c974
 
-BASE_URL = https:/$()/ami-back-staging.osc-fr1.scalingo.io
-CURRENT_ENV = STAGING
+BASE_URL = https:/$()/127.0.0.1:5173
+CURRENT_ENV = LOCALDEV
 
 // Local.xcconfig can override any settings above
 #include? "Local.xcconfig"
