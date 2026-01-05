@@ -18,7 +18,7 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate {
     
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         parent.currentURL = navigationAction.request.url!.absoluteString
-        if let urlStr = navigationAction.request.url?.absoluteString, !urlStr.contains(BASE_URL) {
+        if let urlStr = navigationAction.request.url?.absoluteString, !urlStr.contains(Config.shared.BASE_URL) {
             parent.isExternalProcess = true
         } else {
             parent.isExternalProcess = false
@@ -29,7 +29,7 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate {
     func observeURL(of webView: WebView) {
         urlObservation = webView.webView.observe(\.url, options: [.new]) { _, change in
             guard let newURL = webView.webView.url?.absoluteString else { return }
-            if (newURL.contains(BASE_URL)) {
+            if (newURL.contains(Config.shared.BASE_URL)) {
                 DispatchQueue.main.async {
                     webView.lastURL = newURL
                 }

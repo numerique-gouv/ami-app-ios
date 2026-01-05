@@ -16,7 +16,6 @@ struct WebView: UIViewRepresentable {
     @State var webView: WKWebView = WKWebView()
     
     func makeUIView(context: Context) -> some UIView {
-        //webView = WKWebView()
         webView.navigationDelegate = context.coordinator
         context.coordinator.observeURL(of: self)
         webView.load(URLRequest(url: URL(string: currentURL)!))
