@@ -1,0 +1,11 @@
+# Local development configuration (personal settings)
+AMI/configs/Local.xcconfig
+
+# Xcode
+*.xcuserstate
+*.xcuserdatad
+DerivedData/
+.DS_Store
+
+# SwiftPM
+.swiftpm/

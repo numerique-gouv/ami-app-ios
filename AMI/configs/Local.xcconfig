@@ -1,0 +1,16 @@
+//
+//  Local.xcconfig
+//  AMI
+//
+//  Personal/local settings - NOT tracked in git
+//  Copy from Local.xcconfig.example and set your values
+//
+
+// REQUIRED: Set this to your Apple Developer Team ID
+// Find it at: https://developer.apple.com/account -> Membership -> Team ID
+//DEVELOPMENT_TEAM = D4JA25UPZB  // SIKARI
+DEVELOPMENT_TEAM = NVMQD635C6  // DINSIC
+
+// OPTIONAL: Override BASE_URL for local development
+// Uncomment and set your local backend URL:
+// BASE_URL = https:/$()/192.168.1.55:5173
