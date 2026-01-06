@@ -6,21 +6,20 @@
 //
 
 import SwiftUI
+import WebKit
 
 struct HomeView: View {
     @State var isExternalProcess = false
-    @State var currentURL = Config.shared.BASE_URL
-    @State var lastURL = Config.shared.BASE_URL // Not used for now
-    
+    @State var webViewRef: WKWebView?
+
     var body: some View {
         VStack {
             if(isExternalProcess){
                 BackBar() {
-                    // currentURL = lastURL // Not used for now
-                    currentURL = Config.shared.BASE_URL
+                    webViewRef?.load(URLRequest(url: URL(string: Config.shared.BASE_URL)!))
                 }
             }
-            WebView(isExternalProcess: $isExternalProcess, currentURL: $currentURL, lastURL: $lastURL)
+            WebView(initialURL: Config.shared.BASE_URL, isExternalProcess: $isExternalProcess, webViewRef: $webViewRef)
         }
     }
 }
