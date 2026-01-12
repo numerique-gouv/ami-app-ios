@@ -13,6 +13,8 @@ struct WebView: UIViewRepresentable {
     let initialURL: String
     @Binding var isExternalProcess: Bool
     @Binding var webViewRef: WKWebView?
+    @Binding var isLoading: Bool
+    @Binding var loadingProgress: Double
 
     func makeUIView(context: Context) -> some UIView {
         let contentController = WKUserContentController()
@@ -25,7 +27,7 @@ struct WebView: UIViewRepresentable {
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
-
+        context.coordinator.observeProgress(of: webView)
         webView.load(URLRequest(url: URL(string: initialURL)!))
 
         DispatchQueue.main.async { // Do not modify the state during view update.
@@ -39,6 +41,6 @@ struct WebView: UIViewRepresentable {
     }
     
     func makeCoordinator() -> WebViewCoordinator {
-        WebViewCoordinator(self)
+        WebViewCoordinator(self, isLoading: $isLoading, loadingProgress: $loadingProgress)
     }
 }
