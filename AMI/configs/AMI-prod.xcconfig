@@ -10,3 +10,6 @@
 
 BASE_URL = https:/$()/ami-back-prod.osc-secnum-fr1.scalingo.io
 CURRENT_ENV = PROD
+
+// Local.xcconfig can override any settings above
+#include? "Local.xcconfig"

@@ -23,4 +23,19 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate {
 
         decisionHandler(.allow)
     }
+
+    func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        #if DEBUG
+        // In debug builds, accept self-signed certificates
+        if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+           let serverTrust = challenge.protectionSpace.serverTrust {
+            let credential = URLCredential(trust: serverTrust)
+            completionHandler(.useCredential, credential)
+            return
+        }
+        #endif
+
+        // In release builds, use default handling (reject invalid certificates)
+        completionHandler(.performDefaultHandling, nil)
+    }
 }
