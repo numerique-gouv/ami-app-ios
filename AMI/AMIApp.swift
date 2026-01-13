@@ -9,6 +9,9 @@ import SwiftUI
 
 @main
 struct AMIApp: App {
+    
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    
     var body: some Scene {
         WindowGroup {
             if Config.shared.CURRENT_ENV == "STAGING" {

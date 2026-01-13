@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		4E83DE402EFAFAAE00531A7F /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 4E83DE3F2EFAFAAE00531A7F /* FirebaseCore */; };
+		4E83DE422EFAFAAE00531A7F /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 4E83DE412EFAFAAE00531A7F /* FirebaseMessaging */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		AF9155042EA51D9D00F30B25 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -30,7 +35,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		AFA8FE872EE97C0A00703FDB /* Exceptions for "AMI" folder in "AMI" target */ = {
+		4E83DE3D2EFAF77E00531A7F /* Exceptions for "AMI" folder in "AMI" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -43,7 +48,7 @@
 		AF9154F52EA51D9C00F30B25 /* AMI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				AFA8FE872EE97C0A00703FDB /* Exceptions for "AMI" folder in "AMI" target */,
+				4E83DE3D2EFAF77E00531A7F /* Exceptions for "AMI" folder in "AMI" target */,
 			);
 			path = AMI;
 			sourceTree = "<group>";
@@ -65,6 +70,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4E83DE422EFAFAAE00531A7F /* FirebaseMessaging in Frameworks */,
+				4E83DE402EFAFAAE00531A7F /* FirebaseCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +132,8 @@
 			);
 			name = AMI;
 			packageProductDependencies = (
+				4E83DE3F2EFAFAAE00531A7F /* FirebaseCore */,
+				4E83DE412EFAFAAE00531A7F /* FirebaseMessaging */,
 			);
 			productName = AMI;
 			productReference = AF9154F32EA51D9C00F30B25 /* AMI.app */;
@@ -208,6 +217,9 @@
 			);
 			mainGroup = AF9154EA2EA51D9C00F30B25;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4E83DE3E2EFAFAAE00531A7F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AF9154F42EA51D9C00F30B25 /* Products */;
 			projectDirPath = "";
@@ -319,7 +331,6 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = D4JA25UPZB;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -357,7 +368,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"AMI/Preview Content\"";
-				DEVELOPMENT_TEAM = D4JA25UPZB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AMI/Info.plist;
@@ -451,7 +461,6 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = D4JA25UPZB;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -482,7 +491,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"AMI/Preview Content\"";
-				DEVELOPMENT_TEAM = D4JA25UPZB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AMI/Info.plist;
@@ -576,7 +584,6 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = D4JA25UPZB;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -642,7 +649,6 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = D4JA25UPZB;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -673,7 +679,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"AMI/Preview Content\"";
-				DEVELOPMENT_TEAM = D4JA25UPZB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AMI/Info.plist;
@@ -687,7 +692,6 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "fr.gouv.ami-dev";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -705,7 +709,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"AMI/Preview Content\"";
-				DEVELOPMENT_TEAM = D4JA25UPZB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AMI/Info.plist;
@@ -719,7 +722,6 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "fr.gouv.ami-dev";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -833,7 +835,6 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = D4JA25UPZB;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -871,7 +872,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"AMI/Preview Content\"";
-				DEVELOPMENT_TEAM = D4JA25UPZB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AMI/Info.plist;
@@ -885,7 +885,6 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "fr.gouv.ami-dev";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -965,7 +964,6 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = D4JA25UPZB;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -996,7 +994,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"AMI/Preview Content\"";
-				DEVELOPMENT_TEAM = D4JA25UPZB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AMI/Info.plist;
@@ -1010,7 +1007,6 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "fr.gouv.ami-dev";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -1109,6 +1105,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4E83DE3E2EFAFAAE00531A7F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.7.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4E83DE3F2EFAFAAE00531A7F /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4E83DE3E2EFAFAAE00531A7F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		4E83DE412EFAFAAE00531A7F /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4E83DE3E2EFAFAAE00531A7F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AF9154EB2EA51D9C00F30B25 /* Project object */;
 }
