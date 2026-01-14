@@ -9,6 +9,11 @@ enum NotificationHelper {
                 print("NotificationHelper: Error requesting notification authorization: \(error)")
             } else {
                 print("NotificationHelper: Notification authorization granted: \(granted)")
+                if granted {
+                    DispatchQueue.main.async {
+                        InformationBannerManager.shared.showBanner(.validation, title: "Les notifications ont été activées")
+                    }
+                }
             }
         }
     }
