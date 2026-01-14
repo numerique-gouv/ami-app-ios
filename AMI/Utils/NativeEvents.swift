@@ -36,6 +36,9 @@ enum NativeEvents {
                 coordinator.triggerDeviceRegistration()
             case "notification_permission_requested":
                 NotificationHelper.requestPermission()
+            case "notification_permission_removed":
+                NotificationHelper.openSettings()
+                WebViewManager.shared.goHome()
             default:
                 break
             }
