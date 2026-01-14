@@ -29,10 +29,15 @@ enum NativeEvents {
             let data = messageBody["data"]
             print("WebView: Event received: \(eventName) - \(String(describing: data))")
 
-            if eventName == "user_logged_in" {
+            switch eventName {
+            case "user_logged_in":
                 coordinator.isUserLoggedIn = true
                 // Trigger device registration when user logs in
                 coordinator.triggerDeviceRegistration()
+            case "notification_permission_requested":
+                NotificationHelper.requestPermission()
+            default:
+                break
             }
         }
         return
