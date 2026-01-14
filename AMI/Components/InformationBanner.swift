@@ -1,11 +1,71 @@
 import SwiftUI
 import UIKit
 
+struct BannerData: Identifiable {
+    let id: UUID
+    let informationType: InformationType
+    let title: String
+    let icon: String
+    let content: String?
+    let link: String?
+    let hasCloseIcon: Bool
+    let onClickLink: () -> Void
+    let onClose: (() -> Void)?
+}
+
+class InformationBannerManager: ObservableObject {
+    static let shared = InformationBannerManager()
+
+    @Published var banners: [BannerData] = []
+
+    func showBanner(
+        _ informationType: InformationType,
+        title: String,
+        content: String? = nil,
+        link: String? = nil,
+        onClickLink: @escaping () -> Void = {},
+        hasCloseIcon: Bool = true,
+        icon: String? = nil,
+        onClose: (() -> Void)? = nil
+    ) {
+        let id = UUID()
+        let banner = BannerData(
+            id: id,
+            informationType: informationType,
+            title: title,
+            icon: icon ?? informationType.defaultIcon,
+            content: content,
+            link: link,
+            hasCloseIcon: hasCloseIcon,
+            onClickLink: onClickLink,
+            onClose: onClose
+        )
+        banners.append(banner)
+    }
+
+    func dismissBanner(id: UUID) {
+        banners.removeAll { $0.id == id }
+    }
+}
+
 enum InformationType {
     case warning
     case information
     case error
     case validation
+
+    var defaultIcon: String {
+        switch self {
+        case .warning:
+            return "exclamationmark.triangle.fill"
+        case .information:
+            return "info.square.fill"
+        case .error:
+            return "xmark.circle.fill"
+        case .validation:
+            return "checkmark.circle.fill"
+        }
+    }
 
     var backgroundColor: Color {
         switch self {
@@ -32,53 +92,31 @@ enum InformationType {
             return Color.bannerValidationForeground
         }
     }
-
-    var borderColor: Color {
-        switch self {
-        case .warning:
-            return Color.bannerWarningBorder
-        case .information:
-            return Color.bannerInformationBorder
-        case .error:
-            return Color.bannerErrorBorder
-        case .validation:
-            return Color.bannerValidationBorder
-        }
-    }
 }
 
 extension Color {
     // Warning colors (orange/amber)
-    static let bannerWarningBackground = Color(light: Color(red: 1.0, green: 0.97, blue: 0.89),
-                                                dark: Color(red: 0.3, green: 0.24, blue: 0.1))
-    static let bannerWarningForeground = Color(light: Color(red: 0.6, green: 0.4, blue: 0.0),
-                                                dark: Color(red: 1.0, green: 0.8, blue: 0.4))
-    static let bannerWarningBorder = Color(light: Color(red: 0.9, green: 0.7, blue: 0.3),
-                                            dark: Color(red: 0.7, green: 0.5, blue: 0.2))
-
+    static let bannerWarningBackground = Color(light: Color(red: 0.996, green: 0.922, blue: 0.816),
+                                                dark: Color(red: 0.702, green: 0.251, blue: 0))
+    static let bannerWarningForeground = Color(light: Color(red: 0.702, green: 0.251, blue: 0),
+                                                dark: Color(red: 0.996, green: 0.922, blue: 0.816))
     // Information colors (blue)
-    static let bannerInformationBackground = Color(light: Color(red: 0.9, green: 0.95, blue: 1.0),
-                                                    dark: Color(red: 0.1, green: 0.2, blue: 0.3))
-    static let bannerInformationForeground = Color(light: Color(red: 0.0, green: 0.4, blue: 0.8),
-                                                    dark: Color(red: 0.5, green: 0.75, blue: 1.0))
-    static let bannerInformationBorder = Color(light: Color(red: 0.6, green: 0.8, blue: 1.0),
-                                                dark: Color(red: 0.3, green: 0.5, blue: 0.7))
+    static let bannerInformationBackground = Color(light: Color(red: 0.91, green: 0.929, blue: 1),
+                                                    dark: Color(red: 0, green: 0.388, blue: 0.796))
+    static let bannerInformationForeground = Color(light: Color(red: 0, green: 0.388, blue: 0.796),
+                                                    dark: Color(red: 0.91, green: 0.929, blue: 1))
 
     // Error colors (red)
-    static let bannerErrorBackground = Color(light: Color(red: 1.0, green: 0.92, blue: 0.92),
-                                              dark: Color(red: 0.3, green: 0.1, blue: 0.1))
-    static let bannerErrorForeground = Color(light: Color(red: 0.8, green: 0.2, blue: 0.2),
-                                              dark: Color(red: 1.0, green: 0.5, blue: 0.5))
-    static let bannerErrorBorder = Color(light: Color(red: 1.0, green: 0.6, blue: 0.6),
-                                          dark: Color(red: 0.6, green: 0.3, blue: 0.3))
+    static let bannerErrorBackground = Color(light: Color(red: 1, green: 0.914, blue: 0.914),
+                                              dark: Color(red: 0.808, green: 0.02, blue: 0))
+    static let bannerErrorForeground = Color(light: Color(red: 0.808, green: 0.02, blue: 0),
+                                              dark: Color(red: 1, green: 0.914, blue: 0.914))
 
     // Validation/Success colors (green)
-    static let bannerValidationBackground = Color(light: Color(red: 0.9, green: 1.0, blue: 0.92),
-                                                   dark: Color(red: 0.1, green: 0.25, blue: 0.1))
-    static let bannerValidationForeground = Color(light: Color(red: 0.2, green: 0.6, blue: 0.2),
-                                                   dark: Color(red: 0.5, green: 0.9, blue: 0.5))
-    static let bannerValidationBorder = Color(light: Color(red: 0.5, green: 0.8, blue: 0.5),
-                                               dark: Color(red: 0.3, green: 0.5, blue: 0.3))
+    static let bannerValidationBackground = Color(light: Color(red: 0.89, green: 0.992, blue: 0.922),
+                                                   dark: Color(red: 0.094, green: 0.459, blue: 0.235))
+    static let bannerValidationForeground = Color(light: Color(red: 0.094, green: 0.459, blue: 0.235),
+                                                   dark: Color(red: 0.89, green: 0.992, blue: 0.922))
 }
 
 extension Color {
@@ -103,6 +141,40 @@ struct InformationBanner: View {
     var hasCloseIcon: Bool = true
     var onClickLink: () -> Void = {}
     var onClose: () -> Void = {}
+
+    init(data: BannerData) {
+        self.informationType = data.informationType
+        self.title = data.title
+        self.icon = data.icon
+        self.content = data.content
+        self.link = data.link
+        self.hasCloseIcon = data.hasCloseIcon
+        self.onClickLink = data.onClickLink
+        self.onClose = {
+            data.onClose?()
+            InformationBannerManager.shared.dismissBanner(id: data.id)
+        }
+    }
+
+    init(
+        informationType: InformationType,
+        title: String,
+        icon: String,
+        content: String? = nil,
+        link: String? = nil,
+        hasCloseIcon: Bool = true,
+        onClickLink: @escaping () -> Void = {},
+        onClose: @escaping () -> Void = {}
+    ) {
+        self.informationType = informationType
+        self.title = title
+        self.icon = icon
+        self.content = content
+        self.link = link
+        self.hasCloseIcon = hasCloseIcon
+        self.onClickLink = onClickLink
+        self.onClose = onClose
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -152,10 +224,6 @@ struct InformationBanner: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(informationType.backgroundColor)
-        .overlay(
-            Rectangle()
-                .stroke(informationType.borderColor, lineWidth: 1)
-        )
     }
 }
 
