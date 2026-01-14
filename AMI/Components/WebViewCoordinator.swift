@@ -12,6 +12,7 @@ import SwiftUI
 class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
     var parent: WebView
     private var progressObservation: NSKeyValueObservation?
+    private var urlObservation: NSKeyValueObservation?
     private var isLoadingBinding: Binding<Bool>
     private var loadingProgressBinding: Binding<Double>
     var isUserLoggedIn = false
@@ -185,12 +186,13 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         DispatchQueue.main.async {
             self.isLoadingBinding.wrappedValue = false
         }
-        updateNotificationStatusInLocalStorage(webView: webView)
     }
 
     func updateNotificationStatusInLocalStorage(webView: WKWebView) {
+        print("WebView: updateNotificationStatusInLocalStorage called")
         Task {
             let isEnabled = await NotificationHelper.isNotificationEnabled()
+            print("WebView: Notification status retrieved: \(isEnabled)")
             let script = "localStorage.setItem('notifications_enabled', '\(isEnabled)');"
             await MainActor.run {
                 webView.evaluateJavaScript(script) { _, error in
@@ -210,6 +212,12 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             DispatchQueue.main.async {
                 self.loadingProgressBinding.wrappedValue = webView.estimatedProgress
             }
+        }
+
+        urlObservation = wkWebView.observe(\.url, options: [.new]) { [weak self] webView, _ in
+            guard let self = self else { return }
+            print("WebView: URL changed to: \(webView.url?.absoluteString ?? "nil")")
+            self.updateNotificationStatusInLocalStorage(webView: webView)
         }
     }
 }
