@@ -12,6 +12,7 @@ enum NotificationHelper {
                 if granted {
                     DispatchQueue.main.async {
                         InformationBannerManager.shared.showBanner(.validation, title: "Les notifications ont été activées")
+                        WebViewManager.shared.goHome()
                     }
                 }
             }

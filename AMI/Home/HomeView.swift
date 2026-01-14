@@ -19,7 +19,7 @@ struct HomeView: View {
         VStack(spacing: 0) {
             if(isExternalProcess){
                 BackBar() {
-                    webViewRef?.load(URLRequest(url: URL(string: Config.shared.BASE_URL)!))
+                    WebViewManager.shared.goHome()
                 }
             }
             if isLoading {
@@ -28,6 +28,9 @@ struct HomeView: View {
                     .tint(.blue)
             }
             WebView(initialURL: Config.shared.BASE_URL, isExternalProcess: $isExternalProcess, webViewRef: $webViewRef, isLoading: $isLoading, loadingProgress: $loadingProgress)
+            .onChange(of: webViewRef) { _, newValue in
+                WebViewManager.shared.webView = newValue
+            }
             .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
