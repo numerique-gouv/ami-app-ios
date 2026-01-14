@@ -32,15 +32,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
         UNUserNotificationCenter.current().delegate = self
 
-        let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-        UNUserNotificationCenter.current().requestAuthorization(options: authOptions) { granted, error in
-            if let error = error {
-                print("AppDelegate: Error requesting notification authorization: \(error)")
-            } else {
-                print("AppDelegate: Notification authorization granted: \(granted)")
-            }
-        }
-
         application.registerForRemoteNotifications()
 
         return true
