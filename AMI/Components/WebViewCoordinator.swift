@@ -185,6 +185,23 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         DispatchQueue.main.async {
             self.isLoadingBinding.wrappedValue = false
         }
+        updateNotificationStatusInLocalStorage(webView: webView)
+    }
+
+    func updateNotificationStatusInLocalStorage(webView: WKWebView) {
+        Task {
+            let isEnabled = await NotificationHelper.isNotificationEnabled()
+            let script = "localStorage.setItem('notifications_enabled', '\(isEnabled)');"
+            await MainActor.run {
+                webView.evaluateJavaScript(script) { _, error in
+                    if let error = error {
+                        print("WebView: Failed to set notifications_enabled in localStorage: \(error)")
+                    } else {
+                        print("WebView: Set notifications_enabled=\(isEnabled) in localStorage")
+                    }
+                }
+            }
+        }
     }
 
     func observeProgress(of wkWebView: WKWebView) {
