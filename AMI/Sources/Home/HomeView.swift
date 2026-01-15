@@ -13,6 +13,7 @@ struct HomeView: View {
     @State var isExternalProcess = false
     @State var isLoading = false
     @State var loadingProgress: Double = 0.0
+    @State var isOnContactPage = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,7 +27,7 @@ struct HomeView: View {
                     .progressViewStyle(.linear)
                     .tint(.blue)
             }
-            WebView(initialUrl: Config.shared.BASE_URL, isExternalProcess: $isExternalProcess, isLoading: $isLoading, loadingProgress: $loadingProgress)
+            WebView(initialUrl: Config.shared.BASE_URL, isExternalProcess: $isExternalProcess, isLoading: $isLoading, loadingProgress: $loadingProgress, isOnContactPage: $isOnContactPage)
                 .navigationBarBackButtonHidden(true)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
@@ -46,6 +47,24 @@ struct HomeView: View {
                             }
                         }
                 )
+        }
+        if isOnContactPage {
+            Button {
+                WebViewManager.shared.webView.evaluateJavaScript("localStorage.getItem('user_fc_hash')") { result, _ in
+                    let userFcHash = (result as? String)?.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                    LogsExporter.shareLogs(userFcHash: userFcHash)
+                }
+            } label: {
+                Text("Télécharger les logs")
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Asset.Colors.blueFranceSun113.swiftUIColor)
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 24)
+            .transition(.move(edge: .bottom))
+            .animation(.easeInOut, value: isOnContactPage)
         }
     }
 
