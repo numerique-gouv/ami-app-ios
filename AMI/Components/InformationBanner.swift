@@ -18,6 +18,7 @@ class InformationBannerManager: ObservableObject {
 
     @Published var banners: [BannerData] = []
 
+    @discardableResult
     func showBanner(
         _ informationType: InformationType,
         title: String,
@@ -27,7 +28,7 @@ class InformationBannerManager: ObservableObject {
         hasCloseIcon: Bool = true,
         icon: String? = nil,
         onClose: (() -> Void)? = nil
-    ) {
+    ) -> UUID {
         let id = UUID()
         let banner = BannerData(
             id: id,
@@ -41,6 +42,7 @@ class InformationBannerManager: ObservableObject {
             onClose: onClose
         )
         banners.append(banner)
+        return id
     }
 
     func dismissBanner(id: UUID) {
