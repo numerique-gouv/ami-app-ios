@@ -145,7 +145,7 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         // Show loader immediately on link click (before page starts loading)
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.isLoadingBinding.wrappedValue = true
             self.loadingProgressBinding.wrappedValue = 0.0
         }
@@ -183,7 +183,7 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.isLoadingBinding.wrappedValue = false
         }
     }
@@ -209,7 +209,7 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     func observeProgress(of wkWebView: WKWebView) {
         progressObservation = wkWebView.observe(\.estimatedProgress, options: [.new]) { [weak self] webView, _ in
             guard let self = self else { return }
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.loadingProgressBinding.wrappedValue = webView.estimatedProgress
             }
         }

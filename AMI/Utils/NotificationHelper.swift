@@ -4,7 +4,7 @@ import UserNotifications
 
 enum NotificationHelper {
     static func openSettings() {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             let urlString: String
             if #available(iOS 16.0, *) {
                 urlString = UIApplication.openNotificationSettingsURLString

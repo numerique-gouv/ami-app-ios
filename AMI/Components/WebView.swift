@@ -31,7 +31,7 @@ struct WebView: UIViewRepresentable {
         context.coordinator.observeProgress(of: webView)
         webView.load(URLRequest(url: URL(string: initialURL)!))
 
-        DispatchQueue.main.async { // Do not modify the state during view update.
+        Task { @MainActor in // Do not modify the state during view update.
             webViewRef = webView
         }
 
