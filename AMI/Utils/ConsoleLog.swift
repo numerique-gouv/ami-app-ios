@@ -1,9 +1,8 @@
 import Foundation
-import SwiftUI
 import WebKit
 
 enum ConsoleLog {
-	static func attach(_ contentController: WKUserContentController, _ context: UIViewRepresentableContext<WebView>) {
+	static func attach(_ contentController: WKUserContentController, _ handler: WKScriptMessageHandler) {
 	    // JavaScript to capture console logs
 	    let consoleLogScript = """
 	    (function() {
@@ -60,7 +59,7 @@ enum ConsoleLog {
 
 	    let userScript = WKUserScript(source: consoleLogScript, injectionTime: .atDocumentStart, forMainFrameOnly: false)
 	    contentController.addUserScript(userScript)
-	    contentController.add(context.coordinator, name: "consoleLog")
+	    contentController.add(handler, name: "consoleLog")
 	}
 
 	static func printLog(_ message: WKScriptMessage) {
