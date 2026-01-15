@@ -1,9 +1,8 @@
 import Foundation
-import SwiftUI
 import WebKit
 
 enum NativeEvents {
-	static func attach(_ contentController: WKUserContentController, _ context: UIViewRepresentableContext<WebView>) {
+	static func attach(_ contentController: WKUserContentController, _ handler: WKScriptMessageHandler) {
         // This creates window.NativeBridge.onEvent() that wraps the iOS messaging
         let bridgeScript = """
             window.NativeBridge = {
@@ -18,7 +17,7 @@ enum NativeEvents {
             """
 	    let script = WKUserScript(source: bridgeScript, injectionTime: .atDocumentStart, forMainFrameOnly: false)
         contentController.addUserScript(script)
-        contentController.add(context.coordinator, name: "NativeBridge")
+        contentController.add(handler, name: "NativeBridge")
 	}
 
     static func processMessage(_ message: WKScriptMessage, coordinator: WebViewCoordinator) {

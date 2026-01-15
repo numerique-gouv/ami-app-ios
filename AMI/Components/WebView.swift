@@ -12,28 +12,22 @@ import WebKit
 struct WebView: UIViewRepresentable {
     let initialURL: String
     @Binding var isExternalProcess: Bool
-    @Binding var webViewRef: WKWebView?
     @Binding var isLoading: Bool
     @Binding var loadingProgress: Double
 
     func makeUIView(context: Context) -> some UIView {
-        let contentController = WKUserContentController()
-        let configuration = WKWebViewConfiguration()
-        configuration.userContentController = contentController
-        NativeEvents.attach(contentController, context)
+        let webView = WebViewManager.shared.webView
+        let contentController = webView.configuration.userContentController
+
+        NativeEvents.attach(contentController, context.coordinator)
 
         #if DEBUG
-            ConsoleLog.attach(contentController, context)
+            ConsoleLog.attach(contentController, context.coordinator)
         #endif
 
-        let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         context.coordinator.observeProgress(of: webView)
         webView.load(URLRequest(url: URL(string: initialURL)!))
-
-        Task { @MainActor in // Do not modify the state during view update.
-            webViewRef = webView
-        }
 
         return webView
     }

@@ -44,10 +44,7 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             return
         }
 
-        guard let webView = parent.webViewRef else {
-            print("WebView: ⚠️ WebView reference not ready - cannot register device")
-            return
-        }
+        let webView = WebViewManager.shared.webView
 
         let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
         let deviceModel = UIDevice.current.model
