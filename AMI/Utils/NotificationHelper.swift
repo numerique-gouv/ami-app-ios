@@ -17,28 +17,37 @@ enum NotificationHelper {
         }
     }
 
+    static func checkNotificationsPermission() async -> UNNotificationSettings {
+        await UNUserNotificationCenter.current().notificationSettings()
+    }
+
+    static func requestNotificationsActivation() {
+        let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
+        UNUserNotificationCenter.current().requestAuthorization(options: authOptions) { granted, error in
+            if let error = error {
+                print("NotificationHelper: Error requesting notification authorization: \(error)")
+            } else {
+                print("NotificationHelper: Notification authorization granted: \(granted)")
+                if granted {
+                    Task { @MainActor in
+                        InformationBannerManager.shared.showBanner(.validation, title: "Les notifications ont été activées")
+                        WebViewManager.shared.goHome()
+                    }
+                }
+            }
+        }
+    }
+
     static func requestPermission() {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
+        Task {
+            let settings = await checkNotificationsPermission()
             switch settings.authorizationStatus {
             case .denied:
                 print("NotificationHelper: Permission denied - opening settings")
                 openSettings()
             case .notDetermined:
                 print("NotificationHelper: Permission not determined, trying to open the OS popup")
-                let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-                UNUserNotificationCenter.current().requestAuthorization(options: authOptions) { granted, error in
-                    if let error = error {
-                        print("NotificationHelper: Error requesting notification authorization: \(error)")
-                    } else {
-                        print("NotificationHelper: Notification authorization granted: \(granted)")
-                        if granted {
-                            DispatchQueue.main.async {
-                                InformationBannerManager.shared.showBanner(.validation, title: "Les notifications ont été activées")
-                                WebViewManager.shared.goHome()
-                            }
-                        }
-                    }
-                }
+                requestNotificationsActivation()
             default:
                 print("NotificationHelper: Permission already granted or provisional")
             }
