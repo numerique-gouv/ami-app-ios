@@ -26,7 +26,7 @@ struct HomeView: View {
                     .progressViewStyle(.linear)
                     .tint(.blue)
             }
-            WebView(initialURL: Config.shared.BASE_URL, isExternalProcess: $isExternalProcess, isLoading: $isLoading, loadingProgress: $loadingProgress)
+            WebView(initialUrlString: Config.shared.BASE_URL, isExternalProcess: $isExternalProcess, isLoading: $isLoading, loadingProgress: $loadingProgress)
             .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -50,9 +50,8 @@ struct HomeView: View {
     }
 
     private func handleBackAction() {
-        let webView = WebViewManager.shared.webView
-        if webView.canGoBack {
-            webView.goBack()
+        if WebViewManager.shared.webView.canGoBack {
+            WebViewManager.shared.webView.goBack()
         } else {
             dismiss()
         }

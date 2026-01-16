@@ -10,7 +10,7 @@ import Foundation
 import WebKit
 
 struct WebView: UIViewRepresentable {
-    let initialURL: String
+    let initialUrlString: String
     @Binding var isExternalProcess: Bool
     @Binding var isLoading: Bool
     @Binding var loadingProgress: Double
@@ -27,7 +27,7 @@ struct WebView: UIViewRepresentable {
 
         webView.navigationDelegate = context.coordinator
         context.coordinator.observeProgress(of: webView)
-        webView.load(URLRequest(url: URL(string: initialURL)!))
+        webView.load(URLRequest(url: URL(string: initialUrlString)!))
 
         return webView
     }

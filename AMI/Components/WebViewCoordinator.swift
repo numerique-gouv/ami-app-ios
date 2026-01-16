@@ -191,6 +191,7 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             let isEnabled = await NotificationHelper.isNotificationEnabled()
             print("WebView: Notification status retrieved: \(isEnabled)")
             let script = "localStorage.setItem('notifications_enabled', '\(isEnabled)');"
+            // TODO: check if `MainActor.run` is better than `Task { @MainActor`.
             await MainActor.run {
                 webView.evaluateJavaScript(script) { _, error in
                     if let error = error {
