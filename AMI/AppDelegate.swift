@@ -16,7 +16,7 @@ extension Notification.Name {
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         // Determine which GoogleService-Info plist to use based on environment
-        let environment = Bundle.main.object(forInfoDictionaryKey: "CURRENT_ENV") as? String ?? "PROD"
+        let environment = Config.getValue(for: "CURRENT_ENV", defaultValue: "PROD")
         let fileName = environment == "STAGING" ? "GoogleService-Info-Staging" : "GoogleService-Info-Prod"
 
         guard let filePath = Bundle.main.path(forResource: fileName, ofType: "plist"),
