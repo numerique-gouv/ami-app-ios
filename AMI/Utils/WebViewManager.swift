@@ -4,7 +4,7 @@ import WebKit
 class WebViewManager {
     static let shared = WebViewManager()
 
-    private(set) lazy var webView: WKWebView = {
+    let webView: WKWebView = {
         let configuration = WKWebViewConfiguration()
         configuration.userContentController = WKUserContentController()
         return WKWebView(frame: .zero, configuration: configuration)
