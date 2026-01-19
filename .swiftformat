@@ -1,0 +1,10 @@
+--swift-version 6
+
+--exclude **/Generated
+
+--disable wrapMultilineStatementBraces
+--disable unusedArguments
+
+--elseposition same-line
+--guardelse same-line
+--trailing-commas always
