@@ -35,9 +35,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
         application.registerForRemoteNotifications()
 
-        print("Test STR: \(AMIL10n.myFirstString)")
-        print("Test STR: \(AMIL10n.homesFound(2))")
-
         return true
     }
 

@@ -18,7 +18,7 @@ class WebService: ObservableObject {
     @Published var reviewApps: [ReviewApp] = []
 
     func getReviewApps() async throws {
-        let url = Config.shared.BASE_URL.appendingPathComponent("/dev-utils/review-apps")
+        let url = Config.shared.BASE_URL.appending(path: "dev-utils/review-apps")
 
         let request = URLRequest(url: url)
 
