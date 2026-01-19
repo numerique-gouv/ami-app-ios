@@ -1,0 +1,18 @@
+excluded:
+  - AMI/Sources/Generated/*
+  
+#disabled_rules: # rule identifiers turned on by default to exclude from running
+#  - identifier_name #rule for checking variable conditions (Upper case , lower case , underscore )
+
+identifier_name:
+  allowed_symbols: ["_"]
+    
+line_length:
+  warning: 200
+#  ignores_function_declarations: true
+#  ignores_comments: true
+#  ignores_interpolated_strings: true
+#  ignores_urls: true
+
+trailing_comma:
+  mandatory_comma: true

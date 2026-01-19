@@ -1,0 +1,175 @@
+name: AMI
+#--------------------------------------------------------------------------------
+schemeTemplates:
+  BaseScheme:
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+    build:
+      targets:
+        ${scheme_name}:
+        - running
+        - testing
+        - profiling
+        - analyzing
+        - archiving
+    profile:
+      config: Release
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      coverageTargets:
+        - ${scheme_name}:
+      testPlans:
+#         - path: UnitTests/SupportingFiles/UnitTests.xctestplan
+#           defaultPlan: true
+#         - path: UITests/SupportingFiles/UITests.xctestplan
+#           defaultPlan: false
+#         - path: PreviewTests/SupportingFiles/PreviewTests.xctestplan
+#           defaultPlan: false
+#--------------------------------------------------------------------------------
+schemes:
+  AMI-Production:
+    templates:
+      - BaseScheme
+  AMI-Staging:
+    templates:
+      - BaseScheme
+#--------------------------------------------------------------------------------
+targetTemplates:
+  BaseTarget:
+    type: application
+    platform: iOS
+
+    info:
+      properties:
+        UILaunchScreen:
+          UIColorName: colors/background-color
+        CFBundleDisplayName: $(APP_DISPLAY_NAME)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UISupportedInterfaceOrientations: [
+          UIInterfaceOrientationPortrait,
+          UIInterfaceOrientationPortraitUpsideDown,
+          UIInterfaceOrientationLandscapeLeft,
+          UIInterfaceOrientationLandscapeRight
+        ]
+        productionAppName: $(PRODUCTION_APP_NAME)
+        ITSAppUsesNonExemptEncryption: false
+#        NSCameraUsageDescription: To take pictures or videos and send them as a message $(APP_DISPLAY_NAME) needs access to the camera.
+#        NSMicrophoneUsageDescription: To record and send messages with audio, $(APP_DISPLAY_NAME) needs to access the microphone.
+#        NSPhotoLibraryAddUsageDescription: This lets you save images and videos to your photo library.
+#        NSLocationWhenInUseUsageDescription: Grant location access so that $(APP_DISPLAY_NAME) can share your location.
+#        NSFaceIDUsageDescription: Face ID is used to access your app.
+        UIBackgroundModes: [
+          remote-notification
+        ]
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations: []
+        LSRequiresIPhoneOS: true
+        UILaunchScreen:
+          UILaunchScreen: {}
+        BASE_URL: $(BASE_URL)
+        
+    settings:
+      PRODUCT_NAME: $(APP_NAME)
+      PRODUCT_BUNDLE_IDENTIFIER: $(BASE_BUNDLE_IDENTIFIER)
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      DEVELOPMENT_ASSET_PATHS: AMI/Resources/Preview
+      ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: false # Done by SwiftGen
+#       SWIFT_OBJC_BRIDGING_HEADER: Project-Bridging-Header.h
+#       SWIFT_OBJC_INTERFACE_HEADER_NAME: GeneratedInterface-Swift.h
+
+    preBuildScripts:
+    - name: 🛠 SwiftGen
+      runOnlyWhenInstalling: false
+      basedOnDependencyAnalysis: false
+      shell: /bin/sh
+      script: |
+        export PATH="$PATH:/opt/homebrew/bin"
+        mkdir AMI/Sources/Generated
+        swiftgen config run --config "Tools/SwiftGen/swiftgen-config-tchap-main.yml"
+        if which swiftgen >/dev/null; then
+            swiftgen config run --config Tools/SwiftGen/swiftgen-ami-config.yml
+        else
+            echo "warning: SwiftGen not installed, download from https://github.com/SwiftGen/SwiftGen"
+        fi
+        
+    postBuildScripts:
+    - name: ⚠️ SwiftLint
+      runOnlyWhenInstalling: false
+      basedOnDependencyAnalysis: false
+      shell: /bin/sh
+      script: |
+        export PATH="$PATH:/opt/homebrew/bin"
+        if which swiftlint >/dev/null; then
+            swiftlint
+        else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+        fi
+    - name: 🧹 SwiftFormat
+      runOnlyWhenInstalling: false
+      basedOnDependencyAnalysis: false
+      shell: /bin/sh
+      script: |
+        export PATH="$PATH:/opt/homebrew/bin"
+        if which swiftformat >/dev/null; then
+            swiftformat --lint --lenient "$PROJECT_DIR"
+        else
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
+        fi
+
+    dependencies:
+    - package: Firebase
+      product: FirebaseCore
+      embed: false
+    - package: Firebase
+      product: FirebaseMessaging
+      embed: false
+
+    sources:
+    - path: AMI
+
+#--------------------------------------------------------------------------------
+targets:
+#--------------------------------------------------------------------------------
+  AMI-Production:
+    templates: 
+      - BaseTarget
+
+    info:
+      path: targets/production/SupportingFiles/Info.plist
+
+    settings:
+      BASE_BUNDLE_IDENTIFIER: fr.gouv.ami
+      PRODUCTION_APP_NAME: AMI PRODUCTION
+      APP_NAME: AMI-Production
+      APP_DISPLAY_NAME: AMI # The name used in the application.
+      CODE_SIGN_ENTITLEMENTS: targets/production/SupportingFiles/ami.entitlements
+      OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_PRODUCTION
+
+    sources:
+    - path: targets/production/SupportingFiles
+#--------------------------------------------------------------------------------
+  AMI-Staging:
+    templates: 
+      - BaseTarget
+
+    info:
+      path: targets/staging/SupportingFiles/Info.plist
+
+    settings:
+      BASE_BUNDLE_IDENTIFIER: fr.gouv.ami.staging
+      PRODUCTION_APP_NAME: AMI PRODUCTION
+      APP_NAME: AMI-Production
+      APP_DISPLAY_NAME: AMI staging # The name used in the application.
+      CODE_SIGN_ENTITLEMENTS: targets/production/SupportingFiles/ami.entitlements
+      OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_STAGING
+
+    sources:
+    - path: targets/staging/SupportingFiles
+#--------------------------------------------------------------------------------

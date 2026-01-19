@@ -1,0 +1,9 @@
+/* 
+  Localizable.strings
+  AMI-xcodegen
+
+  Created by Nicolas Buquet on 16/01/2026.
+  Copyright © 2026 DINUM. All rights reserved.
+*/
+
+my_first_string = "Ma première chaîne de caractères";
