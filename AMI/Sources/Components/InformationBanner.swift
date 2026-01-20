@@ -189,7 +189,6 @@ struct InformationBanner: View {
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(informationType.foregroundColor)
-                    .lineLimit(1)
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -244,11 +243,9 @@ struct InformationBanner: View {
 #Preview("Information") {
     InformationBanner(
         informationType: .information,
-        title: "Nouvelle démarche disponible",
+        title: "Un message très long qui ne tient pas sur une seule ligne",
         icon: "info.square.fill",
-        content: "Vérifiez votre connexion et réessayez.",
-        link: "Lien de consultation",
-        hasCloseIcon: false
+        hasCloseIcon: true
     )
 }
 
