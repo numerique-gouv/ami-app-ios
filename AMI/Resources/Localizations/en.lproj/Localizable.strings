@@ -6,4 +6,6 @@
   Copyright © 2026 DINUM. All rights reserved.
 */
 
-my_first_string = "My first string";
+// Logs Exporter
+logs_error_unable_to_access_log = "Unable to access logs";
+logs_error_unable_to_write_log = "Unable to write log files";

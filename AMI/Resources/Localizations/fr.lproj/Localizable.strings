@@ -6,4 +6,6 @@
   Copyright © 2026 DINUM. All rights reserved.
 */
 
-my_first_string = "Ma première chaîne de caractères";
+// Logs Exporter
+logs_error_unable_to_access_log = "Impossible d'accéder aux logs";
+logs_error_unable_to_write_log = "Impossible d'enregistrer le fichier de logs";
