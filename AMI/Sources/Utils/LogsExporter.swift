@@ -116,11 +116,11 @@ struct LogsExporter {
 
     @MainActor
     private func handleError(_ error: LogsExporterError) {
-        let alert = UIAlertController(title: "Error",
+        let alert = UIAlertController(title: AMIL10n.error,
                                       message: error.description,
                                       preferredStyle: .alert)
 
-        let okAction = UIAlertAction(title: "OK", style: .default)
+        let okAction = UIAlertAction(title: AMIL10n.ok, style: .default)
 
         alert.addAction(okAction)
 

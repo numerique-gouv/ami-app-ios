@@ -6,6 +6,12 @@
   Copyright © 2026 DINUM. All rights reserved.
 */
 
+
+// Common
+ok = "Ok";
+cancel = "Annuler";
+error = "Erreur";
+
 // Logs Exporter
 logs_error_unable_to_access_log = "Impossible d'accéder aux logs";
 logs_error_unable_to_write_log = "Impossible d'enregistrer le fichier de logs";
