@@ -12,8 +12,8 @@ struct LogsExporter {
 
         var description: String {
             switch self {
-            case .unableToAccessLogs: "Impossible d'accéder aux logs"
-            case .unableToWriteLogFile: "Impossible d'enregistrer le fichier de logs"
+            case .unableToAccessLogs: AMIL10n.logsErrorUnableToAccessLog
+            case .unableToWriteLogFile: AMIL10n.logsErrorUnableToWriteLog
             }
         }
     }
