@@ -50,10 +50,7 @@ struct HomeView: View {
         }
         if isOnContactPage {
             Button {
-                WebViewManager.shared.webView.evaluateJavaScript("localStorage.getItem('user_fc_hash')") { result, _ in
-                    let userFcHash = (result as? String)?.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
-                    LogsExporter.shareLogs(userFcHash: userFcHash)
-                }
+                handleShareLogsAction()
             } label: {
                 Text("Télécharger les logs")
                     .frame(maxWidth: .infinity)
@@ -73,6 +70,15 @@ struct HomeView: View {
             WebViewManager.shared.webView.goBack()
         } else {
             dismiss()
+        }
+    }
+
+    private func handleShareLogsAction() {
+        Task {
+            do {
+                let userFcHash = try await WebViewManager.shared.webView.evaluateJavaScript("localStorage.getItem('user_fc_hash')") as? String
+                LogsExporter(userId: userFcHash?.trimmingCharacters(in: CharacterSet(charactersIn: "\""))).shareLogs()
+            } catch {}
         }
     }
 }
