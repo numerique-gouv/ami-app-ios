@@ -17,8 +17,8 @@ enum NotificationHelper {
         }
     }
 
-    static func checkNotificationsPermission() async -> UNNotificationSettings {
-        await UNUserNotificationCenter.current().notificationSettings()
+    static func notificationsAuthrizationStatus() async -> UNAuthorizationStatus {
+        await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
     }
 
     static func requestNotificationsActivation() {
@@ -40,8 +40,7 @@ enum NotificationHelper {
 
     static func requestPermission() {
         Task {
-            let settings = await checkNotificationsPermission()
-            switch settings.authorizationStatus {
+            switch await notificationsAuthrizationStatus() {
             case .denied:
                 print("NotificationHelper: Permission denied - opening settings")
                 openSettings()
@@ -54,9 +53,12 @@ enum NotificationHelper {
         }
     }
 
+    static func resetAuthorization() {
+        openSettings()
+    }
+    
     static func isNotificationEnabled() async -> Bool {
-        let settings = await UNUserNotificationCenter.current().notificationSettings()
-        let status = settings.authorizationStatus
+        let status = await notificationsAuthrizationStatus()
         print("NotificationHelper: Authorization status: \(status.rawValue) (\(status))")
         return status == .authorized
     }

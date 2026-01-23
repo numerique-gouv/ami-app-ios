@@ -13,20 +13,26 @@ struct HomeView: View {
     @State var isExternalProcess = false
     @State var isLoading = false
     @State var loadingProgress: Double = 0.0
+    @State var shouldPresentSettings = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            if isExternalProcess {
-                BackBar {
-                    WebViewManager.shared.goHome()
+        NavigationStack {
+            VStack(spacing: 0) {
+                if isExternalProcess {
+                    BackBar {
+                        WebViewManager.shared.goHome()
+                    }
                 }
-            }
-            if isLoading {
-                ProgressView(value: loadingProgress)
-                    .progressViewStyle(.linear)
-                    .tint(.blue)
-            }
-            WebView(initialUrl: Config.shared.BASE_URL, isExternalProcess: $isExternalProcess, isLoading: $isLoading, loadingProgress: $loadingProgress)
+                if isLoading {
+                    ProgressView(value: loadingProgress)
+                        .progressViewStyle(.linear)
+                        .tint(.blue)
+                }
+                WebView(initialUrl: Config.shared.BASE_URL,
+                        isExternalProcess: $isExternalProcess,
+                        isLoading: $isLoading,
+                        loadingProgress: $loadingProgress,
+                        shouldPresentSettings: $shouldPresentSettings)
                 .navigationBarBackButtonHidden(true)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
@@ -46,6 +52,11 @@ struct HomeView: View {
                             }
                         }
                 )
+            }
+        }
+        .navigationBarHidden(true)
+        .sheet(isPresented: $shouldPresentSettings) {
+            SettingsView()
         }
     }
 
