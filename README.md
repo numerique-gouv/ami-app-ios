@@ -7,7 +7,7 @@ This is the iOS application for https://github.com/numerique-gouv/ami-notificati
 AMI Xcode project uses several tools:
 - `XcodeGen` to generate Xcode project: [https://github.com/yonaskolb/XcodeGen](https://github.com/yonaskolb/XcodeGen)
 - `SwiftFormat` to format Swift code: [https://github.com/nicklockwood/SwiftFormat](https://github.com/nicklockwood/SwiftFormat)
-- `SwiftLint` to format Swift code: [https://github.com/realm/SwiftLint](https://github.com/realm/SwiftLint)
+- `SwiftLint` to lint Swift code: [https://github.com/realm/SwiftLint](https://github.com/realm/SwiftLint)
 - `SwiftGen` to automatically generate Swift resources properies/methods: [https://github.com/SwiftGen/SwiftGen](https://github.com/SwiftGen/SwiftGen)
 
 Xcode project file `.xcodeproj` is not gitted to avoid a lot of conflicts when working in team on the project.
@@ -35,11 +35,11 @@ The project is described using 2 files:
 
 - SwiftGen is used in Xcode pre-build script to automatically generate Swift code (in `AMI/Sources/Generated` folder) for String, Color and Image resources.
   - **Strings**
-    - SwiftGen handle localization automatically
+    - SwiftGen handle strings localization automatically
   	- `AMIL10n.<String ID>` for String and `AMIL10n.StringNameID(param)` for String with parameters.
 
   - **Colors**
-    - SwiftGen handle Light, Dark and High constrast mode automatically
+    - SwiftGen handle Light, Dark and High constrast modes automatically
   	- `Asset.Color.<color ID>` for a UIColor, `Asset.Color.<color ID>.swiftUIColor` for a SwiftUI Color
 
   - **Images**
