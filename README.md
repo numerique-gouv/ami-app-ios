@@ -19,12 +19,12 @@ The project is described using 2 files:
 
 ## Start with the project
 
-1. To configure your environnement, execute the script:
-	> scripts/ami-configure-build-tools.sh
-
-2. To clone the project, use `git clone` command:
+1. First, clone the project, use `git clone` command:
 	> git clone git@github.com:numerique-gouv/ami-app-ios.git
  
+2. Then configure your environnement, execute the script:
+	> scripts/ami-configure-build-tools.sh
+
 3. Then, generate the Xcode project using script:
 	> scripts/ami-generate-xcode.sh
 
