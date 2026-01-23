@@ -14,7 +14,8 @@ struct WebView: UIViewRepresentable {
     @Binding var isExternalProcess: Bool
     @Binding var isLoading: Bool
     @Binding var loadingProgress: Double
-
+    @Binding var shouldPresentSettings: Bool
+    
     func makeUIView(context: Context) -> some UIView {
         let webView = WebViewManager.shared.webView
         let contentController = webView.configuration.userContentController
