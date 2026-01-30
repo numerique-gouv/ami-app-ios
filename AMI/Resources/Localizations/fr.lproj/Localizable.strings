@@ -6,4 +6,17 @@
   Copyright © 2026 DINUM. All rights reserved.
 */
 
-my_first_string = "Ma première chaîne de caractères";
+// Common
+common_ok = "Ok";
+common_cancel = "Annuler";
+common_error = "Erreur";
+common_close = "Fermer";
+common_back = "Retour";
+
+// Settings
+settings_title = "Paramètres";
+settings_notifications_allow_title = "Recevoir les notifications sur mon appareil mobile";
+
+// Logs Exporter
+logs_error_unable_to_access_log = "Impossible d'accéder aux logs";
+logs_error_unable_to_write_log = "Impossible d'enregistrer le fichier de logs";

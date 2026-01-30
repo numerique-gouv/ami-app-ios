@@ -9,18 +9,20 @@ import Foundation
 import SwiftUI
 @preconcurrency import WebKit
 
-class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+class WebViewCoordinator: NSObject {
     var parent: WebView
     private var progressObservation: NSKeyValueObservation?
     private var urlObservation: NSKeyValueObservation?
     private var isLoadingBinding: Binding<Bool>
     private var loadingProgressBinding: Binding<Double>
+    private var isOnContactPageBinding: Binding<Bool>
     var isUserLoggedIn = false
 
-    init(_ parent: WebView, isLoading: Binding<Bool>, loadingProgress: Binding<Double>) {
+    init(_ parent: WebView, isLoading: Binding<Bool>, loadingProgress: Binding<Double>, isOnContactPage: Binding<Bool>) {
         self.parent = parent
         isLoadingBinding = isLoading
         loadingProgressBinding = loadingProgress
+        isOnContactPageBinding = isOnContactPage
         super.init()
 
         // Listen for FCM token refresh notifications
@@ -138,51 +140,6 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         }
     }
 
-    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        // Show loader immediately on link click (before page starts loading)
-        Task { @MainActor in
-            self.isLoadingBinding.wrappedValue = true
-            self.loadingProgressBinding.wrappedValue = 0.0
-        }
-
-        guard let urlString = navigationAction.request.url?.absoluteString else { return }
-        parent.isExternalProcess = !urlString.contains(Config.shared.BASE_URL.absoluteString)
-
-        print("WebView: 📍 Navigation to: \(urlString)")
-
-        decisionHandler(.allow)
-    }
-
-    func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        // In debug builds, accept self-signed certificates
-        #if DEBUG
-            if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-               let serverTrust = challenge.protectionSpace.serverTrust {
-                let credential = URLCredential(trust: serverTrust)
-                completionHandler(.useCredential, credential)
-                return
-            }
-        #endif
-
-        // In release builds, use default handling (reject invalid certificates)
-        completionHandler(.performDefaultHandling, nil)
-    }
-
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        switch message.name {
-        case "consoleLog": return ConsoleLog.printLog(message)
-        case "NativeBridge": return NativeEvents.processMessage(message, coordinator: self)
-        default:
-            return
-        }
-    }
-
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        Task { @MainActor in
-            self.isLoadingBinding.wrappedValue = false
-        }
-    }
-
     func updateNotificationStatusInLocalStorage(webView: WKWebView) {
         print("WebView: updateNotificationStatusInLocalStorage called")
         Task {
@@ -210,10 +167,84 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             }
         }
 
-        urlObservation = wkWebView.observe(\.url, options: [.new]) { [weak self] webView, _ in
+        urlObservation = wkWebView.observe(\.url, options: [.old, .new]) { [weak self] webView, value in
             guard let self else { return }
             print("WebView: URL changed to: \(webView.url?.absoluteString ?? "nil")")
+
+            // Check if webview activated application settings access.
+            if let targetUrl = value.newValue,
+               let targetUrlString = targetUrl?.absoluteString,
+               targetUrlString.hasSuffix("/#/settings") {
+                print("WebView: 📍 Application settings requested")
+                parent.shouldPresentSettings = true
+
+                // Reset webView url to previous url.
+                if let optionalPreviousUrl = value.oldValue,
+                   let previousUrl = optionalPreviousUrl {
+                    webView.load(URLRequest(url: previousUrl))
+                }
+                return
+            }
+
             updateNotificationStatusInLocalStorage(webView: webView)
+            guard let urlString = webView.url?.absoluteString else { return }
+            Task { @MainActor in
+                self.isOnContactPageBinding.wrappedValue = urlString.contains("/#/contact")
+            }
+        }
+    }
+}
+
+extension WebViewCoordinator: WKNavigationDelegate {
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        // Show loader immediately on link click (before page starts loading)
+        Task { @MainActor in
+            self.isLoadingBinding.wrappedValue = true
+            self.loadingProgressBinding.wrappedValue = 0.0
+        }
+
+        guard let urlString = navigationAction.request.url?.absoluteString else {
+            decisionHandler(.cancel)
+            return
+        }
+
+        parent.isExternalProcess = !urlString.contains(Config.shared.BASE_URL.absoluteString)
+        isOnContactPageBinding.wrappedValue = urlString.contains("/#/contact")
+
+        print("WebView: 📍 Navigation to: \(urlString)")
+
+        decisionHandler(.allow)
+    }
+
+    func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        // In debug builds, accept self-signed certificates
+        #if DEBUG
+            if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+               let serverTrust = challenge.protectionSpace.serverTrust {
+                let credential = URLCredential(trust: serverTrust)
+                completionHandler(.useCredential, credential)
+                return
+            }
+        #endif
+
+        // In release builds, use default handling (reject invalid certificates)
+        completionHandler(.performDefaultHandling, nil)
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        Task { @MainActor in
+            self.isLoadingBinding.wrappedValue = false
+        }
+    }
+}
+
+extension WebViewCoordinator: WKScriptMessageHandler {
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        switch message.name {
+        case "consoleLog": return ConsoleLog.printLog(message)
+        case "NativeBridge": return NativeEvents.processMessage(message, coordinator: self)
+        default:
+            return
         }
     }
 }
