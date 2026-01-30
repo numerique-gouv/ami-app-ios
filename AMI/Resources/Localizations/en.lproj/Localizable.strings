@@ -7,9 +7,15 @@
 */
 
 // Common
-ok = "Ok";
-cancel = "Cancel";
-error = "Error";
+common_ok = "Ok";
+common_cancel = "Cancel";
+common_error = "Error";
+common_close = "Close";
+common_back = "Back";
+
+// Settings
+settings_title = "Settings";
+settings_notifications_allow_title = "Receive notifications on my mobile device";
 
 // Logs Exporter
 logs_error_unable_to_access_log = "Unable to access logs";

@@ -6,11 +6,16 @@
   Copyright © 2026 DINUM. All rights reserved.
 */
 
-
 // Common
-ok = "Ok";
-cancel = "Annuler";
-error = "Erreur";
+common_ok = "Ok";
+common_cancel = "Annuler";
+common_error = "Erreur";
+common_close = "Fermer";
+common_back = "Retour";
+
+// Settings
+settings_title = "Paramètres";
+settings_notifications_allow_title = "Recevoir les notifications sur mon appareil mobile";
 
 // Logs Exporter
 logs_error_unable_to_access_log = "Impossible d'accéder aux logs";
