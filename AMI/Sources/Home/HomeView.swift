@@ -95,7 +95,7 @@ struct HomeView: View {
         Task {
             do {
                 let userFcHash = try await WebViewManager.shared.webView.evaluateJavaScript("localStorage.getItem('user_fc_hash')") as? String
-//                LogsExporter(userId: userFcHash?.trimmingCharacters(in: CharacterSet(charactersIn: "\""))).shareLogs()
+                LogsExporter(userId: userFcHash?.trimmingCharacters(in: CharacterSet(charactersIn: "\""))).shareLogs()
             } catch {}
         }
     }
