@@ -21,3 +21,6 @@ DerivedData/
 
 # Configs (temporary)
 AMI/configs/
+
+# Generated
+AMI/Sources/Generated/

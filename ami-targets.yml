@@ -91,13 +91,7 @@ targetTemplates:
       basedOnDependencyAnalysis: false
       shell: /bin/sh
       script: |
-        export PATH="$PATH:/opt/homebrew/bin"
-        mkdir AMI/Sources/Generated
-        if which swiftgen >/dev/null; then
-            swiftgen config run --config Tools/SwiftGen/swiftgen-ami-config.yml
-        else
-            echo "warning: SwiftGen not installed, download from https://github.com/SwiftGen/SwiftGen"
-        fi
+        scripts/ami-xcode-pass-swiftgen.sh
         
     postBuildScripts:
     - name: ⚠️ SwiftLint
@@ -105,23 +99,14 @@ targetTemplates:
       basedOnDependencyAnalysis: false
       shell: /bin/sh
       script: |
-        export PATH="$PATH:/opt/homebrew/bin"
-        if which swiftlint >/dev/null; then
-            swiftlint
-        else
-            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
-        fi
+        scripts/ami-xcode-pass-swiftlint.sh
+        
     - name: 🧹 SwiftFormat
       runOnlyWhenInstalling: false
       basedOnDependencyAnalysis: false
       shell: /bin/sh
       script: |
-        export PATH="$PATH:/opt/homebrew/bin"
-        if which swiftformat >/dev/null; then
-            swiftformat --lint --lenient "$PROJECT_DIR"
-        else
-            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
-        fi
+        scripts/ami-xcode-pass-swiftformat.sh
 
     dependencies:
     - package: Firebase
