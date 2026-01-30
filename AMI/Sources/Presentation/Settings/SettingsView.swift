@@ -12,7 +12,7 @@ struct SettingsView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dismiss) private var dismiss
 
-    @State private var activateNotification = false
+    @State private var isNotificationsActive = false
     @State private var isAutoUpdated = false
 
     @ToolbarContentBuilder
@@ -28,11 +28,11 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var notificationToggle: some View {
-        Toggle(isOn: $activateNotification) {
+        Toggle(isOn: $isNotificationsActive) {
             Text(AMIL10n.settingsNotificationsAllowTitle)
         }
         .toggleStyle(SwitchToggleStyle(tint: .accentColor)) // needed for Toggle widget.
-        .onChange(of: activateNotification) { _, newValue in
+        .onChange(of: isNotificationsActive) { _, newValue in
             toggleNotificationPermissions(allowNotifications: newValue)
         }
     }
@@ -74,11 +74,11 @@ struct SettingsView: View {
     }
 
     private func updateNotificationAuthorizationStatus(autoUpdate: Bool) async {
-        let newActivationValue = await NotificationHelper.isNotificationEnabled()
-        if newActivationValue != activateNotification {
+        let notificationsActiveNewValue = await NotificationHelper.isNotificationEnabled()
+        if notificationsActiveNewValue != isNotificationsActive {
             isAutoUpdated = autoUpdate
         }
-        activateNotification = newActivationValue
+        isNotificationsActive = notificationsActiveNewValue
     }
 }
 
