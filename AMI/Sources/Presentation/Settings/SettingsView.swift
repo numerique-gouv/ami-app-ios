@@ -31,7 +31,7 @@ struct SettingsView: View {
         Toggle(isOn: $activateNotification) {
             Text(AMIL10n.settingsNotificationsAllowTitle)
         }
-        .toggleStyle(SwitchToggleStyle(tint: Asset.Colors.blueFranceSun113.swiftUIColor))
+        .toggleStyle(SwitchToggleStyle(tint: .accentColor)) // needed for Toggle widget.
         .onChange(of: activateNotification) { _, newValue in
             toggleNotificationPermissions(allowNotifications: newValue)
         }
@@ -51,7 +51,7 @@ struct SettingsView: View {
                 switch newPhase {
                 case .active:
                     Task {
-                        await updateNotificationAuthorisationStatus(autoUpdate: true)
+                        await updateNotificationAuthorizationStatus(autoUpdate: true)
                     }
                 case .inactive, .background:
                     break
@@ -73,12 +73,12 @@ struct SettingsView: View {
         }
     }
 
-    private func updateNotificationAuthorisationStatus(autoUpdate: Bool) async {
-        let newActivcationValue = await NotificationHelper.notificationsAuthrizationStatus() == .authorized
-        if newActivcationValue != activateNotification {
+    private func updateNotificationAuthorizationStatus(autoUpdate: Bool) async {
+        let newActivationValue = await NotificationHelper.isNotificationEnabled()
+        if newActivationValue != activateNotification {
             isAutoUpdated = autoUpdate
         }
-        activateNotification = newActivcationValue
+        activateNotification = newActivationValue
     }
 }
 
