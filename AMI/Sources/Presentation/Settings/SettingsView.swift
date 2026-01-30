@@ -10,30 +10,43 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dismiss) private var dismiss
 
     @State private var activateNotification = false
     @State private var isAutoUpdated = false
 
+    @ToolbarContentBuilder
+    private var toolbar: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                dismiss()
+            } label: {
+                Text(AMIL10n.commonClose)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var notificationToggle: some View {
+        Toggle(isOn: $activateNotification) {
+            Text(AMIL10n.settingsNotificationsAllowTitle)
+        }
+        .toggleStyle(SwitchToggleStyle(tint: Asset.Colors.blueFranceSun113.swiftUIColor))
+        .onChange(of: activateNotification) { _, newValue in
+            toggleNotificationPermissions(allowNotifications: newValue)
+        }
+    }
+
     var body: some View {
         NavigationStack {
             List {
-                Toggle(isOn: $activateNotification) {
-                    Text("Activer les notifications")
-                    Text("Recevoir les notifications sur mon appareil mobile")
-                }
-                .toggleStyle(SwitchToggleStyle(tint: Asset.Colors.blueFranceSun113.swiftUIColor))
+                notificationToggle
             }
-            .onChange(of: activateNotification) { _, newValue in
-                guard !isAutoUpdated else {
-                    isAutoUpdated = false
-                    return
-                }
-                switch newValue {
-                case true: NotificationHelper.requestPermission()
-                case false: NotificationHelper.resetAuthorization()
-                }
+            .toolbar {
+                toolbar
             }
-            .navigationTitle("Paramètres")
+            .navigationTitle(AMIL10n.settingsTitle)
+            .navigationBarTitleDisplayMode(.inline)
             .onChange(of: scenePhase, initial: true) { _, newPhase in
                 switch newPhase {
                 case .active:
@@ -46,6 +59,17 @@ struct SettingsView: View {
                     break
                 }
             }
+        }
+    }
+
+    private func toggleNotificationPermissions(allowNotifications: Bool) {
+        guard !isAutoUpdated else {
+            isAutoUpdated = false
+            return
+        }
+        switch allowNotifications {
+        case true: NotificationHelper.requestPermission()
+        case false: NotificationHelper.resetAuthorization()
         }
     }
 
