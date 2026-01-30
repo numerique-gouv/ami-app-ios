@@ -20,3 +20,13 @@ settings_notifications_allow_title = "Receive notifications on my mobile device"
 // Logs Exporter
 logs_error_unable_to_access_log = "Unable to access logs";
 logs_error_unable_to_write_log = "Unable to write log files";
+
+// Connection
+connect_message_1 = "To access **your rights, advice, and deadlines** related to your personal situation, please log in via **FranceConnect**.";
+connect_message_2 = "FranceConnect is the solution offered by the government to secure and simplify your connection to online services.";
+connect_france_connect_signin = "Sign in with";
+connect_france_connect_service = "FranceConnect";
+connect_france_connect_more = "What is FranceConnect?";
+connect_problems = "Problem to connect?";
+connect_contact_us = "Contact us with Tchap";
+

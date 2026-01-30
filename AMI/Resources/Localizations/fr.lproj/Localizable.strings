@@ -20,3 +20,12 @@ settings_notifications_allow_title = "Recevoir les notifications sur mon apparei
 // Logs Exporter
 logs_error_unable_to_access_log = "Impossible d'accéder aux logs";
 logs_error_unable_to_write_log = "Impossible d'enregistrer le fichier de logs";
+
+// Connection
+connect_message_1 = "Pour pouvoir accéder à **vos droits, à des conseils, et aux échéances** liées à votre situation personnelle, veuillez vous connecter via **FranceConnect**.";
+connect_message_2 = "FranceConnect est la solution proposée par l’État pour sécuriser et simplifier la connexion à vos services en ligne.";
+connect_france_connect_signin = "S'identifier avec";
+connect_france_connect_service = "FranceConnect";
+connect_france_connect_more = "Qu'est-ce que FranceConnect ?";
+connect_problems = "Difficultés de connexion ?";
+connect_contact_us = "Contactez-nous sur Tchap";

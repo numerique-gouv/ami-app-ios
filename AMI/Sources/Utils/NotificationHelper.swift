@@ -56,7 +56,7 @@ enum NotificationHelper {
     static func resetAuthorization() {
         openSettings()
     }
-    
+
     static func isNotificationEnabled() async -> Bool {
         let status = await notificationsAuthorizationStatus()
         print("NotificationHelper: Authorization status: \(status.rawValue) (\(status))")

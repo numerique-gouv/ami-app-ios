@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "logo-ami.svg",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

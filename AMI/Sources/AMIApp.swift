@@ -14,14 +14,36 @@ struct AMIApp: App {
     @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var offlineBannerId: UUID?
 
-    var body: some Scene {
-        WindowGroup {
-            ZStack(alignment: .top) {
+    enum ViewState {
+        case proposeConnection
+        case home
+    }
+
+    struct CurrentView: View {
+        @Binding var viewState: ViewState
+
+        var body: some View {
+            switch viewState {
+            case .proposeConnection:
+                FranceConnectView {
+                    viewState = .home
+                }
+            case .home:
                 #if IS_AMI_STAGING
                     ReviewAppView().environmentObject(WebService())
                 #else
                     HomeView()
                 #endif
+            }
+        }
+    }
+
+    @State private var viewState = ViewState.proposeConnection
+
+    var body: some Scene {
+        WindowGroup {
+            ZStack(alignment: .top) {
+                CurrentView(viewState: $viewState)
 
                 VStack(spacing: 0) {
                     ForEach(bannerManager.banners) { banner in

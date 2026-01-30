@@ -42,7 +42,7 @@ struct HomeView: View {
                         .progressViewStyle(.linear)
                         .tint(.blue)
                 }
-                WebView(initialUrl: Config.shared.BASE_URL,
+                WebView(initialUrl: Config.shared.BASE_URL.appending(path: "login-france-connect"),
                         isExternalProcess: $isExternalProcess,
                         isLoading: $isLoading,
                         loadingProgress: $loadingProgress,
