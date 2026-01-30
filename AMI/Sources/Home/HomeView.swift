@@ -15,6 +15,19 @@ struct HomeView: View {
     @State var loadingProgress: Double = 0.0
     @State var shouldPresentSettings = false
 
+    @ToolbarContentBuilder
+    private var toolbarBackButton: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            Button(action: handleBackAction) {
+                Label(AMIL10n.commonBack, systemImage: "chevron.left")
+                    .labelStyle(.titleAndIcon) // needed for title to be displayed when located in toolbar.
+                    .fixedSize() // needed for title to be fully displayed.
+            }
+            .buttonStyle(.borderless)
+            .padding(8.0)
+        }
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -33,25 +46,18 @@ struct HomeView: View {
                         isLoading: $isLoading,
                         loadingProgress: $loadingProgress,
                         shouldPresentSettings: $shouldPresentSettings)
-                .navigationBarBackButtonHidden(true)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button(action: handleBackAction) {
-                            HStack {
-                                Image(systemName: "chevron.left")
-                                Text("Retour")
-                            }
-                        }
+                    .navigationBarBackButtonHidden(true)
+                    .toolbar {
+                        toolbarBackButton
                     }
-                }
-                .gesture(
-                    DragGesture()
-                        .onEnded { gesture in
-                            if gesture.translation.width > 50 {
-                                handleBackAction()
+                    .gesture(
+                        DragGesture()
+                            .onEnded { gesture in
+                                if gesture.translation.width > 50 {
+                                    handleBackAction()
+                                }
                             }
-                        }
-                )
+                    )
             }
         }
         .navigationBarHidden(true)
