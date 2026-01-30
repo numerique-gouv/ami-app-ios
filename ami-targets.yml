@@ -92,7 +92,6 @@ targetTemplates:
       script: |
         export PATH="$PATH:/opt/homebrew/bin"
         mkdir AMI/Sources/Generated
-        swiftgen config run --config "Tools/SwiftGen/swiftgen-config-tchap-main.yml"
         if which swiftgen >/dev/null; then
             swiftgen config run --config Tools/SwiftGen/swiftgen-ami-config.yml
         else

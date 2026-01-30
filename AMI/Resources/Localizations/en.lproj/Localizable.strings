@@ -6,4 +6,13 @@
   Copyright © 2026 DINUM. All rights reserved.
 */
 
-my_first_string = "My first string";
+// Common
+common_ok = "Ok";
+common_cancel = "Cancel";
+common_error = "Error";
+common_close = "Close";
+common_back = "Back";
+
+// Settings
+settings_title = "Settings";
+settings_notifications_allow_title = "Receive notifications on my mobile device";
