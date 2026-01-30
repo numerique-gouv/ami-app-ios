@@ -16,3 +16,7 @@ common_back = "Retour";
 // Settings
 settings_title = "Paramètres";
 settings_notifications_allow_title = "Recevoir les notifications sur mon appareil mobile";
+
+// Logs Exporter
+logs_error_unable_to_access_log = "Impossible d'accéder aux logs";
+logs_error_unable_to_write_log = "Impossible d'enregistrer le fichier de logs";

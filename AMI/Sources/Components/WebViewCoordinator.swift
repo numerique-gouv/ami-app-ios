@@ -15,12 +15,14 @@ class WebViewCoordinator: NSObject {
     private var urlObservation: NSKeyValueObservation?
     private var isLoadingBinding: Binding<Bool>
     private var loadingProgressBinding: Binding<Double>
+    private var isOnContactPageBinding: Binding<Bool>
     var isUserLoggedIn = false
 
-    init(_ parent: WebView, isLoading: Binding<Bool>, loadingProgress: Binding<Double>) {
+    init(_ parent: WebView, isLoading: Binding<Bool>, loadingProgress: Binding<Double>, isOnContactPage: Binding<Bool>) {
         self.parent = parent
         isLoadingBinding = isLoading
         loadingProgressBinding = loadingProgress
+        isOnContactPageBinding = isOnContactPage
         super.init()
 
         // Listen for FCM token refresh notifications
@@ -185,6 +187,10 @@ class WebViewCoordinator: NSObject {
             }
 
             updateNotificationStatusInLocalStorage(webView: webView)
+            guard let urlString = webView.url?.absoluteString else { return }
+            Task { @MainActor in
+                self.isOnContactPageBinding.wrappedValue = urlString.contains("/#/contact")
+            }
         }
     }
 }
@@ -203,6 +209,7 @@ extension WebViewCoordinator: WKNavigationDelegate {
         }
 
         parent.isExternalProcess = !urlString.contains(Config.shared.BASE_URL.absoluteString)
+        isOnContactPageBinding.wrappedValue = urlString.contains("/#/contact")
 
         print("WebView: 📍 Navigation to: \(urlString)")
 

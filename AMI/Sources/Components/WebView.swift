@@ -14,6 +14,7 @@ struct WebView: UIViewRepresentable {
     @Binding var isExternalProcess: Bool
     @Binding var isLoading: Bool
     @Binding var loadingProgress: Double
+    @Binding var isOnContactPage: Bool
     @Binding var shouldPresentSettings: Bool
     
     func makeUIView(context: Context) -> some UIView {
@@ -36,6 +37,6 @@ struct WebView: UIViewRepresentable {
     func updateUIView(_ uiView: UIViewType, context: Context) {}
 
     func makeCoordinator() -> WebViewCoordinator {
-        WebViewCoordinator(self, isLoading: $isLoading, loadingProgress: $loadingProgress)
+        WebViewCoordinator(self, isLoading: $isLoading, loadingProgress: $loadingProgress, isOnContactPage: $isOnContactPage)
     }
 }
