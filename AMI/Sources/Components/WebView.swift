@@ -16,9 +16,10 @@ struct WebView: UIViewRepresentable {
     @Binding var loadingProgress: Double
     @Binding var isOnContactPage: Bool
     @Binding var shouldPresentSettings: Bool
-    
+
     func makeUIView(context: Context) -> some UIView {
         let webView = WebViewManager.shared.webView
+        WebViewManager.shared.setHome(homeUrl: initialUrl)
         let contentController = webView.configuration.userContentController
 
         NativeEvents.attach(contentController, context.coordinator)
