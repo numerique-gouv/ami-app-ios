@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+@_spi(Advanced) import SwiftUIIntrospect
 
 struct ReviewAppView: View {
     @EnvironmentObject var webService: WebService
@@ -32,6 +33,12 @@ struct ReviewAppView: View {
                     reviewApps.append(contentsOf: webService.reviewApps)
                 }
             }
+        // On SwiftUI, removing the defaut Navigation Back button disable the Swipe Back gesture.
+        // We reactivate it via trhe underlying UIKit UINavigationController.
+        .introspect(.navigationStack, on: .iOS(.v16...)) {
+            $0.interactivePopGestureRecognizer?.isEnabled = true
+            $0.interactivePopGestureRecognizer?.delegate = nil
+        }
         }
     }
 }

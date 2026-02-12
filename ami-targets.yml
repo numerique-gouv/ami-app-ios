@@ -115,7 +115,10 @@ targetTemplates:
     - package: Firebase
       product: FirebaseMessaging
       embed: false
-
+    - package: SwiftUI-Introspect
+      product: SwiftUIIntrospect
+      embed: false
+    
     sources:
     - path: AMI
 
