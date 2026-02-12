@@ -32,7 +32,8 @@ struct SettingsView: View {
             Text(AMIL10n.settingsNotificationsAllowTitle)
         }
         .toggleStyle(SwitchToggleStyle(tint: .accentColor)) // needed for Toggle widget.
-        .onChange(of: isNotificationsActive) { _, newValue in
+        // Use deprecated version of `onChange` to handle iOS back to iOS 15.
+        .onChange(of: isNotificationsActive) { newValue in
             toggleNotificationPermissions(allowNotifications: newValue)
         }
     }
@@ -47,7 +48,8 @@ struct SettingsView: View {
             }
             .navigationTitle(AMIL10n.settingsTitle)
             .navigationBarTitleDisplayMode(.inline)
-            .onChange(of: scenePhase, initial: true) { _, newPhase in
+            // Use deprecated version of `onChange` to handle iOS back to iOS 15.
+            .onChange(of: scenePhase) { newPhase in
                 switch newPhase {
                 case .active:
                     Task {
@@ -58,6 +60,11 @@ struct SettingsView: View {
                 @unknown default:
                     break
                 }
+            }
+        }
+        .task {
+            Task {
+                await updateNotificationAuthorizationStatus(autoUpdate: true)
             }
         }
     }
