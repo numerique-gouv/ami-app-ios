@@ -178,10 +178,9 @@ class WebViewCoordinator: NSObject {
                 print("WebView: 📍 Application settings requested")
                 parent.shouldPresentSettings = true
 
-                // Reset webView url to previous url.
-                if let optionalPreviousUrl = value.oldValue,
-                   let previousUrl = optionalPreviousUrl {
-                    webView.load(URLRequest(url: previousUrl))
+                // As new page should not be handled by webview, reset webView last step navigation (to clean history).
+                if webView.canGoBack {
+                    webView.goBack()
                 }
                 return
             }
