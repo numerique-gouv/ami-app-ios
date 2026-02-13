@@ -10,11 +10,14 @@ import Foundation
 import WebKit
 
 struct WebView: UIViewRepresentable {
+    @Environment(\.openURL) private var openUrl
+
     let initialUrlString: String
     @Binding var isExternalProcess: Bool
     @Binding var isLoading: Bool
     @Binding var loadingProgress: Double
-
+    @Binding var showNoEmailClientAlert: Bool
+    
     func makeUIView(context: Context) -> some UIView {
         let webView = WebViewManager.shared.webView
         let contentController = webView.configuration.userContentController
@@ -37,5 +40,11 @@ struct WebView: UIViewRepresentable {
     
     func makeCoordinator() -> WebViewCoordinator {
         WebViewCoordinator(self, isLoading: $isLoading, loadingProgress: $loadingProgress)
+    }
+    
+    func contactByEmail(targetUrl: URL) {
+        openUrl(targetUrl) { accepted in
+            showNoEmailClientAlert = !accepted
+        }
     }
 }
