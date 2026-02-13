@@ -13,7 +13,8 @@ struct HomeView: View {
     @State var isExternalProcess = false
     @State var isLoading = false
     @State var loadingProgress: Double = 0.0
-
+    @State var showNoEmailClientAlert = false
+    
     var body: some View {
         VStack(spacing: 0) {
             if(isExternalProcess){
@@ -26,7 +27,11 @@ struct HomeView: View {
                     .progressViewStyle(.linear)
                     .tint(.blue)
             }
-            WebView(initialUrlString: Config.shared.BASE_URL, isExternalProcess: $isExternalProcess, isLoading: $isLoading, loadingProgress: $loadingProgress)
+            WebView(initialUrlString: Config.shared.BASE_URL,
+                    isExternalProcess: $isExternalProcess,
+                    isLoading: $isLoading,
+                    loadingProgress: $loadingProgress,
+                    showNoEmailClientAlert: $showNoEmailClientAlert)
             .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -46,6 +51,11 @@ struct HomeView: View {
                         }
                     }
             )
+        }
+        .alert(isPresented: $showNoEmailClientAlert) {
+            Alert(title: Text("Erreur"),
+            message: Text("Aucun client email correctement configuré n'a été trouvé sur votre appareil."),
+                  dismissButton: .default(Text("Ok")))
         }
     }
 
