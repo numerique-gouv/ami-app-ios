@@ -17,6 +17,7 @@ enum NativeEvents {
         """
         let script = WKUserScript(source: bridgeScript, injectionTime: .atDocumentStart, forMainFrameOnly: false)
         contentController.addUserScript(script)
+        contentController.removeScriptMessageHandler(forName: "NativeBridge")
         contentController.add(handler, name: "NativeBridge")
     }
 

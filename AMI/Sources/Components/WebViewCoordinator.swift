@@ -51,7 +51,8 @@ class WebViewCoordinator: NSObject {
         let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
         let deviceModel = UIDevice.current.model
         let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
-        let baseUrl = Config.shared.BASE_URL
+//        let baseUrl = Config.shared.BASE_URL
+        let baseUrl = parent.initialUrl
 
         print("WebView: ✅ Registering device - fcmToken=\(fcmToken) deviceId=\(deviceId) model=\(deviceModel) platform=ios app_version=\(appVersion)")
 
@@ -207,7 +208,8 @@ extension WebViewCoordinator: WKNavigationDelegate {
             return
         }
 
-        parent.isExternalProcess = !urlString.contains(Config.shared.BASE_URL.absoluteString)
+//        parent.isExternalProcess = !urlString.contains(Config.shared.BASE_URL.absoluteString)
+        parent.isExternalProcess = !urlString.contains(parent.initialUrl.absoluteString)
         isOnContactPageBinding.wrappedValue = urlString.contains("/#/contact")
 
         print("WebView: 📍 Navigation to: \(urlString)")

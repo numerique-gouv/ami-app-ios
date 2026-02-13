@@ -13,36 +13,40 @@ struct ReviewAppView: View {
     @State private var reviewApps: [ReviewApp] = []
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
+            Text("Choix de la review")
+                .font(.title)
             ScrollView {
-                Text("Choix de la review")
-                ForEach(reviewApps, id: \.id) { reviewApp in
+                ForEach(reviewApps) { reviewApp in
                     if let reviewAppUrl = URL(string: reviewApp.url) {
-                        NavigationLink(destination: HomeView()) {
-                            Tile(title: reviewApp.title, content: reviewApp.description ?? "") {
-                                Config.shared.BASE_URL = reviewAppUrl
-                            }
+                        NavigationLink(value: reviewAppUrl) {
+                            Tile(title: reviewApp.title,
+                                 content: reviewApp.description ?? "")
                         }
                     }
                 }
-            }
-            .padding(.top, 1)
-            .onAppear {
-                Task {
-                    try await webService.getReviewApps()
-                    reviewApps.append(contentsOf: webService.reviewApps)
+                .navigationDestination(for: URL.self) { destinationUrl in
+                    HomeView(initialUrl: destinationUrl)
                 }
             }
+            .padding(.top, 1.0)
+        }
         // On SwiftUI, removing the defaut Navigation Back button disable the Swipe Back gesture.
         // We reactivate it via trhe underlying UIKit UINavigationController.
         .introspect(.navigationStack, on: .iOS(.v16...)) {
             $0.interactivePopGestureRecognizer?.isEnabled = true
             $0.interactivePopGestureRecognizer?.delegate = nil
         }
+        .task {
+            Task {
+                try await webService.getReviewApps()
+                reviewApps.append(contentsOf: webService.reviewApps)
+            }
         }
     }
 }
 
 #Preview {
     ReviewAppView()
+        .environmentObject(WebService())
 }

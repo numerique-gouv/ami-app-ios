@@ -59,6 +59,7 @@ enum ConsoleLog {
 
         let userScript = WKUserScript(source: consoleLogScript, injectionTime: .atDocumentStart, forMainFrameOnly: false)
         contentController.addUserScript(userScript)
+        contentController.removeScriptMessageHandler(forName: "consoleLog")
         contentController.add(handler, name: "consoleLog")
     }
 

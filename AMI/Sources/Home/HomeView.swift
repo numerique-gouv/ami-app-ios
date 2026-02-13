@@ -15,6 +15,11 @@ struct HomeView: View {
     @State var loadingProgress: Double = 0.0
     @State var isOnContactPage = false
     @State var shouldPresentSettings = false
+    private let initialUrl: URL
+
+    init(initialUrl: URL) {
+        self.initialUrl = initialUrl
+    }
 
     @ToolbarContentBuilder
     private var toolbarBackButton: some ToolbarContent {
@@ -29,40 +34,30 @@ struct HomeView: View {
         }
     }
 
+    @ViewBuilder
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                if isExternalProcess {
-                    BackBar {
-                        WebViewManager.shared.goHome()
-                    }
+        VStack(spacing: 0) {
+            if isExternalProcess {
+                BackBar {
+                    WebViewManager.shared.goHome()
                 }
-                if isLoading {
-                    ProgressView(value: loadingProgress)
-                        .progressViewStyle(.linear)
-                        .tint(.blue)
-                }
-                WebView(initialUrl: Config.shared.BASE_URL,
-                        isExternalProcess: $isExternalProcess,
-                        isLoading: $isLoading,
-                        loadingProgress: $loadingProgress,
-                        isOnContactPage: $isOnContactPage,
-                        shouldPresentSettings: $shouldPresentSettings)
-                    .navigationBarBackButtonHidden(true)
-                    .toolbar {
-                        toolbarBackButton
-                    }
-                    .gesture(
-                        DragGesture()
-                            .onEnded { gesture in
-                                if gesture.translation.width > 50 {
-                                    handleBackAction()
-                                }
-                            }
-                    )
             }
+            if isLoading {
+                ProgressView(value: loadingProgress)
+                    .progressViewStyle(.linear)
+                    .tint(.blue)
+            }
+            WebView(initialUrl: initialUrl,
+                    isExternalProcess: $isExternalProcess,
+                    isLoading: $isLoading,
+                    loadingProgress: $loadingProgress,
+                    isOnContactPage: $isOnContactPage,
+                    shouldPresentSettings: $shouldPresentSettings)
+                .navigationBarBackButtonHidden(true)
+                .toolbar {
+                    toolbarBackButton
+                }
         }
-        .navigationBarHidden(true)
         .sheet(isPresented: $shouldPresentSettings) {
             SettingsView()
         }
@@ -102,5 +97,5 @@ struct HomeView: View {
 }
 
 #Preview {
-    HomeView()
+    HomeView(initialUrl: URL(string: "https://numerique.gouv.fr")!)
 }
