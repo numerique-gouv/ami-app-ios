@@ -147,10 +147,20 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             self.loadingProgressBinding.wrappedValue = 0.0
         }
 
-        guard let urlString = navigationAction.request.url?.absoluteString else { return }
-        parent.isExternalProcess = !urlString.contains(Config.shared.BASE_URL)
+        guard let targetUrl = navigationAction.request.url else {
+            return
+        }
+        
+        if targetUrl.scheme == "mailto" {
+            print("WebView: 📍 Mailto detected")
+            decisionHandler(.cancel)
+            parent.contactByEmail(targetUrl: targetUrl)
+            return
+        }
+        
+        parent.isExternalProcess = !targetUrl.absoluteString.contains(Config.shared.BASE_URL)
 
-        print("WebView: 📍 Navigation to: \(urlString)")
+        print("WebView: 📍 Navigation to: \(targetUrl)")
 
         decisionHandler(.allow)
     }
