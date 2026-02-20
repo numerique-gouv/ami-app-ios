@@ -1,8 +1,8 @@
 import Foundation
 import WebKit
 
-class WebViewManager {
-    static let shared = WebViewManager()
+class WebViewOldManager {
+    static let shared = WebViewOldManager()
     private var homeUrl: URL?
 
     let webView: WKWebView = {

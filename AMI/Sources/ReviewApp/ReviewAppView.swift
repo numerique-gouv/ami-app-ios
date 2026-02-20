@@ -11,6 +11,11 @@ import SwiftUI
 struct ReviewAppView: View {
     @EnvironmentObject var webService: WebService
     @State private var reviewApps: [ReviewApp] = []
+    @Bindable var viewModel: ReviewAppView.ViewModel
+
+    init(viewModel: ViewModel) {
+        self.viewModel = viewModel
+    }
 
     var body: some View {
         NavigationStack {
@@ -26,16 +31,17 @@ struct ReviewAppView: View {
                     }
                 }
                 .navigationDestination(for: URL.self) { destinationUrl in
-                    HomeView(initialUrl: destinationUrl)
+                    let viewModel = ReviewAppView.ViewModel.homeViewModel(for: destinationUrl)
+                    HomeView(viewModel: viewModel)
                 }
             }
             .padding(.top, 1.0)
         }
         // On SwiftUI, removing the defaut Navigation Back button disable the Swipe Back gesture.
         // We reactivate it via trhe underlying UIKit UINavigationController.
-        .introspect(.navigationStack, on: .iOS(.v16...)) {
-            $0.interactivePopGestureRecognizer?.isEnabled = true
-            $0.interactivePopGestureRecognizer?.delegate = nil
+        .introspect(.navigationStack, on: .iOS(.v16...)) { view in
+            view.interactivePopGestureRecognizer?.isEnabled = true
+            view.interactivePopGestureRecognizer?.delegate = nil
         }
         .task {
             Task {
@@ -47,6 +53,7 @@ struct ReviewAppView: View {
 }
 
 #Preview {
-    ReviewAppView()
+    let viewModel = ReviewAppView.ViewModel()
+    ReviewAppView(viewModel: viewModel)
         .environmentObject(WebService())
 }

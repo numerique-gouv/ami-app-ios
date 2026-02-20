@@ -6,19 +6,15 @@
 //
 
 import SwiftUI
+@_spi(Advanced) import SwiftUIIntrospect
 import WebKit
 
 struct HomeView: View {
     @Environment(\.dismiss) var dismiss
-    @State var isExternalProcess = false
-    @State var isLoading = false
-    @State var loadingProgress: Double = 0.0
-    @State var isOnContactPage = false
-    @State var shouldPresentSettings = false
-    private let initialUrl: URL
+    @Bindable var viewModel: ViewModel
 
-    init(initialUrl: URL) {
-        self.initialUrl = initialUrl
+    init(viewModel: ViewModel) {
+        self.viewModel = viewModel
     }
 
     @ToolbarContentBuilder
@@ -35,33 +31,34 @@ struct HomeView: View {
     }
 
     @ViewBuilder
+    var webView: AMIWebView {
+        AMIWebView(viewModel: viewModel.webViewViewModel)
+    }
+
+    @ViewBuilder
     var body: some View {
         VStack(spacing: 0) {
-            if isExternalProcess {
+            if viewModel.isExternalProcess {
                 BackBar {
-                    WebViewManager.shared.goHome()
+                    WebViewOldManager.shared.goHome()
                 }
             }
-            if isLoading {
-                ProgressView(value: loadingProgress)
-                    .progressViewStyle(.linear)
-                    .tint(.blue)
-            }
-            WebView(initialUrl: initialUrl,
-                    isExternalProcess: $isExternalProcess,
-                    isLoading: $isLoading,
-                    loadingProgress: $loadingProgress,
-                    isOnContactPage: $isOnContactPage,
-                    shouldPresentSettings: $shouldPresentSettings)
+            webView
+//            WebViewOld(initialUrl: viewModel.rootUrl,
+//                       isExternalProcess: $viewModel.isExternalProcess,
+//                       isLoading: $viewModel.isLoading,
+//                       loadingProgress: $viewModel.loadingProgress,
+//                       isOnContactPage: $viewModel.isOnContactPage,
+//                       shouldPresentSettings: $viewModel.shouldPresentSettings)
                 .navigationBarBackButtonHidden(true)
                 .toolbar {
                     toolbarBackButton
                 }
         }
-        .sheet(isPresented: $shouldPresentSettings) {
+        .sheet(isPresented: $viewModel.shouldPresentSettings) {
             SettingsView()
         }
-        if isOnContactPage {
+        if viewModel.isOnContactPage {
             Button {
                 handleShareLogsAction()
             } label: {
@@ -74,13 +71,13 @@ struct HomeView: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 24)
             .transition(.move(edge: .bottom))
-            .animation(.easeInOut, value: isOnContactPage)
+            .animation(.easeInOut, value: viewModel.isOnContactPage)
         }
     }
 
     private func handleBackAction() {
-        if WebViewManager.shared.webView.canGoBack {
-            WebViewManager.shared.webView.goBack()
+        if webView.canGoBack {
+            webView.goBack()
         } else {
             dismiss()
         }
@@ -89,7 +86,7 @@ struct HomeView: View {
     private func handleShareLogsAction() {
         Task {
             do {
-                let userFcHash = try await WebViewManager.shared.webView.evaluateJavaScript("localStorage.getItem('user_fc_hash')") as? String
+                let userFcHash = try await WebViewOldManager.shared.webView.evaluateJavaScript("localStorage.getItem('user_fc_hash')") as? String
                 LogsExporter(userId: userFcHash?.trimmingCharacters(in: CharacterSet(charactersIn: "\""))).shareLogs()
             } catch {}
         }
@@ -97,5 +94,6 @@ struct HomeView: View {
 }
 
 #Preview {
-    HomeView(initialUrl: URL(string: "https://numerique.gouv.fr")!)
+    let viewModel = HomeView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!)
+    HomeView(viewModel: viewModel)
 }

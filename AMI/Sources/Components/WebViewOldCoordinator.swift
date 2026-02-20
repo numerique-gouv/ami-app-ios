@@ -1,5 +1,5 @@
 //
-//  WebViewCoordinator.swift
+//  WebViewOldCoordinator.swift
 //  AMI
 //
 //  Created by Aline Bonnet on 22/12/2025.
@@ -9,8 +9,8 @@ import Foundation
 import SwiftUI
 @preconcurrency import WebKit
 
-class WebViewCoordinator: NSObject {
-    var parent: WebView
+class WebViewOldCoordinator: NSObject {
+    var parent: WebViewOld
     private var progressObservation: NSKeyValueObservation?
     private var urlObservation: NSKeyValueObservation?
     private var isLoadingBinding: Binding<Bool>
@@ -18,7 +18,7 @@ class WebViewCoordinator: NSObject {
     private var isOnContactPageBinding: Binding<Bool>
     var isUserLoggedIn = false
 
-    init(_ parent: WebView, isLoading: Binding<Bool>, loadingProgress: Binding<Double>, isOnContactPage: Binding<Bool>) {
+    init(_ parent: WebViewOld, isLoading: Binding<Bool>, loadingProgress: Binding<Double>, isOnContactPage: Binding<Bool>) {
         self.parent = parent
         isLoadingBinding = isLoading
         loadingProgressBinding = loadingProgress
@@ -46,7 +46,7 @@ class WebViewCoordinator: NSObject {
             return
         }
 
-        let webView = WebViewManager.shared.webView
+        let webView = WebViewOldManager.shared.webView
 
         let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
         let deviceModel = UIDevice.current.model
@@ -195,7 +195,7 @@ class WebViewCoordinator: NSObject {
     }
 }
 
-extension WebViewCoordinator: WKNavigationDelegate {
+extension WebViewOldCoordinator: WKNavigationDelegate {
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         // Show loader immediately on link click (before page starts loading)
         Task { @MainActor in
@@ -239,7 +239,7 @@ extension WebViewCoordinator: WKNavigationDelegate {
     }
 }
 
-extension WebViewCoordinator: WKScriptMessageHandler {
+extension WebViewOldCoordinator: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         switch message.name {
         case "consoleLog": return ConsoleLog.printLog(message)

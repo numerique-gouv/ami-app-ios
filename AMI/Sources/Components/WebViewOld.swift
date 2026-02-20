@@ -1,5 +1,5 @@
 //
-//  WebView.swift
+//  WebViewOld.swift
 //  AMI
 //
 //  Created by Aline Bonnet on 19/10/2025.
@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 import WebKit
 
-struct WebView: UIViewRepresentable {
+struct WebViewOld: UIViewRepresentable {
     let initialUrl: URL
     @Binding var isExternalProcess: Bool
     @Binding var isLoading: Bool
@@ -18,8 +18,8 @@ struct WebView: UIViewRepresentable {
     @Binding var shouldPresentSettings: Bool
 
     func makeUIView(context: Context) -> some UIView {
-        let webView = WebViewManager.shared.webView
-        WebViewManager.shared.setHome(homeUrl: initialUrl)
+        let webView = WebViewOldManager.shared.webView
+        WebViewOldManager.shared.setHome(homeUrl: initialUrl)
         let contentController = webView.configuration.userContentController
 
         NativeEvents.attach(contentController, context.coordinator)
@@ -37,7 +37,7 @@ struct WebView: UIViewRepresentable {
 
     func updateUIView(_ uiView: UIViewType, context: Context) {}
 
-    func makeCoordinator() -> WebViewCoordinator {
-        WebViewCoordinator(self, isLoading: $isLoading, loadingProgress: $loadingProgress, isOnContactPage: $isOnContactPage)
+    func makeCoordinator() -> WebViewOldCoordinator {
+        WebViewOldCoordinator(self, isLoading: $isLoading, loadingProgress: $loadingProgress, isOnContactPage: $isOnContactPage)
     }
 }

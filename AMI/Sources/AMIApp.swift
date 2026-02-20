@@ -14,11 +14,15 @@ struct AMIApp: App {
     @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var offlineBannerId: UUID?
 
+#if IS_AMI_STAGING // && FALSE
+    let reviewAppViewModel = ReviewAppView.ViewModel()
+#endif
+    
     @ViewBuilder
     private var mainContent: some View {
         ZStack(alignment: .top) {
             #if IS_AMI_STAGING // && FALSE
-                ReviewAppView().environmentObject(WebService())
+                ReviewAppView(viewModel: reviewAppViewModel).environmentObject(WebService())
             #else
                 HomeView(initialUrl: Config.shared.BASE_URL)
             #endif

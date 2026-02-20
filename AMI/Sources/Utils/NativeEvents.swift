@@ -21,7 +21,7 @@ enum NativeEvents {
         contentController.add(handler, name: "NativeBridge")
     }
 
-    static func processMessage(_ message: WKScriptMessage, coordinator: WebViewCoordinator) {
+    static func processMessage(_ message: WKScriptMessage, coordinator: WebViewOldCoordinator) {
         // Parse the message from JavaScript (format: {event: string, data: any})
         if let messageBody = message.body as? [String: Any],
            let eventName = messageBody["event"] as? String {
@@ -37,7 +37,7 @@ enum NativeEvents {
                 NotificationHelper.requestPermission()
             case "notification_permission_removed":
                 NotificationHelper.openSettings()
-                WebViewManager.shared.goHome()
+                WebViewOldManager.shared.goHome()
             default:
                 break
             }

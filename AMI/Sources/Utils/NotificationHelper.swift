@@ -31,7 +31,7 @@ enum NotificationHelper {
                 if granted {
                     Task { @MainActor in
                         InformationBannerManager.shared.showBanner(.validation, title: "Les notifications ont été activées")
-                        WebViewManager.shared.goHome()
+                        WebViewOldManager.shared.goHome()
                     }
                 }
             }
@@ -56,7 +56,7 @@ enum NotificationHelper {
     static func resetAuthorization() {
         openSettings()
     }
-    
+
     static func isNotificationEnabled() async -> Bool {
         let status = await notificationsAuthorizationStatus()
         print("NotificationHelper: Authorization status: \(status.rawValue) (\(status))")

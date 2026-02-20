@@ -58,7 +58,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
     private func storeAndNotifyFCMToken(_ token: String) {
         print("AppDelegate: storing and notifying FCM token: \(token)")
-        // Store token in UserDefaults for WebView to access
+        // Store token in UserDefaults for WebViewOld to access
         UserDefaults.standard.set(token, forKey: "fcmToken")
 
         // Notify observers that the token is available
