@@ -13,14 +13,19 @@ extension ReviewAppView {
     @Observable
     class ViewModel: NSObject {
 //        private var currentViewModel: HomeView.ViewModel?
+        private var viewModels = [URL: AnyObject]()
         
-        static func homeViewModel(for url: URL) -> HomeView.ViewModel {
-            HomeView.ViewModel(rootUrl: url)
+        func reviewModel(for url: URL) -> AnyObject {
+            guard let viewModel = viewModels[url] else {
+                let viewModel = HomeView.ViewModel(rootUrl: url)
+                viewModels[url] = viewModel
+                return viewModel
+            }
+            return viewModel
         }
-        
+
         deinit {
             print("deinit")
         }
     }
 }
-

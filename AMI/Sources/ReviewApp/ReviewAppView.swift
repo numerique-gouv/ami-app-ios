@@ -31,8 +31,9 @@ struct ReviewAppView: View {
                     }
                 }
                 .navigationDestination(for: URL.self) { destinationUrl in
-                    let viewModel = ReviewAppView.ViewModel.homeViewModel(for: destinationUrl)
-                    HomeView(viewModel: viewModel)
+                    if let viewModel = viewModel.reviewModel(for: destinationUrl) as? HomeView.ViewModel {
+                        HomeView(viewModel: viewModel)
+                    }
                 }
             }
             .padding(.top, 1.0)
