@@ -46,30 +46,33 @@ extension HomeView {
 //                self.isOnContactPageBinding.wrappedValue = urlString.contains("/#/contact")
 //            }
 //        }
+
+        @Sendable private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
+            print("[URL Change Action] \(url?.debugDescription ?? "<nil>")")
+
+            shouldPresentSettings = url?.absoluteString.hasSuffix("/#/settings") ?? false
+            isOnContactPage = url?.absoluteString.hasSuffix("/#/contact") ?? false
+            isExternalProcess = !(url?.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) ?? true)
+            
+            Task { @MainActor in
+                if self.shouldPresentSettings,
+                   self.webViewViewModel.webView?.canGoBack ?? false {
+                    // As new page should not be handled by webview, reset webView last step navigation (to clean history).
+                    self.webViewViewModel.webView?.goBack()
+                }
+            }
+        }
+
         init(rootUrl: URL) {
             webViewViewModel = SwiftUIWebView.ViewModel(configuration: WKWebViewConfiguration(),
                                                         rootUrl: rootUrl,
                                                         delegate: HomeViewDelegate(),
                                                         userScripts: HomeUserScripts())
             super.init()
-            Task {
-                webViewViewModel.urlChangeAction = { [weak self] url in
-                    print("[URL Change Action] \(url?.debugDescription ?? "<nil>")")
 
-                    self?.shouldPresentSettings = url?.absoluteString.hasSuffix("/#/settings") ?? false
-                    
-                    if self?.shouldPresentSettings ?? false,
-                       self?.webViewViewModel.webView?.canGoBack ?? false {
-                        // As new page should not be handled by webview, reset webView last step navigation (to clean history).
-                        self?.webViewViewModel.webView?.goBack()
-                    }
-                }
-            }
-
-        }
-
-        deinit {
-            print("Deinit")
+            // Init `urlChangeAction` property after fully initialized `self` because closure is referencing `self`.
+            // No clean way to pass this closure in the `SwiftUIWebView.ViewModel.init` call.
+            webViewViewModel.urlChangeAction = handleUrlChange
         }
     }
 }

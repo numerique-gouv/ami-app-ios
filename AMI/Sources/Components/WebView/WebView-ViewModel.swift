@@ -10,10 +10,10 @@ import Foundation
 import WebKit
 
 extension SwiftUIWebView {
+    typealias UrlChangeAction = @Sendable (SwiftUIWebView.ViewModel, URL?) -> Void
+
     @Observable
     class ViewModel: NSObject {
-        typealias UrlChangeAction = @Sendable (URL?) -> Void
-
         weak var webView: WKWebView? {
             didSet {
                 configure()
@@ -47,17 +47,21 @@ extension SwiftUIWebView {
              delegate: WebViewDelegate? = nil,
              userScripts: WebViewUserScripts? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
-             acceptSelfSignedCertificate: Bool = false) {
+             acceptSelfSignedCertificate: Bool = false,
+             urlChangeAction: UrlChangeAction? = nil) {
             self.configuration = configuration
             self.rootUrl = rootUrl
             self.delegate = delegate
             self.userScripts = userScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
             self.acceptSelfSignedCertificate = acceptSelfSignedCertificate
+            self.urlChangeAction = urlChangeAction
 
             super.init()
 
             addUserScripts(userScripts: userScripts)
+
+            configure()
         }
 
         private func addUserScripts(userScripts: WebViewUserScripts?) {
@@ -98,7 +102,10 @@ extension SwiftUIWebView {
             }
 
             urlChangeObserver = webView.observe(\.url) { [weak self] webView, _ in
-                self?.urlChangeAction?(webView.url)
+                guard let self else {
+                    return
+                }
+                urlChangeAction?(self, webView.url)
             }
         }
 
@@ -186,8 +193,8 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
                                                  delegate: WebViewDelegateSimulatorImplementation(),
                                                  userScripts: HomeUserScripts(),
                                                  acceptSelfSignedCertificate: true)
-            model.urlChangeAction = { url in
-                print("[SwiftUIWebView.ViewModel] url did change to \(url?.debugDescription ?? "<nil>")")
+            model.urlChangeAction = { viewModel, url in
+                print("[SwiftUIWebView.ViewModel] url did change to \(url.debugDescription)")
             }
             return model
         }()
