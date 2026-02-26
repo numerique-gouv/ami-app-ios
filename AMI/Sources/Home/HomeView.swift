@@ -55,7 +55,7 @@ struct HomeView: View {
                     toolbarBackButton
                 }
         }
-        .sheet(isPresented: $viewModel.shouldPresentSettings) {
+        .sheet(isPresented: $viewModel.showSettings) {
             SettingsView()
         }
         if viewModel.isOnContactPage {

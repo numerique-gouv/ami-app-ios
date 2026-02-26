@@ -16,7 +16,7 @@ extension HomeView {
 
         var isExternalProcess = false
         var isOnContactPage = false
-        var shouldPresentSettings = false
+        var showSettings = false
 
 //        var rootUrl: URL {
 //            webViewViewModel.rootUrl
@@ -48,17 +48,19 @@ extension HomeView {
 //        }
 
         @Sendable private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
-            print("[URL Change Action] \(url?.debugDescription ?? "<nil>")")
-
-            shouldPresentSettings = url?.absoluteString.hasSuffix("/#/settings") ?? false
+            showSettings = url?.absoluteString.hasSuffix("/#/settings") ?? false
             isOnContactPage = url?.absoluteString.hasSuffix("/#/contact") ?? false
             isExternalProcess = !(url?.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) ?? true)
-            
+
+            print("[URL Change Action] \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage) - external: \(isExternalProcess)")
+
             Task { @MainActor in
-                if self.shouldPresentSettings,
+                if self.showSettings,
                    self.webViewViewModel.webView?.canGoBack ?? false {
                     // As new page should not be handled by webview, reset webView last step navigation (to clean history).
                     self.webViewViewModel.webView?.goBack()
+                    // Force `showSettings` to true because it is reset to false by the `goBack` command.
+                    self.showSettings = true
                 }
             }
         }
