@@ -31,7 +31,7 @@ struct HomeView: View {
     }
 
     @ViewBuilder
-    var webView: AMIWebView {
+    private var webView: AMIWebView {
         AMIWebView(viewModel: viewModel.webViewViewModel)
     }
 
@@ -39,8 +39,8 @@ struct HomeView: View {
     var body: some View {
         VStack(spacing: 0) {
             if viewModel.isExternalProcess {
-                BackBar {
-                    WebViewOldManager.shared.goHome()
+                webView.backButton {
+                    handleBackAction()
                 }
             }
             webView
