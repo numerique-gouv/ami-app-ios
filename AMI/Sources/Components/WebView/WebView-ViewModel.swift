@@ -10,10 +10,13 @@ import Foundation
 import WebKit
 
 extension SwiftUIWebView {
-    typealias UrlChangeAction = @Sendable (SwiftUIWebView.ViewModel, URL?) -> Void
+    // Configguration that can be shared by all SwiftUIWebView to access the same cookie store.
+    static let sharedConfiguration = WKWebViewConfiguration()
 
     @Observable
     class ViewModel: NSObject {
+        typealias UrlChangeAction = @Sendable (SwiftUIWebView.ViewModel, URL?) -> Void
+
         weak var webView: WKWebView? {
             didSet {
                 configure()
@@ -42,7 +45,7 @@ extension SwiftUIWebView {
         private var canGoBackObserver: NSKeyValueObservation?
         private var urlChangeObserver: NSKeyValueObservation?
 
-        init(configuration: WKWebViewConfiguration,
+        init(configuration: WKWebViewConfiguration = SwiftUIWebView.sharedConfiguration,
              rootUrl: URL,
              delegate: WebViewDelegate? = nil,
              userScripts: WebViewUserScripts? = nil,
@@ -69,8 +72,8 @@ extension SwiftUIWebView {
                 return
             }
 
+            configuration.userContentController.removeAllUserScripts()
             for userScript in scripts {
-                configuration.userContentController.removeAllUserScripts()
                 configuration.userContentController.addUserScript(userScript.script)
                 configuration.userContentController.add(self, name: userScript.name)
             }
@@ -109,6 +112,44 @@ extension SwiftUIWebView {
             }
         }
 
+        func readInLocalStorage(key: String) async -> Any? {
+            guard let webView else {
+                print("[WebView-ViewModel]: readInLocalStorage not called because no webView initialzed")
+                return nil
+            }
+
+            // Prepare javaScript script.
+            let script = "localStorage.getItem('\(key)');"
+
+            do {
+                // Execute javaScript script
+                let value = try await webView.evaluateJavaScript(script)
+                print("[WebView-ViewModel]: readInLocalStorage success - `\(key)` -> `\(value.debugDescription)`")
+                return value
+            } catch {
+                print("[WebView-ViewModel]: readInLocalStorage failed to read key `\(key)`: \(error)")
+                return nil
+            }
+        }
+
+        func writeInLocalStorage(key: String, value: String) async {
+            guard let webView else {
+                print("[WebView-ViewModel]: writeInLocalStorage not called because no webView initialzed")
+                return
+            }
+
+            // Prepare javaScript script.
+            let script = "localStorage.setItem('\(key)', '\(value)');"
+
+            do {
+                // Execute javaScript script
+                _ = try await webView.evaluateJavaScript(script)
+                print("[WebView-ViewModel]: writeInLocalStorage success - `\(key)` = `\(value)`")
+            } catch {
+                print("[WebView-ViewModel]: writeInLocalStorage failed to set key `\(key)` to value `\(value)`: \(error)")
+            }
+        }
+
         func goBack() {
             webView?.goBack()
         }
@@ -118,6 +159,7 @@ extension SwiftUIWebView {
 extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         // Dispatch message to message handler, passing the view model to be able to act on it.
+        print("userContentController didReceive message: \(message.name)")
         userScripts?.userScriptEmittedMessage(message, for: self)
     }
 }
@@ -188,12 +230,11 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
 #if DEBUG
     extension SwiftUIWebView.ViewModel {
         static let `default` = {
-            let model = SwiftUIWebView.ViewModel(configuration: WKWebViewConfiguration(),
-                                                 rootUrl: URL(string: "https://numerique.gouv.fr")!,
+            let model = SwiftUIWebView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
                                                  delegate: WebViewDelegateSimulatorImplementation(),
-                                                 userScripts: HomeUserScripts(),
+                                                 userScripts: HomeUserScripts(notificationManager: NotificationManager()),
                                                  acceptSelfSignedCertificate: true)
-            model.urlChangeAction = { viewModel, url in
+            model.urlChangeAction = { _, url in
                 print("[SwiftUIWebView.ViewModel] url did change to \(url.debugDescription)")
             }
             return model
