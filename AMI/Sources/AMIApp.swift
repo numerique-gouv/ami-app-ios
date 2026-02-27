@@ -14,15 +14,25 @@ struct AMIApp: App {
     @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var offlineBannerId: UUID?
 
-#if IS_AMI_STAGING // && FALSE
-    let reviewAppViewModel = ReviewAppView.ViewModel()
-#endif
-    
+    let notificationManager = NotificationManager()
+
+    #if IS_AMI_STAGING
+        let reviewAppViewModel: ReviewAppView.ViewModel
+    #endif
+
+    init() {
+        #if IS_AMI_STAGING
+            reviewAppViewModel = ReviewAppView.ViewModel(notificationManager: notificationManager)
+        #endif
+        delegate.notificationManager = notificationManager
+    }
+
     @ViewBuilder
     private var mainContent: some View {
         ZStack(alignment: .top) {
             #if IS_AMI_STAGING // && FALSE
-                ReviewAppView(viewModel: reviewAppViewModel).environmentObject(WebService())
+                ReviewAppView(viewModel: reviewAppViewModel)
+                    .environmentObject(WebService())
             #else
                 HomeView(initialUrl: Config.shared.BASE_URL)
             #endif
