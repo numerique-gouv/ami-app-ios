@@ -16,3 +16,8 @@ line_length:
 
 trailing_comma:
   mandatory_comma: true
+
+nesting:
+  type_level:
+    warning: 2
+  ignore_coding_keys: true
