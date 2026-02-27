@@ -121,6 +121,8 @@ targetTemplates:
     
     sources:
     - path: AMI
+      excludes:
+        - "**/*.md" # excludes all files with the .md extension
 
 #--------------------------------------------------------------------------------
 targets:
