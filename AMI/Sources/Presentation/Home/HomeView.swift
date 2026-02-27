@@ -44,23 +44,19 @@ struct HomeView: View {
                 }
             }
             webView
-//            WebViewOld(initialUrl: viewModel.rootUrl,
-//                       isExternalProcess: $viewModel.isExternalProcess,
-//                       isLoading: $viewModel.isLoading,
-//                       loadingProgress: $viewModel.loadingProgress,
-//                       isOnContactPage: $viewModel.isOnContactPage,
-//                       shouldPresentSettings: $viewModel.shouldPresentSettings)
                 .navigationBarBackButtonHidden(true)
                 .toolbar {
                     toolbarBackButton
                 }
         }
         .sheet(isPresented: $viewModel.showSettings) {
-            SettingsView()
+            SettingsView(viewModel: viewModel.settingsViewViewModel)
         }
         if viewModel.isOnContactPage {
             Button {
-                handleShareLogsAction()
+                Task {
+                    await viewModel.shareLogs()
+                }
             } label: {
                 Text("Télécharger les logs")
                     .frame(maxWidth: .infinity)
@@ -82,18 +78,10 @@ struct HomeView: View {
             dismiss()
         }
     }
-
-    private func handleShareLogsAction() {
-        Task {
-            do {
-                let userFcHash = try await WebViewOldManager.shared.webView.evaluateJavaScript("localStorage.getItem('user_fc_hash')") as? String
-                LogsExporter(userId: userFcHash?.trimmingCharacters(in: CharacterSet(charactersIn: "\""))).shareLogs()
-            } catch {}
-        }
-    }
 }
 
 #Preview {
-    let viewModel = HomeView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!)
+    let viewModel = HomeView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
+                                       notificationManager: NotificationManager())
     HomeView(viewModel: viewModel)
 }

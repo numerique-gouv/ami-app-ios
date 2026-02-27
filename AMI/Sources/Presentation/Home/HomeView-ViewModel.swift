@@ -13,6 +13,7 @@ extension HomeView {
     @Observable
     class ViewModel: NSObject {
         let webViewViewModel: SwiftUIWebView.ViewModel
+        let settingsViewViewModel: SettingsView.ViewModel
 
         var isExternalProcess = false
         var isOnContactPage = false
@@ -47,12 +48,13 @@ extension HomeView {
 //            }
 //        }
 
-        @Sendable private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
+        @Sendable
+        private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
             showSettings = url?.absoluteString.hasSuffix("/#/settings") ?? false
             isOnContactPage = url?.absoluteString.hasSuffix("/#/contact") ?? false
             isExternalProcess = !(url?.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) ?? true)
 
-            print("[URL Change Action] \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage) - external: \(isExternalProcess)")
+            print("[HomeView-ViewModel]: URL Change Action \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage) - external: \(isExternalProcess)")
 
             Task { @MainActor in
                 if self.showSettings,
@@ -65,11 +67,23 @@ extension HomeView {
             }
         }
 
-        init(rootUrl: URL) {
-            webViewViewModel = SwiftUIWebView.ViewModel(configuration: WKWebViewConfiguration(),
-                                                        rootUrl: rootUrl,
-                                                        delegate: HomeViewDelegate(),
-                                                        userScripts: HomeUserScripts())
+        func shareLogs() async {
+            let userId = await webViewViewModel.readInLocalStorage(key: "user_fc_hash") as? String
+            LogsExporter(userId: userId?.trimmingCharacters(in: CharacterSet(charactersIn: "\""))).shareLogs()
+        }
+
+        init(rootUrl: URL, notificationManager: NotificationManager) {
+            // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
+            let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
+                                                            delegate: HomeViewDelegate(),
+                                                            userScripts: HomeUserScripts(notificationManager: notificationManager))
+            self.webViewViewModel = webViewViewModel
+            settingsViewViewModel = SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
+                print("[HomeView-ViewModel]: notificationsSettingDidChangeAction")
+                Task { @MainActor in
+                    await webViewViewModel.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
+                }
+            })
             super.init()
 
             // Init `urlChangeAction` property after fully initialized `self` because closure is referencing `self`.

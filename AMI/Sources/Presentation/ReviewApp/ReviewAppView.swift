@@ -54,7 +54,7 @@ struct ReviewAppView: View {
 }
 
 #Preview {
-    let viewModel = ReviewAppView.ViewModel()
+    let viewModel = ReviewAppView.ViewModel(notificationManager: NotificationManager())
     ReviewAppView(viewModel: viewModel)
         .environmentObject(WebService())
 }

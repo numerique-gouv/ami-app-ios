@@ -7,14 +7,13 @@
 //
 
 import Foundation
+import SwiftUI
 import WebKit
 
 class HomeUserScripts {
-    var scripts: [UserScript]
-
     // Enumerate existing scripts
     enum Script: String {
-        case nativeBridge
+        case nativeBridge = "NativeBridge"
         case consoleLog
     }
 
@@ -25,12 +24,21 @@ class HomeUserScripts {
         case notificationPermissionRemoved = "notification_permission_removed"
     }
 
-    required init() {
+    // notificationManager: used to handle notification registration once user is logged.
+    let notificationManager: NotificationManager
+    var scripts: [UserScript]
+
+    required init(notificationManager: NotificationManager) {
+        self.notificationManager = notificationManager
         scripts = [
             UserScript(name: Script.nativeBridge.rawValue,
-                       script: WKUserScript(source: Self.nativeBridgeScript, injectionTime: .atDocumentStart, forMainFrameOnly: false)),
+                       script: WKUserScript(source: Self.nativeBridgeScript,
+                                            injectionTime: .atDocumentStart,
+                                            forMainFrameOnly: false)),
             UserScript(name: Script.consoleLog.rawValue,
-                       script: WKUserScript(source: Self.consoleLogScript, injectionTime: .atDocumentStart, forMainFrameOnly: false)),
+                       script: WKUserScript(source: Self.consoleLogScript,
+                                            injectionTime: .atDocumentStart,
+                                            forMainFrameOnly: false)),
         ]
     }
 
@@ -108,7 +116,7 @@ extension HomeUserScripts: WebViewUserScripts {
         case .consoleLog:
             printLog(message)
         case .nativeBridge:
-            processMessage(message)
+            processMessage(message, for: viewModel)
         case .none:
             // Ignore unknown script message names
             break
@@ -121,7 +129,7 @@ extension HomeUserScripts: WebViewUserScripts {
               let level = body["level"] as? String,
               let logMessage = body["message"] as? String else { return }
 
-        let prefix = "[WebView Console]"
+        let prefix = "[HomeUserScripts Console]"
         switch level {
         case "error":
             print("\(prefix) ❌ ERROR: \(logMessage)")
@@ -136,24 +144,23 @@ extension HomeUserScripts: WebViewUserScripts {
         }
     }
 
-    func processMessage(_ message: WKScriptMessage) { // }, coordinator: WebViewOldCoordinator) {
+    func processMessage(_ message: WKScriptMessage, for viewModel: SwiftUIWebView.ViewModel) {
         // Parse the message from JavaScript (format: {event: string, data: any})
         if let messageBody = message.body as? [String: Any],
            let eventName = messageBody["event"] as? String {
             let data = messageBody["data"]
-            print("WebView: Event received: \(eventName) - \(String(describing: data))")
+            print("[HomeUserScripts]: Event received: \(eventName) - \(String(describing: data))")
 
             switch Event(rawValue: eventName) {
             case .userLoggedIn:
-//                coordinator.isUserLoggedIn = true
-                // Trigger device registration when user logs in
-//                coordinator.triggerDeviceRegistration()
-                break
+                Task {
+                    await notificationManager.registerForRemoteNotifications(baseUrl: viewModel.rootUrl)
+                }
             case .notificationPermissionRequested:
-                NotificationHelper.requestPermission()
+                notificationManager.requestPermission()
             case .notificationPermissionRemoved:
-                NotificationHelper.openSettings()
-                WebViewOldManager.shared.goHome()
+                notificationManager.openSettings()
+//                WebViewOldManager.shared.goHome()
             default:
                 break
             }
