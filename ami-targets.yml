@@ -57,7 +57,6 @@ targetTemplates:
           UIInterfaceOrientationLandscapeLeft,
           UIInterfaceOrientationLandscapeRight
         ]
-        productionAppName: $(PRODUCTION_APP_NAME)
         ITSAppUsesNonExemptEncryption: false
 #        NSCameraUsageDescription: To take pictures or videos and send them as a message $(APP_DISPLAY_NAME) needs access to the camera.
 #        NSMicrophoneUsageDescription: To record and send messages with audio, $(APP_DISPLAY_NAME) needs to access the microphone.
@@ -73,7 +72,8 @@ targetTemplates:
         LSRequiresIPhoneOS: true
         UILaunchScreen:
           UILaunchScreen: {}
-        BASE_URL: $(BASE_URL)
+# Disable Firebase swizzling to have AppDelegate callback in SwiftUI app: https://firebase.google.com/docs/cloud-messaging/ios/get-started#disable-swizzling
+        FirebaseAppDelegateProxyEnabled: false
         
     settings:
       PRODUCT_NAME: $(APP_NAME)
