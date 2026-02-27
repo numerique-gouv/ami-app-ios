@@ -32,7 +32,7 @@ extension SwiftUIWebView {
         let configuration: WKWebViewConfiguration
         let rootUrl: URL
         let delegate: WebViewDelegate?
-        let userScripts: WebViewUserScripts?
+        let userScripts: WebViewUserScriptsProtocol?
         let allowsBackForwardNavigationGestures: Bool
         let acceptSelfSignedCertificate: Bool
 
@@ -48,7 +48,7 @@ extension SwiftUIWebView {
         init(configuration: WKWebViewConfiguration = SwiftUIWebView.sharedConfiguration,
              rootUrl: URL,
              delegate: WebViewDelegate? = nil,
-             userScripts: WebViewUserScripts? = nil,
+             userScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
              acceptSelfSignedCertificate: Bool = false,
              urlChangeAction: UrlChangeAction? = nil) {
@@ -67,7 +67,7 @@ extension SwiftUIWebView {
             configure()
         }
 
-        private func addUserScripts(userScripts: WebViewUserScripts?) {
+        private func addUserScripts(userScripts: WebViewUserScriptsProtocol?) {
             guard let scripts = userScripts?.scripts else {
                 return
             }

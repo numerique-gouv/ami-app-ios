@@ -19,6 +19,7 @@ struct SwiftUIWebView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let webView = WKWebView(frame: .zero, configuration: viewModel.configuration)
         webView.allowsBackForwardNavigationGestures = viewModel.allowsBackForwardNavigationGestures
+        // Give the ViewModel a weak handle on the WKWebView.
         viewModel.webView = webView
 
         webView.load(URLRequest(url: viewModel.rootUrl))

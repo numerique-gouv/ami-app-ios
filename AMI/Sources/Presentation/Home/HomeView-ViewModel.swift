@@ -19,35 +19,6 @@ extension HomeView {
         var isOnContactPage = false
         var showSettings = false
 
-//        var rootUrl: URL {
-//            webViewViewModel.rootUrl
-//        }
-
-//        { [weak self] webView, value in
-//            guard let self else { return }
-//            print("WebView: URL changed to: \(webView.url?.absoluteString ?? "nil")")
-//
-//            // Check if webview activated application settings access.
-//            if let targetUrl = value.newValue,
-//               let targetUrlString = targetUrl?.absoluteString,
-//               targetUrlString.hasSuffix("/#/settings") {
-//                print("WebView: 📍 Application settings requested")
-//                parent.shouldPresentSettings = true
-//
-//                // As new page should not be handled by webview, reset webView last step navigation (to clean history).
-//                if webView.canGoBack {
-//                    webView.goBack()
-//                }
-//                return
-//            }
-//
-//            updateNotificationStatusInLocalStorage(webView: webView)
-//            guard let urlString = webView.url?.absoluteString else { return }
-//            Task { @MainActor in
-//                self.isOnContactPageBinding.wrappedValue = urlString.contains("/#/contact")
-//            }
-//        }
-
         @Sendable
         private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
             showSettings = url?.absoluteString.hasSuffix("/#/settings") ?? false

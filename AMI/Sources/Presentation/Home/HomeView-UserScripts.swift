@@ -110,7 +110,7 @@ class HomeUserScripts {
     """
 }
 
-extension HomeUserScripts: WebViewUserScripts {
+extension HomeUserScripts: WebViewUserScriptsProtocol {
     func userScriptEmittedMessage(_ message: WKScriptMessage, for viewModel: SwiftUIWebView.ViewModel) {
         switch Script(rawValue: message.name) {
         case .consoleLog:
