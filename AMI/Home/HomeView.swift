@@ -33,16 +33,16 @@ struct HomeView: View {
                     loadingProgress: $loadingProgress,
                     showNoEmailClientAlert: $showNoEmailClientAlert)
             .navigationBarBackButtonHidden(true)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: handleBackAction) {
-                        HStack {
-                            Image(systemName: "chevron.left")
-                            Text("Retour")
-                        }
-                    }
-                }
-            }
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarLeading) {
+//                    Button(action: handleBackAction) {
+//                        HStack {
+//                            Image(systemName: "chevron.left")
+//                            Text("Retour")
+//                        }
+//                    }
+//                }
+//            }
             .gesture(
                 DragGesture()
                     .onEnded { gesture in
