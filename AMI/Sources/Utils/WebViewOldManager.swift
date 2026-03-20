@@ -1,31 +1,31 @@
-//import Foundation
-//import WebKit
+// import Foundation
+// import WebKit
 //
-//class WebViewOldManager {
-//    static let shared = WebViewOldManager()
-//    private var homeUrl: URL?
+// class WebViewOldManager {
+//     static let shared = WebViewOldManager()
+//     private var homeUrl: URL?
 //
-//    let webView: WKWebView = {
-//        let configuration = WKWebViewConfiguration()
-//        configuration.userContentController = WKUserContentController()
-//        let webView = WKWebView(frame: .zero, configuration: configuration)
-//        webView.allowsBackForwardNavigationGestures = true
-//        return webView
-//    }()
+//     let webView: WKWebView = {
+//         let configuration = WKWebViewConfiguration()
+//         configuration.userContentController = WKUserContentController()
+//         let webView = WKWebView(frame: .zero, configuration: configuration)
+//         webView.allowsBackForwardNavigationGestures = true
+//         return webView
+//     }()
 //
-//    private init() {}
+//     private init() {}
 //
-//    func setHome(homeUrl: URL) {
-//        self.homeUrl = homeUrl
-//    }
+//     func setHome(homeUrl: URL) {
+//         self.homeUrl = homeUrl
+//     }
 //
-//    func goHome() {
-//        guard let homeUrl else {
-//            print("WebViewManager Error: Navigating to home but homeUrl is undefined.")
-//            return
-//        }
+//     func goHome() {
+//         guard let homeUrl else {
+//             print("WebViewManager Error: Navigating to home but homeUrl is undefined.")
+//             return
+//         }
 //
-//        print("WebViewManager: Navigating to home")
-//        webView.load(URLRequest(url: homeUrl))
-//    }
-//}
+//         print("WebViewManager: Navigating to home")
+//         webView.load(URLRequest(url: homeUrl))
+//     }
+// }
