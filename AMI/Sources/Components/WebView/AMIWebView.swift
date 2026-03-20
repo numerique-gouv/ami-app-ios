@@ -23,25 +23,29 @@ struct AMIWebView: View {
         SwiftUIWebView(viewModel: viewModel)
     }
 
-    @ViewBuilder
-    func backButton(action: (() -> Void)?) -> some View {
-        HStack {
-            Button {
-                action?()
-            } label: {
-                Label(AMIL10n.commonBack, systemImage: "arrowtriangle.left.fill")
-                    .labelStyle(.titleAndIcon) // needed for title to be displayed when located in toolbar.
-                    .fixedSize() // needed for title to be fully displayed.
-            }
-            Spacer()
-        }
-    }
+//    @ViewBuilder
+//    func backButton(action: (() -> Void)?) -> some View {
+//        HStack {
+//            Button {
+//                action?()
+//            } label: {
+//                Label(AMIL10n.commonBack, systemImage: "arrowtriangle.left.fill")
+//                    .labelStyle(.titleAndIcon) // needed for title to be displayed when located in toolbar.
+//                    .fixedSize() // needed for title to be fully displayed.
+//            }
+//            Spacer()
+//        }
+//    }
 
     var body: some View {
-        if viewModel.isLoading {
-            loadingBar
+        ZStack(alignment: .top) {
+            SwiftUIWebView(viewModel: viewModel)
+            if viewModel.isLoading {
+                loadingBar
+                    .allowsHitTesting(false)
+            }
         }
-        SwiftUIWebView(viewModel: viewModel)
+        .navigationBarBackButtonHidden()
     }
 }
 
