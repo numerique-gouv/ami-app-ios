@@ -20,7 +20,9 @@ struct HomeView: View {
     @ToolbarContentBuilder
     private var toolbarBackButton: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            Button(action: handleBackAction) {
+            Button {
+                handleBackAction()
+            } label: {
                 Label(AMIL10n.commonBack, systemImage: "chevron.left")
                     .labelStyle(.titleAndIcon) // needed for title to be displayed when located in toolbar.
                     .fixedSize() // needed for title to be fully displayed.
@@ -37,21 +39,14 @@ struct HomeView: View {
 
     @ViewBuilder
     var body: some View {
-        VStack(spacing: 0) {
-            if viewModel.isExternalProcess {
-                webView.backButton {
-                    handleBackAction()
-                }
+        webView
+            .toolbar {
+                toolbarBackButton
             }
-            webView
-                .navigationBarBackButtonHidden(true)
-                .toolbar {
-                    toolbarBackButton
-                }
-        }
-        .sheet(isPresented: $viewModel.showSettings) {
-            SettingsView(viewModel: viewModel.settingsViewViewModel)
-        }
+            .sheet(isPresented: $viewModel.showSettings) {
+                SettingsView(viewModel: viewModel.settingsViewViewModel)
+            }
+
         if viewModel.isOnContactPage {
             Button {
                 Task {
