@@ -72,7 +72,7 @@ extension SwiftUIWebView {
                 return
             }
 
-            configuration.userContentController.removeAllUserScripts()
+            configuration.userContentController.removeAllScriptMessageHandlers()
             for userScript in scripts {
                 configuration.userContentController.addUserScript(userScript.script)
                 configuration.userContentController.add(self, name: userScript.name)
