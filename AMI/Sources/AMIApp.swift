@@ -13,12 +13,17 @@ struct AMIApp: App {
     @StateObject private var bannerManager = InformationBannerManager.shared
     @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var offlineBannerId: UUID?
+    @State private var openedFromNotification = false
 
     var body: some Scene {
         WindowGroup {
             ZStack(alignment: .top) {
                 #if IS_AMI_STAGING
-                    ReviewAppView().environmentObject(WebService())
+                    if openedFromNotification {
+                        HomeView()
+                    } else {
+                        ReviewAppView().environmentObject(WebService())
+                    }
                 #else
                     HomeView()
                 #endif
@@ -32,6 +37,9 @@ struct AMIApp: App {
             }
             .animation(.easeInOut(duration: 0.3), value: bannerManager.banners.count)
             .environmentObject(networkMonitor)
+            .onReceive(NotificationCenter.default.publisher(for: .pendingUrl)) { _ in
+                openedFromNotification = true
+            }
             .onChange(of: networkMonitor.isConnected) { _, isConnected in
                 print("Main App: received a network status change, isConnected=\(isConnected)")
                 if isConnected {

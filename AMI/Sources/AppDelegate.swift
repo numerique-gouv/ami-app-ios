@@ -11,14 +11,16 @@ import SwiftUI
 
 extension Notification.Name {
     static let fcmTokenRefreshed = Notification.Name("fcmTokenRefreshed")
+    static let pendingUrl = Notification.Name("pendingUrl")
 }
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         let firebaseConfigFilename = "GoogleService-Info"
 
         guard let filePath = Bundle.main.path(forResource: firebaseConfigFilename, ofType: "plist"),
-              let options = FirebaseOptions(contentsOfFile: filePath) else {
+              let options = FirebaseOptions(contentsOfFile: filePath)
+        else {
             fatalError("Could not load Firebase config file: \(firebaseConfigFilename).plist")
         }
 
@@ -38,7 +40,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         return true
     }
 
-    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    func application(_: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         print("AppDelegate: Received APNS device token")
 
         // Pass APNS token to Firebase for proper notification delivery
@@ -48,7 +50,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         fetchFCMToken()
     }
 
-    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+    func application(_: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         print("AppDelegate: Failed to register for remote notifications: \(error)")
         print("AppDelegate: This is normal in the simulator - FCM will still work for testing")
 
@@ -77,9 +79,10 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         }
     }
 
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
+    func userNotificationCenter(_: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
-                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void)
+    {
         let userInfo = notification.request.content.userInfo
 
         print("AppDelegate: Notification received while app is in foreground")
@@ -91,7 +94,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         completionHandler([.banner, .sound, .badge])
     }
 
-    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+    func userNotificationCenter(_: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
         let userInfo = response.notification.request.content.userInfo
 
         print("AppDelegate: User tapped notification")
@@ -100,22 +103,23 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         print("AppDelegate: Notification data: \(userInfo)")
         print("AppDelegate: Action identifier: \(response.actionIdentifier)")
 
-        // Handle notification tap based on data
-        // Example: navigate to specific screen, update UI, etc.
-        if let customData = userInfo["customField"] as? String {
-            print("AppDelegate: Custom data received: \(customData)")
-            // TODO: Handle custom data (navigation, deep linking, etc.)
+        if let appUrlString = userInfo["app_url"] as? String, let appUrl = URL(string: appUrlString) {
+            print("AppDelegate: app_url received: \(appUrlString)")
+            Config.shared.BASE_URL = appUrl
         }
 
-        // Handle different action types
         if response.actionIdentifier == UNNotificationDefaultActionIdentifier {
-            print("AppDelegate: User tapped the notification banner")
+            print("AppDelegate: User tapped the notification banner, navigating to the notifications page")
+
+            let notificationsURL = URL(string: "/#/notifications", relativeTo: Config.shared.BASE_URL)!
+            WebViewManager.shared.pendingURL = notificationsURL
+            NotificationCenter.default.post(name: .pendingUrl, object: nil, userInfo: ["pendingUrl": notificationsURL])
         } else if response.actionIdentifier == UNNotificationDismissActionIdentifier {
             print("AppDelegate: User dismissed the notification")
         }
     }
 
-    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+    func messaging(_: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         if let token = fcmToken {
             print("AppDelegate: FCM token received/refreshed")
             storeAndNotifyFCMToken(token)

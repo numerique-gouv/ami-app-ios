@@ -10,6 +10,8 @@ class WebViewManager {
         return WKWebView(frame: .zero, configuration: configuration)
     }()
 
+    var pendingURL: URL?
+
     private init() {}
 
     func goHome() {

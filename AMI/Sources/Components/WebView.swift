@@ -29,7 +29,9 @@ struct WebView: UIViewRepresentable {
 
         webView.navigationDelegate = context.coordinator
         context.coordinator.observeProgress(of: webView)
-        webView.load(URLRequest(url: initialUrl))
+        let urlToLoad = WebViewManager.shared.pendingURL ?? initialUrl
+        WebViewManager.shared.pendingURL = nil
+        webView.load(URLRequest(url: urlToLoad))
 
         return webView
     }
