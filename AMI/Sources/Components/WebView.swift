@@ -16,11 +16,16 @@ struct WebView: UIViewRepresentable {
     @Binding var loadingProgress: Double
     @Binding var isOnContactPage: Bool
     @Binding var shouldPresentSettings: Bool
-    
+
     func makeUIView(context: Context) -> some UIView {
         let webView = WebViewManager.shared.webView
         let contentController = webView.configuration.userContentController
 
+        // Make sure to cleanup the potential existing content controllers before trying to add them again.
+        // WebView is a singleton, so it's reused for example when going back to the review app screen to
+        // select another review app.
+        contentController.removeAllScriptMessageHandlers()
+        contentController.removeAllUserScripts()
         NativeEvents.attach(contentController, context.coordinator)
 
         #if DEBUG

@@ -20,6 +20,7 @@ struct ReviewAppView: View {
                     if let reviewAppUrl = URL(string: reviewApp.url) {
                         Button {
                             Config.shared.BASE_URL = reviewAppUrl
+                            print("ReviewAppView: switching to BASE_URL=\(Config.shared.BASE_URL)")
                             navigate = true
                         } label: {
                             Tile(title: reviewApp.title, content: reviewApp.description ?? "")
