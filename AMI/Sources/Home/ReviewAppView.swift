@@ -35,7 +35,7 @@ struct ReviewAppView: View {
             .onAppear {
                 Task {
                     try await webService.getReviewApps()
-                    reviewApps.append(contentsOf: webService.reviewApps)
+                    reviewApps = webService.reviewApps
                 }
             }
         }

@@ -32,6 +32,13 @@ class WebViewCoordinator: NSObject {
             name: .fcmTokenRefreshed,
             object: nil
         )
+        // Listen for pending URLs notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePendingUrl(_:)),
+            name: .pendingUrl,
+            object: nil
+        )
     }
 
     func triggerDeviceRegistration() {
@@ -140,6 +147,16 @@ class WebViewCoordinator: NSObject {
         }
     }
 
+    @objc private func handlePendingUrl(_ notification: Notification) {
+        guard let pendingUrl = notification.userInfo?["pendingUrl"] as? URL else {
+            print("WebView: pending URL notification received but no url found")
+            return
+        }
+
+        print("WebView: pending URL - loading \(pendingUrl)")
+        WebViewManager.shared.webView.load(URLRequest(url: pendingUrl))
+    }
+
     func updateNotificationStatusInLocalStorage(webView: WKWebView) {
         print("WebView: updateNotificationStatusInLocalStorage called")
         Task {
@@ -174,13 +191,15 @@ class WebViewCoordinator: NSObject {
             // Check if webview activated application settings access.
             if let targetUrl = value.newValue,
                let targetUrlString = targetUrl?.absoluteString,
-               targetUrlString.hasSuffix("/#/settings") {
+               targetUrlString.hasSuffix("/#/settings")
+            {
                 print("WebView: 📍 Application settings requested")
                 parent.shouldPresentSettings = true
 
                 // Reset webView url to previous url.
                 if let optionalPreviousUrl = value.oldValue,
-                   let previousUrl = optionalPreviousUrl {
+                   let previousUrl = optionalPreviousUrl
+                {
                     webView.load(URLRequest(url: previousUrl))
                 }
                 return
@@ -196,7 +215,7 @@ class WebViewCoordinator: NSObject {
 }
 
 extension WebViewCoordinator: WKNavigationDelegate {
-    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+    func webView(_: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         // Show loader immediately on link click (before page starts loading)
         Task { @MainActor in
             self.isLoadingBinding.wrappedValue = true
@@ -216,11 +235,12 @@ extension WebViewCoordinator: WKNavigationDelegate {
         decisionHandler(.allow)
     }
 
-    func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+    func webView(_: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
         // In debug builds, accept self-signed certificates
         #if DEBUG
             if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-               let serverTrust = challenge.protectionSpace.serverTrust {
+               let serverTrust = challenge.protectionSpace.serverTrust
+            {
                 let credential = URLCredential(trust: serverTrust)
                 completionHandler(.useCredential, credential)
                 return
@@ -231,7 +251,7 @@ extension WebViewCoordinator: WKNavigationDelegate {
         completionHandler(.performDefaultHandling, nil)
     }
 
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    func webView(_: WKWebView, didFinish _: WKNavigation!) {
         Task { @MainActor in
             self.isLoadingBinding.wrappedValue = false
         }
@@ -239,7 +259,7 @@ extension WebViewCoordinator: WKNavigationDelegate {
 }
 
 extension WebViewCoordinator: WKScriptMessageHandler {
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+    func userContentController(_: WKUserContentController, didReceive message: WKScriptMessage) {
         switch message.name {
         case "consoleLog": return ConsoleLog.printLog(message)
         case "NativeBridge": return NativeEvents.processMessage(message, coordinator: self)
