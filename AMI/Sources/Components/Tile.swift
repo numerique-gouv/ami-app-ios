@@ -10,7 +10,6 @@ import SwiftUI
 struct Tile: View {
     @State var title: String
     @State var content: String
-    @State var action: () -> Void
 
     var body: some View {
         HStack {
@@ -32,9 +31,6 @@ struct Tile: View {
             .border(width: 8, edges: [.bottom], color: Asset.Colors.blueFranceSun113.swiftUIColor)
         }
         .padding(16)
-        .simultaneousGesture(TapGesture().onEnded {
-            action()
-        })
     }
 }
 
@@ -61,5 +57,5 @@ struct EdgeBorder: Shape {
 }
 
 #Preview {
-    Tile(title: "PR239", content: "build two apps per platforms") {}
+    Tile(title: "PR239", content: "build two apps per platforms")
 }
