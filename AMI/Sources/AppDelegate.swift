@@ -97,9 +97,15 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     func userNotificationCenter(_: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
         let userInfo = response.notification.request.content.userInfo
 
+        let content = response.notification.request.content
+        guard !content.title.isEmpty, !content.body.isEmpty else {
+            print("AppDelegate: Ignoring notification with empty title or body")
+            return
+        }
+
         print("AppDelegate: User tapped notification")
-        print("AppDelegate: Notification title: \(response.notification.request.content.title)")
-        print("AppDelegate: Notification body: \(response.notification.request.content.body)")
+        print("AppDelegate: Notification title: \(content.title)")
+        print("AppDelegate: Notification body: \(content.body)")
         print("AppDelegate: Notification data: \(userInfo)")
         print("AppDelegate: Action identifier: \(response.actionIdentifier)")
 
