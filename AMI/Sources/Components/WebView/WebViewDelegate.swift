@@ -27,22 +27,20 @@ extension WebViewDelegate {
     func navigationDidFailed(withError error: Error) {}
 }
 
-#if DEBUG
-    class WebViewDelegateSimulatorImplementation: WebViewDelegate {
-        func navigationWillStart() {
-            print("[WebViewDelegate] Navigation will start")
-        }
-
-        func navigationDidStart() {
-            print("[WebViewDelegate] Navigation did start")
-        }
-
-        func navigationDidFinish() {
-            print("[WebViewDelegate] Navigation did finish")
-        }
-
-        func navigationDidFailed(withError error: Error) {
-            print("[WebViewDelegate] Navigation did failed with error: \(error)")
-        }
+class WebViewDelegateSimulatorImplementation: WebViewDelegate {
+    func navigationWillStart() {
+        print("[WebViewDelegate] Navigation will start")
     }
-#endif
+    
+    func navigationDidStart() {
+        print("[WebViewDelegate] Navigation did start")
+    }
+    
+    func navigationDidFinish() {
+        print("[WebViewDelegate] Navigation did finish")
+    }
+    
+    func navigationDidFailed(withError error: Error) {
+        print("[WebViewDelegate] Navigation did failed with error: \(error)")
+    }
+}

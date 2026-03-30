@@ -227,17 +227,15 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     }
 }
 
-#if DEBUG
-    extension SwiftUIWebView.ViewModel {
-        static let `default` = {
-            let model = SwiftUIWebView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
-                                                 delegate: WebViewDelegateSimulatorImplementation(),
-                                                 userScripts: HomeUserScripts(notificationManager: NotificationManager()),
-                                                 acceptSelfSignedCertificate: true)
-            model.urlChangeAction = { _, url in
-                print("[SwiftUIWebView.ViewModel] url did change to \(url.debugDescription)")
-            }
-            return model
-        }()
-    }
-#endif
+extension SwiftUIWebView.ViewModel {
+    static let `default` = {
+        let model = SwiftUIWebView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
+                                             delegate: WebViewDelegateSimulatorImplementation(),
+                                             userScripts: HomeUserScripts(notificationManager: NotificationManager()),
+                                             acceptSelfSignedCertificate: true)
+        model.urlChangeAction = { _, url in
+            print("[SwiftUIWebView.ViewModel] url did change to \(url.debugDescription)")
+        }
+        return model
+    }()
+}
