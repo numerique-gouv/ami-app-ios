@@ -160,7 +160,6 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
                 notificationManager.requestPermission()
             case .notificationPermissionRemoved:
                 notificationManager.openSettings()
-//                WebViewOldManager.shared.goHome()
             default:
                 break
             }
