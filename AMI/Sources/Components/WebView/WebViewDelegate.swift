@@ -31,15 +31,15 @@ class WebViewDelegateSimulatorImplementation: WebViewDelegate {
     func navigationWillStart() {
         print("[WebViewDelegate] Navigation will start")
     }
-    
+
     func navigationDidStart() {
         print("[WebViewDelegate] Navigation did start")
     }
-    
+
     func navigationDidFinish() {
         print("[WebViewDelegate] Navigation did finish")
     }
-    
+
     func navigationDidFailed(withError error: Error) {
         print("[WebViewDelegate] Navigation did failed with error: \(error)")
     }

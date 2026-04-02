@@ -34,7 +34,9 @@ extension SwiftUIWebView {
         let delegate: WebViewDelegate?
         let userScripts: WebViewUserScriptsProtocol?
         let allowsBackForwardNavigationGestures: Bool
-        let acceptSelfSignedCertificate: Bool
+        #if DEBUG
+            var acceptSelfSignedCertificate = false
+        #endif
 
         private(set) var isLoading = false
         private(set) var estimatedProgress = CGFloat(0.0)
@@ -50,14 +52,12 @@ extension SwiftUIWebView {
              delegate: WebViewDelegate? = nil,
              userScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
-             acceptSelfSignedCertificate: Bool = false,
              urlChangeAction: UrlChangeAction? = nil) {
             self.configuration = configuration
             self.rootUrl = rootUrl
             self.delegate = delegate
             self.userScripts = userScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
-            self.acceptSelfSignedCertificate = acceptSelfSignedCertificate
             self.urlChangeAction = urlChangeAction
 
             super.init()
@@ -199,13 +199,15 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  didReceive challenge: URLAuthenticationChallenge,
                  completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        if acceptSelfSignedCertificate,
-           challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-           let serverTrust = challenge.protectionSpace.serverTrust {
-            let credential = URLCredential(trust: serverTrust)
-            completionHandler(.useCredential, credential)
-            return
-        }
+        #if DEBUG
+            if acceptSelfSignedCertificate,
+               challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+               let serverTrust = challenge.protectionSpace.serverTrust {
+                let credential = URLCredential(trust: serverTrust)
+                completionHandler(.useCredential, credential)
+                return
+            }
+        #endif
 
         completionHandler(.performDefaultHandling, nil)
     }
@@ -231,8 +233,10 @@ extension SwiftUIWebView.ViewModel {
     static let `default` = {
         let model = SwiftUIWebView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
                                              delegate: WebViewDelegateSimulatorImplementation(),
-                                             userScripts: HomeUserScripts(notificationManager: NotificationManager()),
-                                             acceptSelfSignedCertificate: true)
+                                             userScripts: HomeUserScripts(notificationManager: NotificationManager()))
+        #if DEBUG
+            model.acceptSelfSignedCertificate = true
+        #endif
         model.urlChangeAction = { _, url in
             print("[SwiftUIWebView.ViewModel] url did change to \(url.debugDescription)")
         }

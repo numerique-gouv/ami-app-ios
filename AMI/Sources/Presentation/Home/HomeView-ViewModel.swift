@@ -49,7 +49,7 @@ extension HomeView {
                                                             delegate: HomeViewDelegate(),
                                                             userScripts: HomeUserScripts(notificationManager: notificationManager))
             self.webViewViewModel = webViewViewModel
-             settingsViewViewModel = SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
+            settingsViewViewModel = SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
                 print("[HomeView-ViewModel]: notificationsSettingDidChangeAction")
                 Task { @MainActor in
                     await webViewViewModel.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
