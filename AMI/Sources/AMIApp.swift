@@ -19,9 +19,9 @@ struct AMIApp: App {
 
     #if IS_AMI_STAGING
         let reviewAppViewModel: ReviewAppView.ViewModel
-    #else
-        let homeViewModel = HomeView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: Self.notificationManager)
     #endif
+
+    private static let homeViewModel = HomeView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: Self.notificationManager)
 
     init() {
         #if IS_AMI_STAGING
@@ -35,13 +35,15 @@ struct AMIApp: App {
         ZStack(alignment: .top) {
             #if IS_AMI_STAGING // && FALSE
                 if openedFromNotification {
-                    HomeView(viewModel: HomeView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: Self.notificationManager))
+                    // TODO: should initialize home view model with review app backend url.
+                    // Can I get it via the received notification?
+                    HomeView(viewModel: Self.homeViewModel)
                 } else {
                     ReviewAppView(viewModel: reviewAppViewModel)
                         .environmentObject(WebService())
                 }
             #else
-                HomeView(viewModel: homeViewModel)
+                HomeView(viewModel: Self.homeViewModel)
             #endif
 
             VStack(spacing: 0) {
