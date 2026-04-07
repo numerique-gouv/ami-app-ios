@@ -1,0 +1,112 @@
+//
+//  NotificationManager.swift
+//  AMI-xcodegen
+//
+//  Created by Nicolas Buquet on 26/02/2026.
+//  Copyright © 2026 DINUM. All rights reserved.
+//
+
+import FirebaseMessaging
+import Foundation
+import SwiftUI
+import UIKit
+import WebKit
+
+class NotificationManager: NSObject {
+    // The base URL (used in AppReview). Filled by calling `registerForRemoteNotifications(baseUrl: URL)`.
+    // It is used to call the correct endpoint for device registration.
+    private var baseUrl: URL?
+
+    override init() {
+        super.init()
+    }
+
+    func registerForRemoteNotifications(baseUrl: URL) async {
+        self.baseUrl = baseUrl
+
+        switch await NotificationStatus.notificationsAuthorizationStatus() {
+        case .notDetermined:
+            await NotificationStatus.requestNotificationsActivation()
+        case .authorized, .ephemeral:
+            await MainActor.run {
+                UIApplication.shared.registerForRemoteNotifications()
+            }
+        case .denied, .provisional:
+            break
+        @unknown default:
+            break
+        }
+    }
+
+    func registerDeviceForRemoteNotificationsToBackend(token: String) {
+        guard let baseUrl else {
+            print("[NotificationManager]: Base url is not defined")
+            return
+        }
+
+        // Execute `regsiterDevice` task in background job.
+        Task(priority: .background) {
+            await RegisterDevice().registerDevice(baseUrl: baseUrl,
+                                                  token: token,
+                                                  webviewConfiguration: SwiftUIWebView.sharedConfiguration)
+        }
+    }
+}
+
+extension NotificationManager: UNUserNotificationCenterDelegate {
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        let userInfo = notification.request.content.userInfo
+
+        print("[NotificationManager]: Notification received while app is in foreground")
+        print("[NotificationManager]: Notification title: \(notification.request.content.title)")
+        print("[NotificationManager]: Notification body: \(notification.request.content.body)")
+        print("[NotificationManager]: Notification data: \(userInfo)")
+
+        // Display notification banner, play sound, and update badge even when app is open
+        completionHandler([.banner, .sound, .badge])
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+        let userInfo = response.notification.request.content.userInfo
+
+        print("[NotificationManager]: User tapped notification")
+        print("[NotificationManager]: Notification title: \(response.notification.request.content.title)")
+        print("[NotificationManager]: Notification body: \(response.notification.request.content.body)")
+        print("[NotificationManager]: Notification data: \(userInfo)")
+        print("[NotificationManager]: Action identifier: \(response.actionIdentifier)")
+
+        // Handle reception of notification: update base url (review app for instance)
+        if let appUrlString = userInfo["app_url"] as? String,
+           let appUrl = URL(string: appUrlString) {
+            print("AppDelegate: app_url received: \(appUrlString)")
+            Config.shared.BASE_URL = appUrl
+        }
+
+        // Handle different action types
+        if response.actionIdentifier == UNNotificationDefaultActionIdentifier {
+            print("AppDelegate: User tapped the notification banner, navigating to the notifications page")
+
+            let notificationsURL = URL(string: "/#/notifications", relativeTo: Config.shared.BASE_URL)!
+            //             WebViewManager.shared.pendingURL = notificationsURL
+            NotificationCenter.default.post(name: .pendingUrl, object: nil, userInfo: ["pendingUrl": notificationsURL])
+        } else if response.actionIdentifier == UNNotificationDismissActionIdentifier {
+            print("[NotificationManager]: User dismissed the notification")
+        }
+    }
+}
+
+extension NotificationManager: MessagingDelegate {
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        guard let fcmToken else {
+            print("[NotificationManager]: FCM token is nil")
+            return
+        }
+
+        guard let baseUrl else {
+            print("[NotificationManager]: Base url is not defined")
+            return
+        }
+    }
+}
