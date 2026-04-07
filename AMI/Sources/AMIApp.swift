@@ -33,7 +33,7 @@ struct AMIApp: App {
     @ViewBuilder
     private var mainContent: some View {
         ZStack(alignment: .top) {
-            #if IS_AMI_STAGING // && FALSE
+            #if IS_AMI_STAGING
                 if openedFromNotification {
                     // TODO: should initialize home view model with review app backend url.
                     // Can I get it via the received notification?
