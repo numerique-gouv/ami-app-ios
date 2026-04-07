@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct ReviewApp: Decodable, Identifiable {
-    var id: String = UUID().uuidString
+struct ReviewApp: Decodable, Identifiable, Hashable {
+    var id: UUID = .init()
     let url: String
     let title: String
     let number: Int

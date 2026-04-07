@@ -12,8 +12,7 @@ struct SettingsView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dismiss) private var dismiss
 
-    @State private var isNotificationsActive = false
-    @State private var isAutoUpdated = false
+    @Bindable var viewModel: ViewModel
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
@@ -28,12 +27,13 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var notificationToggle: some View {
-        Toggle(isOn: $isNotificationsActive) {
+        Toggle(isOn: $viewModel.isNotificationsActive) {
             Text(AMIL10n.settingsNotificationsAllowTitle)
         }
         .toggleStyle(SwitchToggleStyle(tint: .accentColor)) // needed for Toggle widget.
-        .onChange(of: isNotificationsActive) { _, newValue in
-            toggleNotificationPermissions(allowNotifications: newValue)
+        // Use deprecated version of `onChange` to handle iOS back to iOS 15.
+        .onChange(of: viewModel.isNotificationsActive) { newValue in
+            viewModel.toggleNotificationPermissions(allowNotifications: newValue)
         }
     }
 
@@ -47,11 +47,12 @@ struct SettingsView: View {
             }
             .navigationTitle(AMIL10n.settingsTitle)
             .navigationBarTitleDisplayMode(.inline)
-            .onChange(of: scenePhase, initial: true) { _, newPhase in
+            // Use deprecated version of `onChange` to handle iOS back to iOS 15.
+            .onChange(of: scenePhase) { newPhase in
                 switch newPhase {
                 case .active:
                     Task {
-                        await updateNotificationAuthorizationStatus(autoUpdate: true)
+                        await viewModel.updateNotificationAuthorizationStatus(autoUpdate: true)
                     }
                 case .inactive, .background:
                     break
@@ -60,28 +61,15 @@ struct SettingsView: View {
                 }
             }
         }
-    }
-
-    private func toggleNotificationPermissions(allowNotifications: Bool) {
-        guard !isAutoUpdated else {
-            isAutoUpdated = false
-            return
+        .task {
+            Task {
+                await viewModel.updateNotificationAuthorizationStatus(autoUpdate: true)
+            }
         }
-        switch allowNotifications {
-        case true: NotificationHelper.requestPermission()
-        case false: NotificationHelper.resetAuthorization()
-        }
-    }
-
-    private func updateNotificationAuthorizationStatus(autoUpdate: Bool) async {
-        let notificationsActiveNewValue = await NotificationHelper.isNotificationEnabled()
-        if notificationsActiveNewValue != isNotificationsActive {
-            isAutoUpdated = autoUpdate
-        }
-        isNotificationsActive = notificationsActiveNewValue
     }
 }
 
 #Preview {
-    SettingsView()
+    let viewModel = SettingsView.ViewModel(notificationManager: NotificationManager())
+    SettingsView(viewModel: viewModel)
 }

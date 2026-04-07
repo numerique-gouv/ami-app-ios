@@ -11,7 +11,7 @@ options:
   groupSortPosition: bottom
   createIntermediateGroups: true
   deploymentTarget:
-    iOS: '18.2'
+    iOS: '17.0'
   groupOrdering:
   - order:
     - AMI
@@ -28,7 +28,8 @@ settings:
   DEVELOPMENT_TEAM: NVMQD635C6
 #  CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED: true
 #  ENABLE_BITCODE: false
-  MARKETING_VERSION: 0.1
+  MARKETING_VERSION: 0.3
+  CURRENT_PROJECT_VERSION: 1
   SUPPORTS_MACCATALYST: false
   TARGETED_DEVICE_FAMILY: iPhone, iPad
   
@@ -39,3 +40,6 @@ packages:
   Firebase:
     url: https://github.com/firebase/firebase-ios-sdk
     version: 12.7.0
+  SwiftUI-Introspect:
+    url: https://github.com/siteline/swiftui-introspect.git
+    version: 26.0.0
