@@ -15,17 +15,19 @@ struct AMIApp: App {
     @State private var offlineBannerId: UUID?
     @State private var openedFromNotification = false
 
-    let notificationManager = NotificationManager()
+    private static let notificationManager = NotificationManager()
 
     #if IS_AMI_STAGING
         let reviewAppViewModel: ReviewAppView.ViewModel
     #endif
 
+    private static let homeViewModel = HomeView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: Self.notificationManager)
+
     init() {
         #if IS_AMI_STAGING
-            reviewAppViewModel = ReviewAppView.ViewModel(notificationManager: notificationManager)
+            reviewAppViewModel = ReviewAppView.ViewModel(notificationManager: Self.notificationManager)
         #endif
-        delegate.notificationManager = notificationManager
+        delegate.notificationManager = Self.notificationManager
     }
 
     @ViewBuilder
@@ -33,13 +35,15 @@ struct AMIApp: App {
         ZStack(alignment: .top) {
             #if IS_AMI_STAGING // && FALSE
                 if openedFromNotification {
-                    HomeView()
+                    // TODO: should initialize home view model with review app backend url.
+                    // Can I get it via the received notification?
+                    HomeView(viewModel: Self.homeViewModel)
                 } else {
-                    ReviewAppView()
-					    .environmentObject(WebService())
-            }
+                    ReviewAppView(viewModel: reviewAppViewModel)
+                        .environmentObject(WebService())
+                }
             #else
-                HomeView(initialUrl: Config.shared.BASE_URL)
+                HomeView(viewModel: Self.homeViewModel)
             #endif
 
             VStack(spacing: 0) {
