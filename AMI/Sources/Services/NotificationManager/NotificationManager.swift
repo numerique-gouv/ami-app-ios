@@ -86,7 +86,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
 
         // Handle different action types
         if response.actionIdentifier == UNNotificationDefaultActionIdentifier {
-            print("AppDelegate: User tapped the notification banner, navigating to the notifications page")
+            print("[NotificationManager]: User tapped the notification banner, navigating to the notifications page")
 
             let notificationsURL = URL(string: "/#/notifications", relativeTo: Config.shared.BASE_URL)!
             //             WebViewManager.shared.pendingURL = notificationsURL
@@ -104,9 +104,6 @@ extension NotificationManager: MessagingDelegate {
             return
         }
 
-        guard let baseUrl else {
-            print("[NotificationManager]: Base url is not defined")
-            return
-        }
+        print("[NotificationManager] didReceiveRegistrationToken: \(fcmToken)")
     }
 }
