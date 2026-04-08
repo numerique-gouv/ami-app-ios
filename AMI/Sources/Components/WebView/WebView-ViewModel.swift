@@ -112,6 +112,7 @@ extension SwiftUIWebView {
             }
         }
 
+        @MainActor // `evaluateJavaScript` must be used from main thread only.
         func readInLocalStorage(key: String) async -> Any? {
             guard let webView else {
                 print("[WebView-ViewModel]: readInLocalStorage not called because no webView initialzed")
@@ -132,6 +133,7 @@ extension SwiftUIWebView {
             }
         }
 
+        @MainActor // `evaluateJavaScript` must be used from main thread only.
         func writeInLocalStorage(key: String, value: String) async {
             guard let webView else {
                 print("[WebView-ViewModel]: writeInLocalStorage not called because no webView initialzed")
