@@ -54,6 +54,7 @@ class NotificationManager: NSObject {
 }
 
 extension NotificationManager: UNUserNotificationCenterDelegate {
+    // Called when a push notification is delivered to the device while the application is in foreground.
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
@@ -68,32 +69,41 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         completionHandler([.banner, .sound, .badge])
     }
 
+    // Called when a push notification is tapped by the user when the application is in background.
+    // Annotate with @MainActor else when called, the application is in background state and this will trigger a crash: `NSInternalInconsistencyException', reason: 'Call must be made on main thread'`
+    @MainActor
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
         let userInfo = response.notification.request.content.userInfo
 
-        print("[NotificationManager]: User tapped notification")
-        print("[NotificationManager]: Notification title: \(response.notification.request.content.title)")
-        print("[NotificationManager]: Notification body: \(response.notification.request.content.body)")
-        print("[NotificationManager]: Notification data: \(userInfo)")
-        print("[NotificationManager]: Action identifier: \(response.actionIdentifier)")
-
-        // Handle reception of notification: update base url (review app for instance)
-        if let appUrlString = userInfo["app_url"] as? String,
-           let appUrl = URL(string: appUrlString) {
-            print("AppDelegate: app_url received: \(appUrlString)")
-            Config.shared.BASE_URL = appUrl
-        }
+        print("[NotificationManager] User tapped notification")
+        print("[NotificationManager] Notification title: \(response.notification.request.content.title)")
+        print("[NotificationManager] Notification body: \(response.notification.request.content.body)")
+        print("[NotificationManager] Notification data: \(userInfo)")
+        print("[NotificationManager] Action identifier: \(response.actionIdentifier)")
 
         // Handle different action types
         if response.actionIdentifier == UNNotificationDefaultActionIdentifier {
             print("[NotificationManager] User tapped the notification banner, navigating to the notifications page")
 
-            let notificationsURL = URL(string: "/#/notifications", relativeTo: Config.shared.BASE_URL)!
-            //             WebViewManager.shared.pendingURL = notificationsURL
-            NotificationCenter.default.post(name: .pendingUrl, object: nil, userInfo: ["pendingUrl": notificationsURL])
+            // Handle reception of notification (review app for instance)
+            if let appUrlString = userInfo["app_url"] as? String,
+               let targetApplicationUrl = URL(string: appUrlString) {
+                handleIncomingNotificationUrl(url: targetApplicationUrl)
+            }
         } else if response.actionIdentifier == UNNotificationDismissActionIdentifier {
             print("[NotificationManager] User dismissed the notification")
         }
+    }
+
+    private func handleIncomingNotificationUrl(url: URL) {
+        print("[NotificationManager] app_url received: \(url)")
+        guard let notificationsURL = URL(string: "/#/notifications", relativeTo: url) else {
+            return
+        }
+
+        // Use NotificationCenter rather than callback to be sure the notification is treated on the main UI thread.
+        let notification = Notification(name: Notification.Name.pendingUrl, object: nil, userInfo: [Notification.Name.pendingUrl: notificationsURL])
+        NotificationCenter.default.post(notification)
     }
 }
 
