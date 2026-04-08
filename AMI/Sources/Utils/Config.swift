@@ -10,9 +10,9 @@ final class Config {
     static let shared = Config()
 
     #if IS_AMI_STAGING
-        var BASE_URL = URL(string: "https://ami-back-staging.osc-fr1.scalingo.io")!
+        let BASE_URL = URL(string: "https://ami-back-staging.osc-fr1.scalingo.io")!
     #elseif IS_AMI_PRODUCTION
-        var BASE_URL = URL(string: "https://ami-back-prod.osc-secnum-fr1.scalingo.io")!
+        let BASE_URL = URL(string: "https://ami-back-prod.osc-secnum-fr1.scalingo.io")!
     #endif
 
     private init() {}
