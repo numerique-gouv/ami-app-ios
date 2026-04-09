@@ -41,10 +41,9 @@ extension HomeView {
 
         @Sendable
         private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
-            showSettings = url?.absoluteString.hasSuffix("/#/settings") ?? false
-            isOnContactPage = url?.absoluteString.hasSuffix("/#/contact") ?? false
-
-            print("[HomeView-ViewModel]: URL Change Action \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage)")
+            let urlString = url?.absoluteString ?? ""
+            isOnContactPage = urlString.hasSuffix("/#/contact") ?? false
+            isExternalProcess = !urlString.hasPrefix(webViewViewModel.rootUrl.absoluteString)
 
             Task { @MainActor in
                 if self.showSettings,
@@ -53,7 +52,21 @@ extension HomeView {
                     self.webViewViewModel.webView?.goBack()
                     // Force `showSettings` to true because it is reset to false by the `goBack` command.
                     self.showSettings = true
+            if let route = findNativeRoute(for: urlString) {
+                Task { @MainActor in
+                    self.navigate(to: route)
                 }
+            }
+
+            print("[HomeView-ViewModel]: URL Change Action \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage) - external: \(isExternalProcess)")
+        }
+
+        @MainActor
+        func navigate(to route: NativeRoute) {
+            print("[HomeView-ViewModel]: Promoted page detected, navigating app to \(route)")
+            switch route {
+            case .settings:
+                showSettings = true
             }
         }
 
@@ -93,6 +106,11 @@ extension HomeView {
             webViewViewModel.urlChangeAction = handleUrlChange
             userScripts.userLoggedInAction = userLoginActions
             userScripts.userLoggedOutAction = userLogoutActions
+            homeUserScripts.onNavigate = { [weak self] route in
+                Task { @MainActor in
+                    self?.navigate(to: route)
+                }
+            }
             onboardingViewViewModel.eventReceiver = { event in
                 switch event {
                 case .isDismissed:
