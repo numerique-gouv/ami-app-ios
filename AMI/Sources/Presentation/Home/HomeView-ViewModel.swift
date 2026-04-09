@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 import WebKit
 
 extension HomeView {
@@ -18,6 +19,7 @@ extension HomeView {
         var isExternalProcess = false
         var isOnContactPage = false
         var showSettings = false
+        var showNoEmailClientAlert = false
 
         @Sendable
         private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
@@ -43,10 +45,16 @@ extension HomeView {
             LogsExporter(userId: userId?.trimmingCharacters(in: CharacterSet(charactersIn: "\""))).shareLogs()
         }
 
+        @MainActor
+        func contactByEmail(targetUrl: URL) {
+            UIApplication.shared.open(targetUrl) { accepted in
+                self.showNoEmailClientAlert = !accepted
+            }
+        }
+
         init(rootUrl: URL, notificationManager: NotificationManager) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
-                                                            delegate: HomeViewDelegate(),
                                                             userScripts: HomeUserScripts(notificationManager: notificationManager))
             self.webViewViewModel = webViewViewModel
             settingsViewViewModel = SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
@@ -57,6 +65,8 @@ extension HomeView {
             })
             super.init()
 
+            self.webViewViewModel.delegate = self
+
             // Init `urlChangeAction` property after fully initialized `self` because closure is referencing `self`.
             // No clean way to pass this closure in the `SwiftUIWebView.ViewModel.init` call.
             webViewViewModel.urlChangeAction = handleUrlChange
@@ -64,7 +74,18 @@ extension HomeView {
     }
 }
 
-class HomeViewDelegate: WebViewDelegate {
+extension HomeView.ViewModel: WebViewDelegate {
+    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
+        if let targetUrl = navigationAction.request.url,
+           targetUrl.scheme == "mailto" {
+            Task { @MainActor in
+                contactByEmail(targetUrl: targetUrl)
+            }
+            return false
+        }
+        return true
+    }
+
     func navigationWillStart(navigationAction: WKNavigationAction) {
         print("[WebViewDelegate navigationWillStart]")
     }
