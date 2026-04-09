@@ -21,20 +21,25 @@ extension HomeView {
 
         @Sendable
         private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
-            showSettings = url?.absoluteString.hasSuffix("/#/settings") ?? false
-            isOnContactPage = url?.absoluteString.hasSuffix("/#/contact") ?? false
-            isExternalProcess = !(url?.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) ?? true)
+            let urlString = url?.absoluteString ?? ""
+            isOnContactPage = urlString.hasSuffix("/#/contact") ?? false
+            isExternalProcess = !urlString.hasPrefix(webViewViewModel.rootUrl.absoluteString)
+
+            if let route = findNativeRoute(for: urlString) {
+                Task { @MainActor in
+                    self.navigate(to: route)
+                }
+            }
 
             print("[HomeView-ViewModel]: URL Change Action \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage) - external: \(isExternalProcess)")
+        }
 
-            Task { @MainActor in
-                if self.showSettings,
-                   self.webViewViewModel.webView?.canGoBack ?? false {
-                    // As new page should not be handled by webview, reset webView last step navigation (to clean history).
-                    self.webViewViewModel.webView?.goBack()
-                    // Force `showSettings` to true because it is reset to false by the `goBack` command.
-                    self.showSettings = true
-                }
+        @MainActor
+        func navigate(to route: NativeRoute) {
+            print("[HomeView-ViewModel]: Promoted page detected, navigating app to \(route)")
+            switch route {
+            case .settings:
+                showSettings = true
             }
         }
 
@@ -45,9 +50,10 @@ extension HomeView {
 
         init(rootUrl: URL, notificationManager: NotificationManager) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
+            let homeUserScripts = HomeUserScripts(notificationManager: notificationManager)
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                                             delegate: HomeViewDelegate(),
-                                                            userScripts: HomeUserScripts(notificationManager: notificationManager))
+                                                            userScripts: homeUserScripts)
             self.webViewViewModel = webViewViewModel
             settingsViewViewModel = SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
                 print("[HomeView-ViewModel]: notificationsSettingDidChangeAction")
@@ -60,12 +66,17 @@ extension HomeView {
             // Init `urlChangeAction` property after fully initialized `self` because closure is referencing `self`.
             // No clean way to pass this closure in the `SwiftUIWebView.ViewModel.init` call.
             webViewViewModel.urlChangeAction = handleUrlChange
+            homeUserScripts.onNavigate = { [weak self] route in
+                Task { @MainActor in
+                    self?.navigate(to: route)
+                }
+            }
         }
     }
 }
 
 class HomeViewDelegate: WebViewDelegate {
-    func navigationWillStart(navigationAction: WKNavigationAction) {
+    func navigationWillStart(navigationAction _: WKNavigationAction) {
         print("[WebViewDelegate navigationWillStart]")
     }
 

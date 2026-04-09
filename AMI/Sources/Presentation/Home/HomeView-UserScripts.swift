@@ -15,6 +15,7 @@ class HomeUserScripts {
     enum Script: String {
         case nativeBridge = "NativeBridge"
         case consoleLog
+        case nativeURLs
     }
 
     // Enumerate existing events
@@ -22,10 +23,12 @@ class HomeUserScripts {
         case userLoggedIn = "user_logged_in"
         case notificationPermissionRequested = "notification_permission_requested"
         case notificationPermissionRemoved = "notification_permission_removed"
+        case navigateTo = "navigateTo"
     }
 
     // notificationManager: used to handle notification registration once user is logged.
     let notificationManager: NotificationManager
+    var onNavigate: ((NativeRoute) -> Void)?
     var scripts: [UserScript]
 
     required init(notificationManager: NotificationManager) {
@@ -38,6 +41,10 @@ class HomeUserScripts {
             UserScript(name: Script.consoleLog.rawValue,
                        script: WKUserScript(source: Self.consoleLogScript,
                                             injectionTime: .atDocumentStart,
+                                            forMainFrameOnly: false)),
+            UserScript(name: Script.nativeURLs.rawValue,
+                       script: WKUserScript(source: Self.nativeURLsScript,
+                                            injectionTime: .atDocumentEnd,
                                             forMainFrameOnly: false)),
         ]
     }
@@ -54,6 +61,14 @@ class HomeUserScripts {
     };
     console.log('NativeBridge initialized');
     """
+
+    // This sets window.NativeURLs so the web frontend knows which URLs are handled natively
+    private static let nativeURLsScript: String = {
+        let urls = Array(nativeRoutes.keys)
+        let data = (try? JSONSerialization.data(withJSONObject: urls)) ?? Data("[]".utf8)
+        let json = String(data: data, encoding: .utf8)! // safe: JSONSerialization always produces valid UTF-8
+        return "window.NativeURLs = \(json);"
+    }()
 
     // JavaScript to capture console logs
     private static let consoleLogScript = """
@@ -117,8 +132,7 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
             printLog(message)
         case .nativeBridge:
             processMessage(message, for: viewModel)
-        case .none:
-            // Ignore unknown script message names
+        case .nativeURLs, .none:
             break
         }
     }
@@ -160,6 +174,10 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
                 notificationManager.requestPermission()
             case .notificationPermissionRemoved:
                 notificationManager.openSettings()
+            case .navigateTo:
+                if let url = data as? String, let route = findNativeRoute(for: url) {
+                    onNavigate?(route)
+                }
             default:
                 break
             }
