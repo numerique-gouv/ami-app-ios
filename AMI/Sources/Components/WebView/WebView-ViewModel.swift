@@ -191,9 +191,14 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
             return
         }
 
-        delegate?.navigationWillStart(navigationAction: navigationAction)
-
-        decisionHandler(.allow)
+        // Check with delegate if navigation to destination is allowed.
+        if let delegate,
+           !delegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
+            decisionHandler(.cancel)
+        } else {
+            delegate?.navigationWillStart(navigationAction: navigationAction)
+            decisionHandler(.allow)
+        }
     }
 
     func webView(_ webView: WKWebView,
