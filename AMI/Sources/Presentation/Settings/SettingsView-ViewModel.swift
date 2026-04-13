@@ -26,7 +26,7 @@ extension SettingsView {
         }
 
         func updateNotificationAuthorizationStatus(autoUpdate: Bool) async {
-            let notificationsActiveNewValue = await notificationManager.isNotificationEnabled()
+            let notificationsActiveNewValue = await NotificationStatus.isNotificationEnabled()
             if notificationsActiveNewValue != isNotificationsActive {
                 isAutoUpdated = autoUpdate
             }
@@ -40,8 +40,8 @@ extension SettingsView {
                 return
             }
             switch allowNotifications {
-            case true: notificationManager.requestPermission()
-            case false: notificationManager.resetAuthorization()
+            case true: NotificationStatus.requestPermission()
+            case false: NotificationStatus.resetAuthorization()
             }
         }
     }

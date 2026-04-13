@@ -13,37 +13,45 @@ struct AMIApp: App {
     @StateObject private var bannerManager = InformationBannerManager.shared
     @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var offlineBannerId: UUID?
-    @State private var openedFromNotification = false
 
     private static let notificationManager = NotificationManager()
+
+    @State private var notificationTriggeredHomeViewModel = Self.defaulthomeViewModel
+    // State to force refresh view when a notification is tqpped by the user.
+    @State private var notificationActivatedHomeViewModelId: UUID?
 
     #if IS_AMI_STAGING
         let reviewAppViewModel: ReviewAppView.ViewModel
     #endif
 
-    private static let homeViewModel = HomeView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: Self.notificationManager)
+    private static var defaulthomeViewModel = HomeView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: Self.notificationManager)
 
     init() {
         #if IS_AMI_STAGING
             reviewAppViewModel = ReviewAppView.ViewModel(notificationManager: Self.notificationManager)
         #endif
+
+        // Set the notificationManager to receive notification events.
+        UNUserNotificationCenter.current().delegate = Self.notificationManager
+
+        // Set AppDelegate notificationManager for Firebase configuration.
         delegate.notificationManager = Self.notificationManager
     }
 
     @ViewBuilder
     private var mainContent: some View {
         ZStack(alignment: .top) {
-            #if IS_AMI_STAGING // && FALSE
-                if openedFromNotification {
-                    // TODO: should initialize home view model with review app backend url.
-                    // Can I get it via the received notification?
-                    HomeView(viewModel: Self.homeViewModel)
+            #if IS_AMI_STAGING
+                if let notificationActivatedHomeViewModelId {
+                    HomeView(viewModel: notificationTriggeredHomeViewModel)
+                        .id(notificationActivatedHomeViewModelId)
                 } else {
                     ReviewAppView(viewModel: reviewAppViewModel)
                         .environmentObject(WebService())
                 }
             #else
-                HomeView(viewModel: Self.homeViewModel)
+                HomeView(viewModel: notificationTriggeredHomeViewModel)
+                    .id(notificationActivatedHomeViewModelId)
             #endif
 
             VStack(spacing: 0) {
@@ -55,8 +63,8 @@ struct AMIApp: App {
         }
         .animation(.easeInOut(duration: 0.3), value: bannerManager.banners.count)
         .environmentObject(networkMonitor)
-        .onReceive(NotificationCenter.default.publisher(for: .pendingUrl)) { _ in
-            openedFromNotification = true
+        .onReceive(NotificationCenter.default.publisher(for: .pendingUrl)) { notification in
+            notificationReceived(notification: notification)
         }
     }
 
@@ -85,5 +93,18 @@ struct AMIApp: App {
                 hasCloseIcon: false
             )
         }
+    }
+
+    private func notificationReceived(notification: Notification) {
+        guard let appReviewUrl = notification.userInfo?[Notification.Name.pendingUrl] as? URL else {
+            notificationTriggeredHomeViewModel = Self.defaulthomeViewModel
+            notificationActivatedHomeViewModelId = nil
+            return
+        }
+        print("[AmiApp] Notification Received: \(appReviewUrl)")
+
+        notificationTriggeredHomeViewModel = HomeView.ViewModel(rootUrl: appReviewUrl.absoluteURL, notificationManager: Self.notificationManager)
+        // Change view ID to force refresh.
+        notificationActivatedHomeViewModelId = UUID()
     }
 }

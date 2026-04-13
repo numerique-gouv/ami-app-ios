@@ -157,9 +157,9 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
                     await notificationManager.registerForRemoteNotifications(baseUrl: viewModel.rootUrl)
                 }
             case .notificationPermissionRequested:
-                notificationManager.requestPermission()
+                NotificationStatus.requestPermission()
             case .notificationPermissionRemoved:
-                notificationManager.openSettings()
+                NotificationStatus.openSettings()
             default:
                 break
             }

@@ -154,7 +154,7 @@ targets:
 
     settings:
       BASE_BUNDLE_IDENTIFIER: fr.gouv.ami.staging
-      PRODUCTION_APP_NAME: AMI PRODUCTION
+      PRODUCTION_APP_NAME: AMI STAGING
       APP_NAME: AMI-Production
       APP_DISPLAY_NAME: AMI staging # The name used in the application.
       CODE_SIGN_ENTITLEMENTS: targets/production/SupportingFiles/ami.entitlements
