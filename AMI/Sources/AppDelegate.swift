@@ -50,7 +50,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // Messaging delegate (NotificationManager) method `messaging:didReceiveRegistrationToken:` will be called only if apnsToken did change from previous one.
         Messaging.messaging().apnsToken = deviceToken
 
-        // So, don't rely on `messaging:didReceiveRegistrationToken` to regsiter device to our backend.
+        // So, don't rely on `messaging:didReceiveRegistrationToken` to register device to our backend.
         Task {
             if let token = try? await Messaging.messaging().token() {
                 notificationManager?.registerDeviceForRemoteNotificationsToBackend(token: token)

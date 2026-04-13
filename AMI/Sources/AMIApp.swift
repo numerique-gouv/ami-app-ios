@@ -17,7 +17,7 @@ struct AMIApp: App {
     private static let notificationManager = NotificationManager()
 
     @State private var notificationTriggeredHomeViewModel = Self.defaulthomeViewModel
-    // State to force refresh view when a notification is tqpped by the user.
+    // State to force refresh view when a notification is tapped by the user.
     @State private var notificationActivatedHomeViewModelId: UUID?
 
     #if IS_AMI_STAGING
