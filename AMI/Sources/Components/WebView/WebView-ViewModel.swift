@@ -31,7 +31,7 @@ extension SwiftUIWebView {
 
         let configuration: WKWebViewConfiguration
         let rootUrl: URL
-        let delegate: WebViewDelegate?
+        var delegate: WebViewDelegate?
         let userScripts: WebViewUserScriptsProtocol?
         let allowsBackForwardNavigationGestures: Bool
         #if DEBUG
@@ -49,18 +49,19 @@ extension SwiftUIWebView {
 
         init(configuration: WKWebViewConfiguration = SwiftUIWebView.sharedConfiguration,
              rootUrl: URL,
-             delegate: WebViewDelegate? = nil,
              userScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
              urlChangeAction: UrlChangeAction? = nil) {
             self.configuration = configuration
             self.rootUrl = rootUrl
-            self.delegate = delegate
             self.userScripts = userScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
             self.urlChangeAction = urlChangeAction
 
             super.init()
+
+            // Default delegate to self.
+            delegate = self
 
             addUserScripts(userScripts: userScripts)
 
@@ -167,6 +168,11 @@ extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
 }
 
 extension SwiftUIWebView.ViewModel: WebViewDelegate {
+    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
+        print("[WebViewDelegate] Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
+        return true
+    }
+
     func navigationWillStart() {
         print("[WebViewDelegate] Navigation will start")
     }
@@ -193,9 +199,14 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
             return
         }
 
-        delegate?.navigationWillStart(navigationAction: navigationAction)
-
-        decisionHandler(.allow)
+        // Check with delegate if navigation to destination is allowed.
+        if let delegate,
+           !delegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
+            decisionHandler(.cancel)
+        } else {
+            delegate?.navigationWillStart(navigationAction: navigationAction)
+            decisionHandler(.allow)
+        }
     }
 
     func webView(_ webView: WKWebView,
@@ -234,8 +245,8 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
 extension SwiftUIWebView.ViewModel {
     static let `default` = {
         let model = SwiftUIWebView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
-                                             delegate: WebViewDelegateSimulatorImplementation(),
                                              userScripts: HomeUserScripts(notificationManager: NotificationManager()))
+        model.delegate = WebViewDelegateSimulatorImplementation()
         #if DEBUG
             model.acceptSelfSignedCertificate = true
         #endif

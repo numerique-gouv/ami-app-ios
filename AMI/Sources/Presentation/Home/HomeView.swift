@@ -46,6 +46,11 @@ struct HomeView: View {
             .sheet(isPresented: $viewModel.showSettings) {
                 SettingsView(viewModel: viewModel.settingsViewViewModel)
             }
+            .alert(isPresented: $viewModel.showNoEmailClientAlert) {
+                Alert(title: Text("Erreur"),
+                      message: Text("Aucun client email correctement configuré n'a été trouvé sur votre appareil."),
+                      dismissButton: .default(Text("Ok")))
+            }
 
         if viewModel.isOnContactPage {
             Button {
