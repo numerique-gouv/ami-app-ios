@@ -34,9 +34,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
         FirebaseApp.configure(options: options)
         #if IS_AMI_STAGING
-            print("Firebase configured with \(firebaseConfigFilename).plist for environment: STAGING")
+        AppLog.app.notice("[\(AppLog.logHeader(caller: self, function: #function))] Firebase configured with \(firebaseConfigFilename).plist for environment: STAGING")
         #else
-            print("Firebase configured with \(firebaseConfigFilename).plist for environment: PRODUCTION")
+            AppLog.app.notice("[\(type(of: self))] Firebase configured with \(firebaseConfigFilename).plist for environment: PRODUCTION")
         #endif
 
         // Set Messaging Delegate to receive FCM token updates
