@@ -41,7 +41,7 @@ class RegisterDevice {
 
     func registerDevice(baseUrl: URL, token: String, webviewConfiguration: WKWebViewConfiguration) async {
         guard let authToken = await getAuthToken(webviewConfiguration: webviewConfiguration) else {
-            print("[NotificationManager]: ⚠️ No 'token' cookie found - cannot register device")
+            AppLog.service.warning("\(AppLog.logHeader(caller: self, function: #function)) ⚠️ No 'token' cookie found - cannot register device")
             return
         }
 
@@ -49,7 +49,15 @@ class RegisterDevice {
         let deviceModel = await UIDevice.current.model
         let appVersion = AppBundle.version()
 
-        print("[NotificationManager]: ✅ Registering device - fcmToken=\(token) deviceId=\(deviceId) model=\(deviceModel) platform=ios app_version=\(appVersion)")
+        AppLog.service.notice(
+            """
+            \(AppLog.logHeader(caller: self, function: #function)) ✅ Registering device
+            \tfcmToken=\(token, privacy: .private)
+            \tdeviceId=\(deviceId, privacy: .private)
+            \tmodel=\(deviceModel)
+            \tplatform=ios app_version=\(appVersion)
+            """
+        )
 
         // prepare registration data.
         let registerInput = RegisterDeviceRequestInput(token: token,
@@ -78,13 +86,13 @@ class RegisterDevice {
 
             if let httpResponse = response as? HTTPURLResponse {
                 if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
-                    print("[NotificationManager]: ✅ Device registered successfully")
+                    AppLog.service.notice("\(AppLog.logHeader(caller: self, function: #function)) ✅ Device registered successfully")
                 } else {
-                    print("[NotificationManager]: ⚠️ Device registration failed with status \(httpResponse.statusCode)")
+                    AppLog.service.warning("\(AppLog.logHeader(caller: self, function: #function)) ⚠️ Device registration failed with status \(httpResponse.statusCode)")
                 }
             }
         } catch {
-            print("[NotificationManager]: ❌ Device registration error: \(error.localizedDescription)")
+            AppLog.service.error("\(AppLog.logHeader(caller: self, function: #function)) ❌ Device registration error: \(error.localizedDescription)")
         }
     }
 }

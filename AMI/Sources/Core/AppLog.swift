@@ -17,11 +17,12 @@ enum AppLog {
     static let app = Logger(subsystem: AppBundle.identifier(), category: "application")
     static let view = Logger(subsystem: AppBundle.identifier(), category: "view")
     static let viewModel = Logger(subsystem: AppBundle.identifier(), category: "viewModel")
+    static let service = Logger(subsystem: AppBundle.identifier(), category: "service")
 
     static func logHeader(caller: Any? = nil, function: String) -> String {
         switch caller {
-        case let .some(caller): "\(type(of: caller)) - \(function)"
-        case .none: "<no-caller> - \(function)"
+        case let .some(caller): "[\(type(of: caller)) - \(function)]"
+        case .none: "[<no-caller> - \(function)]"
         }
     }
 
