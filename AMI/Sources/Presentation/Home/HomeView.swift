@@ -51,6 +51,9 @@ struct HomeView: View {
                       message: Text("Aucun client email correctement configuré n'a été trouvé sur votre appareil."),
                       dismissButton: .default(Text("Ok")))
             }
+            .sheet(isPresented: $viewModel.onboardingViewViewModel.isPresentingOnboardingView) {
+                OnboardingView(viewModel: viewModel.onboardingViewViewModel)
+            }
 
         if viewModel.isOnContactPage {
             Button {

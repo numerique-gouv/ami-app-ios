@@ -245,7 +245,7 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
 extension SwiftUIWebView.ViewModel {
     static let `default` = {
         let model = SwiftUIWebView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
-                                             userScripts: HomeUserScripts(notificationManager: NotificationManager()))
+                                             userScripts: HomeUserScripts())
         model.delegate = WebViewDelegateSimulatorImplementation()
         #if DEBUG
             model.acceptSelfSignedCertificate = true

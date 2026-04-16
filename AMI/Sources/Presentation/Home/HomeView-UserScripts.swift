@@ -24,12 +24,12 @@ class HomeUserScripts {
         case notificationPermissionRemoved = "notification_permission_removed"
     }
 
-    // notificationManager: used to handle notification registration once user is logged.
-    let notificationManager: NotificationManager
-    var scripts: [UserScript]
+    typealias UserLoggedAction = () -> Void
 
-    required init(notificationManager: NotificationManager) {
-        self.notificationManager = notificationManager
+    var scripts: [UserScript]
+    var userLoggedAction: UserLoggedAction?
+
+    required init() {
         scripts = [
             UserScript(name: Script.nativeBridge.rawValue,
                        script: WKUserScript(source: Self.nativeBridgeScript,
@@ -153,9 +153,7 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
 
             switch Event(rawValue: eventName) {
             case .userLoggedIn:
-                Task {
-                    await notificationManager.registerForRemoteNotifications(baseUrl: viewModel.rootUrl)
-                }
+                userLoggedAction?()
             case .notificationPermissionRequested:
                 NotificationStatus.requestPermission()
             case .notificationPermissionRemoved:

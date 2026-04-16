@@ -15,12 +15,15 @@ extension HomeView {
     class ViewModel: NSObject {
         let webViewViewModel: SwiftUIWebView.ViewModel
         let settingsViewViewModel: SettingsView.ViewModel
+        var onboardingViewViewModel: OnboardingView.ViewModel
 
         var isExternalProcess = false
         var isOnContactPage = false
         var showSettings = false
         var showNoEmailClientAlert = false
 
+        private var checkNotificationStatusDone = false
+        
         @Sendable
         private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
             showSettings = url?.absoluteString.hasSuffix("/#/settings") ?? false
@@ -54,8 +57,9 @@ extension HomeView {
 
         init(rootUrl: URL, notificationManager: NotificationManager) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
+            let homeUserScripts = HomeUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
-                                                            userScripts: HomeUserScripts(notificationManager: notificationManager))
+                                                            userScripts: homeUserScripts)
             self.webViewViewModel = webViewViewModel
             settingsViewViewModel = SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
                 print("[HomeView-ViewModel]: notificationsSettingDidChangeAction")
@@ -63,6 +67,7 @@ extension HomeView {
                     await webViewViewModel.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
                 }
             })
+            onboardingViewViewModel = OnboardingView.ViewModel(applicationRootUrl: rootUrl, notificationManager: notificationManager)
             super.init()
 
             self.webViewViewModel.delegate = self
@@ -70,6 +75,20 @@ extension HomeView {
             // Init `urlChangeAction` property after fully initialized `self` because closure is referencing `self`.
             // No clean way to pass this closure in the `SwiftUIWebView.ViewModel.init` call.
             webViewViewModel.urlChangeAction = handleUrlChange
+            homeUserScripts.userLoggedAction = checkNotificationStatus
+        }
+
+        private func checkNotificationStatus() {
+            // User logged event is called too often.
+            // Only check Notifications Status once par session.
+            // TODO: reset `checkNotificationStatusDone` on user disconnection.
+            guard !checkNotificationStatusDone else {
+                return
+            }
+            checkNotificationStatusDone = true
+            Task {
+                onboardingViewViewModel.isPresentingOnboardingView = await NotificationStatus.notificationsAuthorizationStatus() == .notDetermined
+            }
         }
     }
 }
