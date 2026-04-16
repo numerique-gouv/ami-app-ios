@@ -10,11 +10,22 @@ class NetworkMonitor: ObservableObject {
 
     private init() {
         monitor.pathUpdateHandler = { [weak self] path in
-            print("NetworkMonitor: network status changed to \(path.status)")
+            AppLog.service.notice("\(AppLog.logHeader(caller: self, function: #function)) Network status changed to \(path.status)")
             DispatchQueue.main.async {
                 self?.isConnected = path.status == .satisfied
             }
         }
         monitor.start(queue: DispatchQueue(label: "NetworkMonitor"))
+    }
+}
+
+extension NWPath.Status: @retroactive CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .requiresConnection: "requires connection"
+        case .satisfied: "satisfied"
+        case .unsatisfied: "unsatisfied"
+        @unknown default: "unknown NWPath.Status"
+        }
     }
 }

@@ -25,7 +25,16 @@ extension HomeView {
             isOnContactPage = url?.absoluteString.hasSuffix("/#/contact") ?? false
             isExternalProcess = !(url?.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) ?? true)
 
-            print("[HomeView-ViewModel]: URL Change Action \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage) - external: \(isExternalProcess)")
+            // swiftformat:disable redundantSelf
+            AppLog.viewModel.notice(
+                """
+                \(AppLog.logHeader(caller: self, function: #function)) URL Change Action \(url?.debugDescription ?? "<nil>")
+                \tsettings: \(self.showSettings)
+                \tcontact: \(self.isOnContactPage)
+                \texternal: \(self.isExternalProcess)
+                """
+            )
+            // swiftformat:enable redundantSelf
 
             Task { @MainActor in
                 if self.showSettings,
@@ -50,7 +59,6 @@ extension HomeView {
                                                             userScripts: HomeUserScripts(notificationManager: notificationManager))
             self.webViewViewModel = webViewViewModel
             settingsViewViewModel = SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
-                print("[HomeView-ViewModel]: notificationsSettingDidChangeAction")
                 Task { @MainActor in
                     await webViewViewModel.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
                 }
@@ -66,18 +74,18 @@ extension HomeView {
 
 class HomeViewDelegate: WebViewDelegate {
     func navigationWillStart(navigationAction: WKNavigationAction) {
-        print("[WebViewDelegate navigationWillStart]")
+        AppLog.viewModel.notice("\(AppLog.logHeader(caller: self, function: #function)) NavigationWillStart")
     }
 
     func navigationDidStart() {
-        print("[WebViewDelegate navigationDidStart]")
+        AppLog.viewModel.notice("\(AppLog.logHeader(caller: self, function: #function)) NavigationDidStart")
     }
 
     func navigationDidFinish() {
-        print("[WebViewDelegate navigationDidFinish]")
+        AppLog.viewModel.notice("\(AppLog.logHeader(caller: self, function: #function)) NavigationDidFinish")
     }
 
     func navigationDidFailed(withError error: Error) {
-        print("[WebViewDelegate navigationDidFailed] failed with error \(error)")
+        AppLog.viewModel.notice("\(AppLog.logHeader(caller: self, function: #function)) NavigationDidFailed] failed with error \(error)")
     }
 }

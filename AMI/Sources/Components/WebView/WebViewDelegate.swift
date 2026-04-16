@@ -29,18 +29,18 @@ extension WebViewDelegate {
 
 class WebViewDelegateSimulatorImplementation: WebViewDelegate {
     func navigationWillStart() {
-        print("[WebViewDelegate] Navigation will start")
+        AppLog.view.notice("\(AppLog.logHeader(caller: self, function: #function)) Navigation will start")
     }
 
     func navigationDidStart() {
-        print("[WebViewDelegate] Navigation did start")
+        AppLog.view.notice("\(AppLog.logHeader(caller: self, function: #function)) Navigation did start")
     }
 
     func navigationDidFinish() {
-        print("[WebViewDelegate] Navigation did finish")
+        AppLog.view.notice("\(AppLog.logHeader(caller: self, function: #function)) Navigation did finish")
     }
 
     func navigationDidFailed(withError error: Error) {
-        print("[WebViewDelegate] Navigation did failed with error: \(error)")
+        AppLog.view.notice("\(AppLog.logHeader(caller: self, function: #function)) Navigation did failed with error: \(error)")
     }
 }
