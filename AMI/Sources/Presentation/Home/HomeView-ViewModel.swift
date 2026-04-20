@@ -6,6 +6,7 @@
 //  Copyright © 2026 DINUM. All rights reserved.
 //
 
+import Combine
 import Foundation
 import UIKit
 import WebKit
@@ -21,9 +22,16 @@ extension HomeView {
         var isOnContactPage = false
         var showSettings = false
         var showNoEmailClientAlert = false
+        var isPresentingOnboardingView = false
 
         private var checkNotificationStatusDone = false
-        
+
+        enum Event {
+            case navigateToRootUrl
+        }
+
+        let eventsStream = PassthroughSubject<Event, Never>()
+
         @Sendable
         private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
             showSettings = url?.absoluteString.hasSuffix("/#/settings") ?? false
@@ -68,6 +76,7 @@ extension HomeView {
                 }
             })
             onboardingViewViewModel = OnboardingView.ViewModel(applicationRootUrl: rootUrl, notificationManager: notificationManager)
+
             super.init()
 
             self.webViewViewModel.delegate = self
@@ -76,6 +85,14 @@ extension HomeView {
             // No clean way to pass this closure in the `SwiftUIWebView.ViewModel.init` call.
             webViewViewModel.urlChangeAction = handleUrlChange
             homeUserScripts.userLoggedAction = checkNotificationStatus
+            onboardingViewViewModel.eventReceiver = { event in
+                switch event {
+                case .isDismissed:
+                    // Go back to root URL (to leave web page 
+                    self.webViewViewModel.goBackToRootUrl()
+                    self.isPresentingOnboardingView = false
+                }
+            }
         }
 
         private func checkNotificationStatus() {
@@ -87,7 +104,7 @@ extension HomeView {
             }
             checkNotificationStatusDone = true
             Task {
-                onboardingViewViewModel.isPresentingOnboardingView = await NotificationStatus.notificationsAuthorizationStatus() == .notDetermined
+                isPresentingOnboardingView = await NotificationStatus.notificationsAuthorizationStatus() == .notDetermined
             }
         }
     }
