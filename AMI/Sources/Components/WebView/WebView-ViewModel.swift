@@ -156,6 +156,15 @@ extension SwiftUIWebView {
         func goBack() {
             webView?.goBack()
         }
+
+        func goBackToRootUrl() {
+            guard let webView,
+                  let firstItem = webView.backForwardList.backList.first,
+                  firstItem.initialURL == rootUrl else {
+                return
+            }
+            webView.go(to: firstItem)
+        }
     }
 }
 
