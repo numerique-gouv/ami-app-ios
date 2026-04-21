@@ -55,6 +55,10 @@ struct HomeView: View {
                 OnboardingView(viewModel: viewModel.onboardingViewViewModel)
             }
             .navigationBarHidden(true)
+            .navigationDestination(item: $viewModel.selectedPartner) { partner in
+                switch partner {
+                case let .generic(partnerUrl):
+                    PartnerView(viewModel: viewModel.partnerViewModel(for: partnerUrl))
                 }
             }
         if viewModel.isOnContactPage {

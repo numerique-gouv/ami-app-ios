@@ -13,24 +13,29 @@ import WebKit
 extension HomeView {
     @Observable
     class ViewModel: NSObject {
+        enum Partner: Hashable {
+            case generic(URL)
+        }
+
+        private let notificationManager: NotificationManager
         let webViewViewModel: SwiftUIWebView.ViewModel
         let settingsViewViewModel: SettingsView.ViewModel
         var onboardingViewViewModel: OnboardingView.ViewModel
 
-        var isExternalProcess = false
         var isOnContactPage = false
         var showSettings = false
         var showNoEmailClientAlert = false
 
         private var checkNotificationStatusDone = false
-        
+
+        var selectedPartner: Partner?
+
         @Sendable
         private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
             showSettings = url?.absoluteString.hasSuffix("/#/settings") ?? false
             isOnContactPage = url?.absoluteString.hasSuffix("/#/contact") ?? false
-            isExternalProcess = !(url?.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) ?? true)
 
-            print("[HomeView-ViewModel]: URL Change Action \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage) - external: \(isExternalProcess)")
+            print("[HomeView-ViewModel]: URL Change Action \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage)")
 
             Task { @MainActor in
                 if self.showSettings,
@@ -57,10 +62,11 @@ extension HomeView {
 
         init(rootUrl: URL, notificationManager: NotificationManager) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
-            let homeUserScripts = HomeUserScripts()
+            let userScripts = HomeUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
-                                                            userScripts: homeUserScripts)
+                                                            userScripts: userScripts)
             self.webViewViewModel = webViewViewModel
+            self.notificationManager = notificationManager
             settingsViewViewModel = SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
                 print("[HomeView-ViewModel]: notificationsSettingDidChangeAction")
                 Task { @MainActor in
@@ -75,7 +81,7 @@ extension HomeView {
             // Init `urlChangeAction` property after fully initialized `self` because closure is referencing `self`.
             // No clean way to pass this closure in the `SwiftUIWebView.ViewModel.init` call.
             webViewViewModel.urlChangeAction = handleUrlChange
-            homeUserScripts.userLoggedAction = checkNotificationStatus
+            userScripts.userLoggedAction = checkNotificationStatus
         }
 
         private func checkNotificationStatus() {
@@ -90,18 +96,35 @@ extension HomeView {
                 onboardingViewViewModel.isPresentingOnboardingView = await NotificationStatus.notificationsAuthorizationStatus() == .notDetermined
             }
         }
+
+        func partnerViewModel(for url: URL) -> PartnerView.ViewModel {
+            // Init Partner's view with the HomeView web configuration (to share cookies and tokens).
+            PartnerView.ViewModel(configuration: webViewViewModel.configuration, rootUrl: url)
+        }
     }
 }
 
 extension HomeView.ViewModel: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
-        if let targetUrl = navigationAction.request.url,
-           targetUrl.scheme == "mailto" {
+        guard let targetUrl = navigationAction.request.url else {
+            // No special restriction. Return TRUE.
+            return true
+        }
+
+        // Special process for `mailto` url.
+        if targetUrl.scheme == "mailto" {
             Task { @MainActor in
                 contactByEmail(targetUrl: targetUrl)
             }
             return false
         }
+
+        // Special process for partner Url
+        if !targetUrl.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) {
+            selectedPartner = .generic(targetUrl)
+            return false
+        }
+
         return true
     }
 
