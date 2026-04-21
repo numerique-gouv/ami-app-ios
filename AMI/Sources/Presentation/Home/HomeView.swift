@@ -39,41 +39,39 @@ struct HomeView: View {
 
     @ViewBuilder
     var body: some View {
-        // Put subviews in a VStack in case the view is not in a NavigationStack (in Production mode for instance)
-        VStack(spacing: 0.0) {
-            webView
-                .toolbar {
-                    toolbarBackButton
-                }
-                .sheet(isPresented: $viewModel.showSettings) {
-                    SettingsView(viewModel: viewModel.settingsViewViewModel)
-                }
-                .alert(isPresented: $viewModel.showNoEmailClientAlert) {
-                    Alert(title: Text("Erreur"),
-                          message: Text("Aucun client email correctement configuré n'a été trouvé sur votre appareil."),
-                          dismissButton: .default(Text("Ok")))
-                }
-                .sheet(isPresented: $viewModel.onboardingViewViewModel.isPresentingOnboardingView) {
-                    OnboardingView(viewModel: viewModel.onboardingViewViewModel)
-                }
-
-            if viewModel.isOnContactPage {
-                Button {
-                    Task {
-                        await viewModel.shareLogs()
-                    }
-                } label: {
-                    Text("Télécharger les logs")
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Asset.Colors.blueFranceSun113.swiftUIColor)
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 24)
-                .transition(.move(edge: .bottom))
-                .animation(.easeInOut, value: viewModel.isOnContactPage)
+        webView
+            .toolbar {
+                toolbarBackButton
             }
+            .sheet(isPresented: $viewModel.showSettings) {
+                SettingsView(viewModel: viewModel.settingsViewViewModel)
+            }
+            .alert(isPresented: $viewModel.showNoEmailClientAlert) {
+                Alert(title: Text("Erreur"),
+                      message: Text("Aucun client email correctement configuré n'a été trouvé sur votre appareil."),
+                      dismissButton: .default(Text("Ok")))
+            }
+            .sheet(isPresented: $viewModel.onboardingViewViewModel.isPresentingOnboardingView) {
+                OnboardingView(viewModel: viewModel.onboardingViewViewModel)
+            }
+                }
+            }
+        if viewModel.isOnContactPage {
+            Button {
+                Task {
+                    await viewModel.shareLogs()
+                }
+            } label: {
+                Text("Télécharger les logs")
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Asset.Colors.blueFranceSun113.swiftUIColor)
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 24)
+            .transition(.move(edge: .bottom))
+            .animation(.easeInOut, value: viewModel.isOnContactPage)
         }
     }
 
