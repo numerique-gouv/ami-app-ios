@@ -6,6 +6,7 @@
 //  Copyright © 2026 DINUM. All rights reserved.
 //
 
+import Combine
 import Foundation
 
 extension OnboardingView {
@@ -14,11 +15,28 @@ extension OnboardingView {
         enum Action {
             case activate
             case later
+            case close
         }
+
+        private var cancellables = Set<AnyCancellable>() // For auto cancelation
+        enum Event {
+            case isDismissed
+        }
+
+        typealias EventReceiverType = (Event) -> Void
+
+        private let eventsStream = PassthroughSubject<Event, Never>()
 
         let applicationRootUrl: URL
         let notificationManager: NotificationManager
-        var isPresentingOnboardingView = false
+        var eventReceiver: EventReceiverType? {
+            didSet {
+                if let eventReceiver {
+                    eventsStream.sink(receiveValue: eventReceiver)
+                        .store(in: &cancellables)
+                }
+            }
+        }
 
         init(applicationRootUrl: URL, notificationManager: NotificationManager) {
             self.applicationRootUrl = applicationRootUrl
@@ -28,10 +46,12 @@ extension OnboardingView {
         func processAction(_ action: Action) {
             switch action {
             case .activate:
-                isPresentingOnboardingView = false
+                viewWillDismiss()
                 registerForRemoteNotifications()
             case .later:
-                isPresentingOnboardingView = false
+                viewWillDismiss()
+            case .close:
+                viewWillDismiss()
             }
         }
 
@@ -39,6 +59,10 @@ extension OnboardingView {
             Task {
                 await notificationManager.registerForRemoteNotifications(baseUrl: applicationRootUrl)
             }
+        }
+
+        private func viewWillDismiss() {
+            eventsStream.send(.isDismissed)
         }
     }
 }
