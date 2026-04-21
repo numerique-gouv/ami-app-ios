@@ -54,6 +54,7 @@ struct HomeView: View {
             .sheet(isPresented: $viewModel.onboardingViewViewModel.isPresentingOnboardingView) {
                 OnboardingView(viewModel: viewModel.onboardingViewViewModel)
             }
+            .navigationTitle(AMIL10n.amiTitle)
             .navigationBarHidden(true)
             .navigationDestination(item: $viewModel.selectedPartner) { partner in
                 switch partner {
