@@ -54,6 +54,7 @@ struct HomeView: View {
             .sheet(isPresented: $viewModel.onboardingViewViewModel.isPresentingOnboardingView) {
                 OnboardingView(viewModel: viewModel.onboardingViewViewModel)
             }
+            .navigationBarHidden(true)
                 }
             }
         if viewModel.isOnContactPage {
