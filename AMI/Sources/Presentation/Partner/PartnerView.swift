@@ -10,6 +10,7 @@ import SwiftUI
 import WebKit
 
 struct PartnerView: View {
+    @Environment(\.dismiss) var dismiss
     @Bindable var viewModel: ViewModel
 
     init(viewModel: ViewModel) {
@@ -22,10 +23,22 @@ struct PartnerView: View {
     }
 
     @ViewBuilder
+    private var backButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Label(AMIL10n.amiTitle, systemImage: "arrowtriangle.left.fill")
+        }
+    }
+
+    @ViewBuilder
     var body: some View {
+        backButton
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 8.0)
         webView
-            // Show Back button on Partner's view.
-            .navigationBarBackButtonHidden(false)
+            // Hide Back button on Partner's view.
+            .navigationBarBackButtonHidden(true)
             .alert(isPresented: $viewModel.showNoEmailClientAlert) {
                 Alert(title: Text("Erreur"),
                       message: Text("Aucun client email correctement configuré n'a été trouvé sur votre appareil."),
