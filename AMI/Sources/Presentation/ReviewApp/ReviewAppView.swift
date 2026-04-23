@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-@_spi(Advanced) import SwiftUIIntrospect
 
 struct ReviewAppView: View {
     @EnvironmentObject var webService: WebService
@@ -18,35 +17,27 @@ struct ReviewAppView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Text("Choix de la review")
-                .font(.title)
-            ScrollView {
-                ForEach(reviewApps) { reviewApp in
-                    if let reviewAppUrl = URL(string: reviewApp.url) {
-                        NavigationLink(value: reviewAppUrl) {
-                            Tile(title: reviewApp.title,
-                                 content: reviewApp.description ?? "")
-                        }
-                    }
-                }
-                .navigationDestination(for: URL.self) { destinationUrl in
-                    if let viewModel = viewModel.reviewModel(for: destinationUrl) as? HomeView.ViewModel {
-                        HomeView(viewModel: viewModel)
+        Text("Choix de la review")
+            .font(.title)
+        ScrollView {
+            ForEach(reviewApps) { reviewApp in
+                if let reviewAppUrl = URL(string: reviewApp.url) {
+                    NavigationLink(value: reviewAppUrl) {
+                        Tile(title: reviewApp.title,
+                             content: reviewApp.description ?? "")
                     }
                 }
             }
-            .padding(.top, 1.0)
-        }
-        // On SwiftUI, removing the defaut Navigation Back button disable the Swipe Back gesture.
-        // We reactivate it via trhe underlying UIKit UINavigationController.
-        .introspect(.navigationStack, on: .iOS(.v16...)) { view in
-            view.interactivePopGestureRecognizer?.isEnabled = true
-            view.interactivePopGestureRecognizer?.delegate = nil
+            .navigationDestination(for: URL.self) { destinationUrl in
+                if let viewModel = viewModel.reviewModel(for: destinationUrl) as? HomeView.ViewModel {
+                    HomeView(viewModel: viewModel)
+                }
+            }
         }
         .task {
             Task {
                 try await webService.getReviewApps()
+                reviewApps.removeAll()
                 reviewApps.append(contentsOf: webService.reviewApps)
             }
         }

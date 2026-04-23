@@ -20,3 +20,6 @@ settings_notifications_allow_title = "Recevoir les notifications sur mon apparei
 // Logs Exporter
 logs_error_unable_to_access_log = "Impossible d'accéder aux logs";
 logs_error_unable_to_write_log = "Impossible d'enregistrer le fichier de logs";
+
+// AMI Application
+ami_title = "AMI";

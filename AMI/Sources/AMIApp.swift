@@ -6,9 +6,14 @@
 //
 
 import SwiftUI
+@_spi(Advanced) import SwiftUIIntrospect
 
 @main
 struct AMIApp: App {
+    // Static properties
+    private static let notificationManager = NotificationManager()
+    private static var defaultHomeViewModel = HomeView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: Self.notificationManager)
+
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @Bindable var appState = AMIAppState()
 
@@ -23,24 +28,34 @@ struct AMIApp: App {
     @ViewBuilder
     private var mainContent: some View {
         ZStack(alignment: .top) {
-            #if IS_AMI_STAGING
-                if let notificationActivatedHomeViewModelId = appState.notificationActivatedHomeViewModelId {
-                    HomeView(viewModel: appState.notificationTriggeredHomeViewModel)
+            NavigationStack {
+                #if IS_AMI_STAGING
+                    if let notificationActivatedHomeViewModelId {
+                        HomeView(viewModel: notificationTriggeredHomeViewModel)
+                            .id(notificationActivatedHomeViewModelId)
+                    } else {
+                        ReviewAppView(viewModel: ReviewAppView.ViewModel(notificationManager: Self.notificationManager))
+                            .environmentObject(WebService())
+                    }
+                #elseif IS_AMI_PRODUCTION
+                    HomeView(viewModel: Self.defaultHomeViewModel)
                         .id(notificationActivatedHomeViewModelId)
-                } else {
-                    ReviewAppView(viewModel: ReviewAppView.ViewModel(notificationManager: AMIAppState.notificationManager))
-                        .environmentObject(WebService())
-                }
-            #else
-                HomeView(viewModel: notificationTriggeredHomeViewModel)
-                    .id(notificationActivatedHomeViewModelId)
-            #endif
+                #else
+                    EmptyView()
+                #endif
 
-            VStack(spacing: 0) {
-                ForEach(appState.bannerManager.banners) { banner in
-                    InformationBanner(data: banner)
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                VStack(spacing: 0) {
+                    ForEach(bannerManager.banners) { banner in
+                        InformationBanner(data: banner)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
                 }
+            }
+            // On SwiftUI, removing the defaut Navigation Back button disable the Swipe Back gesture.
+            // We reactivate it via trhe underlying UIKit UINavigationController.
+            .introspect(.navigationStack, on: .iOS(.v16...)) { view in
+                view.interactivePopGestureRecognizer?.isEnabled = true
+                view.interactivePopGestureRecognizer?.delegate = nil
             }
         }
         .animation(.easeInOut(duration: 0.3), value: appState.bannerManager.banners.count)
