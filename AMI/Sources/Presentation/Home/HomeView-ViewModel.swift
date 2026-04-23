@@ -88,7 +88,7 @@ extension HomeView {
             onboardingViewViewModel.eventReceiver = { event in
                 switch event {
                 case .isDismissed:
-                    // Go back to root URL (to leave web page 
+                    // Go back to root URL (to leave web page)
                     self.webViewViewModel.goBackToRootUrl()
                     self.isPresentingOnboardingView = false
                 }
