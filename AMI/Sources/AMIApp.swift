@@ -10,7 +10,6 @@ import SwiftUI
 @main
 struct AMIApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    @StateObject private var networkMonitor = NetworkMonitor.shared
     @Bindable var appState = AMIAppState()
 
     init() {
@@ -44,7 +43,6 @@ struct AMIApp: App {
                 }
             }
         }
-        .environmentObject(networkMonitor)
         .animation(.easeInOut(duration: 0.3), value: appState.bannerManager.banners.count)
         .onReceive(NotificationCenter.default.publisher(for: .pendingUrl)) { notification in
             appState.notificationReceived(notification: notification)
@@ -54,27 +52,6 @@ struct AMIApp: App {
     var body: some Scene {
         WindowGroup {
             mainContent
-                // Use deprecated version of `onChange` to handle iOS back to iOS 15.
-                .onChange(of: networkMonitor.isConnected) { isConnected in
-                    connectivityDidChange(isConnected: isConnected)
-                }
-        }
-    }
-
-    private func connectivityDidChange(isConnected: Bool) {
-        print("Main App: received a network status change, isConnected=\(isConnected)")
-        if isConnected {
-            if let id = offlineBannerId {
-                bannerManager.dismissBanner(id: id)
-                offlineBannerId = nil
-            }
-        } else {
-            offlineBannerId = bannerManager.showBanner(
-                .warning,
-                title: "Vous êtes hors ligne",
-                content: "L'accès à certaines fonctionnalités est limité.",
-                hasCloseIcon: false
-            )
         }
     }
 }

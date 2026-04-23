@@ -15,6 +15,7 @@ class AMIAppState: NSObject {
     static var defaultHomeViewModel: HomeView.ViewModel!
 
     var bannerManager = InformationBannerManager.shared
+    var networkMonitor = NetworkMonitor()
     var offlineBannerId: UUID?
 
     var notificationTriggeredHomeViewModel: HomeView.ViewModel!
@@ -26,6 +27,35 @@ class AMIAppState: NSObject {
         notificationTriggeredHomeViewModel = Self.defaultHomeViewModel
 
         super.init()
+
+        networkMonitor.eventReceiver = { connectionState in
+            Task { @MainActor in
+                self.connectivityDidChange(state: connectionState)
+            }
+        }
+    }
+
+    func connectivityDidChange(state: NetworkMonitor.EventType) {
+        print("Main App: received a network status change, isConnected=\(state == .connected ? "Connected" : "Not connected")")
+        switch state {
+        case .connected:
+            if let id = offlineBannerId {
+                bannerManager.dismissBanner(id: id)
+                offlineBannerId = nil
+            }
+        case .notConnected:
+            // Check no previous offline banner is already present.
+            guard offlineBannerId == nil else {
+                return
+            }
+
+            offlineBannerId = bannerManager.showBanner(
+                .warning,
+                title: "Vous êtes hors ligne",
+                content: "L'accès à certaines fonctionnalités est limité.",
+                hasCloseIcon: false
+            )
+        }
     }
 
     func notificationReceived(notification: Notification) {

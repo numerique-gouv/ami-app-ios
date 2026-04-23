@@ -1,20 +1,32 @@
+import Combine
 import Foundation
 import Network
 
-class NetworkMonitor: ObservableObject {
-    static let shared = NetworkMonitor()
-
-    @Published private(set) var isConnected = true
-
+class NetworkMonitor {
     private let monitor = NWPathMonitor()
+    private let queue = DispatchQueue(label: "NetworkMonitor")
 
-    private init() {
-        monitor.pathUpdateHandler = { [weak self] path in
-            print("NetworkMonitor: network status changed to \(path.status)")
-            DispatchQueue.main.async {
-                self?.isConnected = path.status == .satisfied
+    enum EventType {
+        case connected
+        case notConnected
+    }
+
+    typealias EventReceiverType = (EventType) -> Void
+    private let eventsStream = PassthroughSubject<EventType, Never>()
+    private var cancellables = Set<AnyCancellable>() // For auto cancelation
+    var eventReceiver: EventReceiverType? {
+        didSet {
+            if let eventReceiver {
+                eventsStream.sink(receiveValue: eventReceiver)
+                    .store(in: &cancellables)
             }
         }
-        monitor.start(queue: DispatchQueue(label: "NetworkMonitor"))
+    }
+
+    init() {
+        monitor.pathUpdateHandler = { [weak self] path in
+            self?.eventsStream.send(path.status == .satisfied ? .connected : .notConnected)
+        }
+        monitor.start(queue: queue)
     }
 }
