@@ -42,7 +42,20 @@ extension PartnerView {
 
 extension PartnerView.ViewModel: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
-        true
+        guard let targetUrl = navigationAction.request.url else {
+            // No special restriction. Return TRUE.
+            return true
+        }
+
+        // Special process for `mailto` url.
+        if targetUrl.scheme == "mailto" {
+            Task { @MainActor in
+                contactByEmail(targetUrl: targetUrl)
+            }
+            return false
+        }
+
+        return true
     }
 
     func navigationWillStart(navigationAction: WKNavigationAction) {
