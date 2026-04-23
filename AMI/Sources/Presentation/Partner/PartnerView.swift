@@ -28,6 +28,7 @@ struct PartnerView: View {
             dismiss()
         } label: {
             Label(AMIL10n.amiTitle, systemImage: "arrowtriangle.left.fill")
+                .bold()
         }
     }
 
