@@ -57,6 +57,10 @@ extension AMIWebView {
     func goBack() {
         viewModel.goBack()
     }
+
+    func goBackToInitialUrl() {
+        viewModel.goBackToRootUrl()
+    }
 }
 
 #Preview {

@@ -53,6 +53,7 @@ struct OnboardingView: View {
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Button {
+                viewModel.processAction(.close)
                 dismiss()
             } label: {
                 Text(AMIL10n.commonClose)
@@ -88,6 +89,11 @@ struct OnboardingView: View {
 }
 
 #Preview {
-    OnboardingView(viewModel: OnboardingView.ViewModel(applicationRootUrl: URL(string: "https://google.com")!,
-                                                       notificationManager: NotificationManager()))
+    OnboardingView(
+        viewModel: OnboardingView.ViewModel(
+            applicationRootUrl: URL(
+                string: "https://google.com"
+            )!,
+            notificationManager: NotificationManager()
+        ))
 }
