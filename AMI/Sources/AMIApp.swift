@@ -30,8 +30,8 @@ struct AMIApp: App {
         ZStack(alignment: .top) {
             NavigationStack {
                 #if IS_AMI_STAGING
-                    if let notificationActivatedHomeViewModelId {
-                        HomeView(viewModel: notificationTriggeredHomeViewModel)
+                    if let notificationActivatedHomeViewModelId = appState.notificationActivatedHomeViewModelId {
+                        HomeView(viewModel: appState.notificationTriggeredHomeViewModel)
                             .id(notificationActivatedHomeViewModelId)
                     } else {
                         ReviewAppView(viewModel: ReviewAppView.ViewModel(notificationManager: Self.notificationManager))
@@ -39,13 +39,13 @@ struct AMIApp: App {
                     }
                 #elseif IS_AMI_PRODUCTION
                     HomeView(viewModel: Self.defaultHomeViewModel)
-                        .id(notificationActivatedHomeViewModelId)
+                        .id(notificationActivatedHomeViewModelId ?? UUID())
                 #else
                     EmptyView()
                 #endif
 
                 VStack(spacing: 0) {
-                    ForEach(bannerManager.banners) { banner in
+                    ForEach(appState.bannerManager.banners) { banner in
                         InformationBanner(data: banner)
                             .transition(.move(edge: .top).combined(with: .opacity))
                     }
