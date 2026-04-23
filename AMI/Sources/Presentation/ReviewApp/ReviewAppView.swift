@@ -37,6 +37,7 @@ struct ReviewAppView: View {
         .task {
             Task {
                 try await webService.getReviewApps()
+                reviewApps.removeAll()
                 reviewApps.append(contentsOf: webService.reviewApps)
             }
         }
