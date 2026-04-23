@@ -69,15 +69,9 @@ struct HomeView: View {
                 }
             } label: {
                 Text("Télécharger les logs")
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Asset.Colors.blueFranceSun113.swiftUIColor)
-                    .foregroundColor(.white)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 24)
-            .transition(.move(edge: .bottom))
-            .animation(.easeInOut, value: viewModel.isOnContactPage)
+            .buttonStyle(DsfrButtonStyle(type: .secondary))
+            .padding(.top)
         }
     }
 
