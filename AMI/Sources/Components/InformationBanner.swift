@@ -1,3 +1,4 @@
+import Observation
 import SwiftUI
 import UIKit
 
@@ -13,10 +14,11 @@ struct BannerData: Identifiable {
     let onClose: (() -> Void)?
 }
 
-class InformationBannerManager: ObservableObject {
+@Observable
+class InformationBannerManager {
     static let shared = InformationBannerManager()
 
-    @Published var banners: [BannerData] = []
+    var banners: [BannerData] = []
 
     @discardableResult
     func showBanner(
