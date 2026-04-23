@@ -119,6 +119,18 @@ extension HomeView.ViewModel: WebViewDelegate {
             return false
         }
 
+        // Special case of OIDC web page for HomeView
+        // Contninue normal navigation inside the Home webView.
+        if let targetHost = targetUrl.host(),
+           Config.shared.OIDC_HOSTS.contains(targetHost) {
+            return true
+        }
+
+        // Special case of "about:blank" (used on FI impots.gouv.fr)
+        if targetUrl.host() == nil {
+            return true
+        }
+
         // Special process for partner Url
         if !targetUrl.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) {
             selectedPartner = .generic(targetUrl)
