@@ -120,7 +120,7 @@ extension HomeView.ViewModel: WebViewDelegate {
         }
 
         // Special case of OIDC web page for HomeView
-        // Contninue normal navigation inside the Home webView.
+        // Continue normal navigation inside the Home webView.
         if let targetHost = targetUrl.host(),
            Config.shared.OIDC_HOSTS.contains(targetHost) {
             return true
