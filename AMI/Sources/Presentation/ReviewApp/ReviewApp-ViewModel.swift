@@ -28,9 +28,5 @@ extension ReviewAppView {
             }
             return viewModel
         }
-
-        deinit {
-            print("deinit")
-        }
     }
 }
