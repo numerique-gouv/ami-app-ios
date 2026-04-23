@@ -39,7 +39,7 @@ struct AMIApp: App {
                     }
                 #elseif IS_AMI_PRODUCTION
                     HomeView(viewModel: Self.defaultHomeViewModel)
-                        .id(notificationActivatedHomeViewModelId ?? UUID())
+                        .id(appState.notificationActivatedHomeViewModelId ?? UUID())
                 #else
                     EmptyView()
                 #endif
