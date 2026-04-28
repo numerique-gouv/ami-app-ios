@@ -33,8 +33,8 @@ struct DsfrButtonStyle: ButtonStyle {
     @ViewBuilder
     private func background(configuration: Configuration) -> some View {
         switch type {
-        case .primary: RoundedRectangle(cornerRadius: 4.0).fill(backgroundColor(configuration: configuration))
-        case .secondary: RoundedRectangle(cornerRadius: 4.0).stroke(color(configuration: configuration))
+        case .primary: RoundedRectangle(cornerRadius: 0.0).fill(backgroundColor(configuration: configuration))
+        case .secondary: RoundedRectangle(cornerRadius: 0.0).stroke(color(configuration: configuration))
         }
     }
 
@@ -48,7 +48,7 @@ struct DsfrButtonStyle: ButtonStyle {
             }
             // Full width
             .frame(maxWidth: .infinity)
-            .contentShape(RoundedRectangle(cornerRadius: 4.0))
+            .contentShape(RoundedRectangle(cornerRadius: 0.0))
         // .scaleEffect(configuration.isPressed ? 1.2 : 1)
         // .animation(.easeOut(duration: 0.2), value: configuration.isPressed)
     }
