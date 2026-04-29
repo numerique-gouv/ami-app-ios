@@ -14,3 +14,7 @@ let nativeRoutes: [String: NativeRoute] = [
 func findNativeRoute(for url: String) -> NativeRoute? {
     nativeRoutes.first { (path, _) in url.contains(path) }?.value
 }
+
+protocol WebRouteManagerProtocol {
+    func handleRoute(routeString: String)
+}

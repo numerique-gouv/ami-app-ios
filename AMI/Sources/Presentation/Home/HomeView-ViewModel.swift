@@ -54,20 +54,14 @@ extension HomeView {
                     self.showSettings = true
             if let route = findNativeRoute(for: urlString) {
                 Task { @MainActor in
-                    self.navigate(to: route)
+                    switch route {
+                    case .settings:
+                        self.showSettings = true
+                    }
                 }
             }
 
             print("[HomeView-ViewModel]: URL Change Action \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage) - external: \(isExternalProcess)")
-        }
-
-        @MainActor
-        func navigate(to route: NativeRoute) {
-            print("[HomeView-ViewModel]: Promoted page detected, navigating app to \(route)")
-            switch route {
-            case .settings:
-                showSettings = true
-            }
         }
 
         func shareLogs() async {
@@ -106,9 +100,11 @@ extension HomeView {
             webViewViewModel.urlChangeAction = handleUrlChange
             userScripts.userLoggedInAction = userLoginActions
             userScripts.userLoggedOutAction = userLogoutActions
-            homeUserScripts.onNavigate = { [weak self] route in
-                Task { @MainActor in
-                    self?.navigate(to: route)
+            homeUserScripts.onNavigate = { [weak self] data in
+                if let url = data as? String {
+                    Task { @MainActor in
+                        self?.handleRoute(routeString: url)
+                    }
                 }
             }
             onboardingViewViewModel.eventReceiver = { event in
@@ -214,5 +210,21 @@ extension HomeView.ViewModel: WebViewDelegate {
 
     func navigationDidFailed(withError error: Error) {
         print("[WebViewDelegate navigationDidFailed] failed with error \(error)")
+    }
+}
+
+extension HomeView.ViewModel: WebRouteManagerProtocol {
+    @MainActor
+    func handleRoute(routeString: String) {
+        if let route = findNativeRoute(for: routeString) {
+            print("[HomeView-ViewModel]: Native route detected, navigating app to \(route)")
+            switch route {
+            case .settings:
+                showSettings = true
+            }
+        } else {
+            guard let url = URL(string: routeString, relativeTo: webViewViewModel.rootUrl) else { return }
+            webViewViewModel.navigate(to: url)
+        }
     }
 }

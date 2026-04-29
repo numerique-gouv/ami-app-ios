@@ -24,12 +24,12 @@ class HomeUserScripts {
         case userLoggedOut = "user_logged_out"
         case notificationPermissionRequested = "notification_permission_requested"
         case notificationPermissionRemoved = "notification_permission_removed"
-        case navigateTo = "navigateTo"
+        case navigateTo
     }
 
     typealias UserLoggedInAction = () -> Void
     typealias UserLoggedOutAction = () -> Void
-    var onNavigate: ((NativeRoute) -> Void)?
+    var onNavigate: ((Any?) -> Void)?
 
     var scripts: [UserScript]
     var userLoggedInAction: UserLoggedInAction?
@@ -178,9 +178,7 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
             case .notificationPermissionRemoved:
                 notificationManager.openSettings()
             case .navigateTo:
-                if let url = data as? String, let route = findNativeRoute(for: url) {
-                    onNavigate?(route)
-                }
+                onNavigate?(data)
             default:
                 break
             }
