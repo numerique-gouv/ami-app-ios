@@ -153,6 +153,10 @@ extension SwiftUIWebView {
         func goBack() {
             webView?.goBack()
         }
+
+        func navigate(to url: URL) {
+            webView?.load(URLRequest(url: url))
+        }
     }
 }
 

@@ -23,12 +23,12 @@ class HomeUserScripts {
         case userLoggedIn = "user_logged_in"
         case notificationPermissionRequested = "notification_permission_requested"
         case notificationPermissionRemoved = "notification_permission_removed"
-        case navigateTo = "navigateTo"
+        case navigateTo
     }
 
     // notificationManager: used to handle notification registration once user is logged.
     let notificationManager: NotificationManager
-    var onNavigate: ((NativeRoute) -> Void)?
+    var onNavigate: ((Any?) -> Void)?
     var scripts: [UserScript]
 
     required init(notificationManager: NotificationManager) {
@@ -175,9 +175,7 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
             case .notificationPermissionRemoved:
                 notificationManager.openSettings()
             case .navigateTo:
-                if let url = data as? String, let route = findNativeRoute(for: url) {
-                    onNavigate?(route)
-                }
+                onNavigate?(data)
             default:
                 break
             }
