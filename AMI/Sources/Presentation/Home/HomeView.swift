@@ -37,8 +37,25 @@ struct HomeView: View {
         AMIWebView(viewModel: viewModel.webViewViewModel)
     }
 
+    // Temporarily display back button when on OIDC page.
+    @ViewBuilder
+    private var backButton: some View {
+        Button {
+            viewModel.webViewViewModel.goBackToRootUrl()
+        } label: {
+            Label(AMIL10n.amiTitle, systemImage: "arrowtriangle.left.fill")
+                .bold()
+        }
+    }
+
     @ViewBuilder
     var body: some View {
+        // Temporarily display back button when on OIDC page.
+        if viewModel.showBackButton {
+            backButton
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 8.0)
+        }
         webView
             .toolbar {
                 toolbarBackButton

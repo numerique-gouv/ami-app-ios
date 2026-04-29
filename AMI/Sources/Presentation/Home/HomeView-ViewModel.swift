@@ -27,7 +27,9 @@ extension HomeView {
         var showSettings = false
         var showNoEmailClientAlert = false
         var isPresentingOnboardingView = false
-
+        // Temporarily display back button when on OIDC page.
+        var showBackButton = false
+        
         private var checkNotificationStatusDone = false
 
         var selectedPartner: Partner?
@@ -153,9 +155,17 @@ extension HomeView.ViewModel: WebViewDelegate {
 
         // Special case of OIDC web page for HomeView
         // Continue normal navigation inside the Home webView.
+        //
+        // Connection pages is special for now because we can be blocked
+        // on France Connect page when loging out without any way to exit the error page.
+        // So let's the back button be present.
+        //
         if let targetHost = targetUrl.host(),
            Config.shared.OIDC_HOSTS.contains(targetHost) {
+            showBackButton = true
             return true
+        } else {
+            showBackButton = false
         }
 
         // Special case of "about:blank" (used on FI impots.gouv.fr)
