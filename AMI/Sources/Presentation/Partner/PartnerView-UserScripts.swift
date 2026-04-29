@@ -99,7 +99,7 @@ extension PartnerUserScripts: WebViewUserScriptsProtocol {
               let level = body["level"] as? String,
               let logMessage = body["message"] as? String else { return }
 
-        let prefix = "[HomeUserScripts Console]"
+        let prefix = "[PartnerUserScripts Console]"
         switch level {
         case "error":
             print("\(prefix) ❌ ERROR: \(logMessage)")
