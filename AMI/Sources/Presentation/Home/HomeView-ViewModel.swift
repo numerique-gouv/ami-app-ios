@@ -14,6 +14,8 @@ import WebKit
 extension HomeView {
     @Observable
     class ViewModel: NSObject {
+        // The name of the cookie containing the authentication token.
+        private static let AUTHENTICATION_COOKIE_NAME = "token"
         enum Partner: Hashable {
             case generic(URL)
         }
@@ -105,7 +107,8 @@ extension HomeView {
 
         init(rootUrl: URL, notificationManager: NotificationManager) {
             let userScripts = HomeUserScripts()
-            let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
+            let webViewViewModel = SwiftUIWebView.ViewModel(configuration: SwiftUIWebView.sharedConfiguration,
+                                                            rootUrl: rootUrl,
                                                             userScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.notificationManager = notificationManager
@@ -136,6 +139,23 @@ extension HomeView {
             checkNotificationStatusDone = true
             Task {
                 isPresentingOnboardingView = await NotificationStatus.notificationsAuthorizationStatus() == .notDetermined
+
+            // Prepare Onboarding View Model now that we have all required datas.
+            notificationManager.userAuthenticationToken = userAuthenticationToken
+            onboardingViewViewModel = OnboardingView.ViewModel(applicationRootUrl: webViewViewModel.rootUrl,
+                                                               notificationManager: notificationManager)
+            onboardingViewViewModel?.eventReceiver = { event in
+                switch event {
+                case .isDismissed:
+                    // Go back to root URL (to leave web page)
+                    self.webViewViewModel.goBackToRootUrl()
+                    self.isPresentingOnboardingView = false
+                    self.onboardingViewViewModel = nil
+                }
+            }
+
+            Task { @MainActor in
+                isPresentingOnboardingView = true
             }
         }
 
@@ -147,6 +167,18 @@ extension HomeView {
                 // Remove all session data to avoid reusing automatically them on next connection.
                 await webViewViewModel.deleteSessionLocalData()
                 webViewViewModel.goBackToRootUrl()
+            }
+        }
+
+        // Get the auth token from cookie store.
+        // Return nil if no token is found.
+        private var getUserAuthenticationToken: String? {
+            get async {
+                await webViewViewModel.configuration
+                    .websiteDataStore
+                    .httpCookieStore
+                    .allCookies()
+                    .first(where: { $0.name == Self.AUTHENTICATION_COOKIE_NAME })?.value.replacingOccurrences(of: "\"", with: "")
             }
         }
 
