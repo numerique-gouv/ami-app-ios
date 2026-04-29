@@ -16,6 +16,8 @@ extension HomeView {
     class ViewModel: NSObject {
         // The name of the cookie containing the authentication token.
         private static let AUTHENTICATION_COOKIE_NAME = "token"
+        private static let MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION = Double(24 * 60 * 60)
+
         enum Partner: Hashable {
             case generic(URL)
         }
@@ -32,7 +34,7 @@ extension HomeView {
         // Temporarily display back button when on OIDC page.
         var showBackButton = false
 
-        private var checkNotificationStatusDone = false
+        private var lastCheckNotificationTime = Date.distantPast
 
         var selectedPartner: Partner?
         enum Event {
@@ -99,19 +101,55 @@ extension HomeView {
 
         private func userLoginActions() {
             // Check if user made a choice about allowing Push notifications reception.
-            checkNotificationStatus()
+            Task {
+                await checkNotificationStatus()
+            }
         }
 
-        private func checkNotificationStatus() {
-            // User logged event is called too often.
-            // Only check Notifications Status once par session.
-            // TODO: reset `checkNotificationStatusDone` on user disconnection.
-            guard !checkNotificationStatusDone else {
+        private func lastOnboardingPresentationTimeIsExpired() -> Bool {
+            Date.now.timeIntervalSince(lastCheckNotificationTime) > Self.MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION
+        }
+
+        private func setLastOnboardingPresentationTimeToNow() {
+            lastCheckNotificationTime = .now
+        }
+
+        private func resetLastOnboardingPresentationTime() {
+            lastCheckNotificationTime = .distantPast
+        }
+
+        private func checkNotificationStatus() async {
+            guard let userAuthenticationToken = await getUserAuthenticationToken else {
+                // Unable to get user authentication token. Exit.
+                print("[HomeView-ViewModel] getUserAuthenticationToken: Unable to get User Authentication token")
                 return
             }
-            checkNotificationStatusDone = true
-            Task {
-                isPresentingOnboardingView = await NotificationStatus.notificationsAuthorizationStatus() == .notDetermined
+
+            var shouldPresentOnboardingView = false
+
+            switch await NotificationStatus.notificationsAuthorizationStatus() {
+            case .notDetermined:
+                // User logged event is called too often.
+                // Only check Notifications Status once par session.
+                shouldPresentOnboardingView = lastOnboardingPresentationTimeIsExpired()
+            case .denied:
+                // No need to present Onboarding view: user already made its choice.
+                break
+            case .authorized, .provisional, .ephemeral:
+                // Always call `registerForRemoteNotifications` to refresh Apns token if necessary.
+                // Apple recommends it ("Each time your app launches, it must register with APNs"): https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/HandlingRemoteNotifications.html
+                await MainActor.run {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            @unknown default:
+                print("[HomeView-ViewModel] checkNotificationStatus: Unknown Notification Authorization Status")
+            }
+
+            // Only check Notifications Status once par session.
+            guard shouldPresentOnboardingView else {
+                return
+            }
+            setLastOnboardingPresentationTimeToNow()
 
             // Prepare Onboarding View Model now that we have all required datas.
             notificationManager.userAuthenticationToken = userAuthenticationToken
@@ -134,7 +172,7 @@ extension HomeView {
 
         private func userLogoutActions() {
             // Reset Notification status check when on logout to recheck it on next login.
-            checkNotificationStatusDone = false
+            resetLastOnboardingPresentationTime()
 
             // TODO: we should reset web session here to destroy any user data.
             // Currently, on next login, FC find the previous token and reconnect automatically with previous profile.
