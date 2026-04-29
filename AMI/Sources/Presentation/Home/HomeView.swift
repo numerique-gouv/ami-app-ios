@@ -71,7 +71,7 @@ struct HomeView: View {
                 Text("Télécharger les logs")
             }
             .buttonStyle(DsfrButtonStyle(type: .secondary))
-            .padding(.top)
+            .padding(.vertical)
         }
     }
 
