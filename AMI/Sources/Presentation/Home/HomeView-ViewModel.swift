@@ -27,7 +27,9 @@ extension HomeView {
         var showSettings = false
         var showNoEmailClientAlert = false
         var isPresentingOnboardingView = false
-
+        // Temporarily display back button when on OIDC page.
+        var showBackButton = false
+        
         private var checkNotificationStatusDone = false
 
         var selectedPartner: Partner?
@@ -89,7 +91,8 @@ extension HomeView {
             // Init `urlChangeAction` property after fully initialized `self` because closure is referencing `self`.
             // No clean way to pass this closure in the `SwiftUIWebView.ViewModel.init` call.
             webViewViewModel.urlChangeAction = handleUrlChange
-            userScripts.userLoggedAction = checkNotificationStatus
+            userScripts.userLoggedInAction = userLoginActions
+            userScripts.userLoggedOutAction = userLogoutActions
             onboardingViewViewModel.eventReceiver = { event in
                 switch event {
                 case .isDismissed:
@@ -98,6 +101,11 @@ extension HomeView {
                     self.isPresentingOnboardingView = false
                 }
             }
+        }
+
+        private func userLoginActions() {
+            // Check if user made a choice about allowing Push notifications reception.
+            checkNotificationStatus()
         }
 
         private func checkNotificationStatus() {
@@ -111,6 +119,16 @@ extension HomeView {
             Task {
                 isPresentingOnboardingView = await NotificationStatus.notificationsAuthorizationStatus() == .notDetermined
             }
+        }
+
+        private func userLogoutActions() {
+            // Reset Notification status check when on logout to recheck it on next login.
+            checkNotificationStatusDone = false
+
+            // TODO: we should reset web session here to destroy any user data.
+            // Currently, on next login, FC find the previous token and reconnect automatically with previous profile.
+
+            webViewViewModel.goBackToRootUrl()
         }
 
         func partnerViewModel(for url: URL) -> PartnerView.ViewModel {
@@ -137,9 +155,17 @@ extension HomeView.ViewModel: WebViewDelegate {
 
         // Special case of OIDC web page for HomeView
         // Continue normal navigation inside the Home webView.
+        //
+        // Connection pages is special for now because we can be blocked
+        // on France Connect page when loging out without any way to exit the error page.
+        // So let's the back button be present.
+        //
         if let targetHost = targetUrl.host(),
            Config.shared.OIDC_HOSTS.contains(targetHost) {
+            showBackButton = true
             return true
+        } else {
+            showBackButton = false
         }
 
         // Special case of "about:blank" (used on FI impots.gouv.fr)
