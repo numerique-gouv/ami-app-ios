@@ -20,14 +20,17 @@ class HomeUserScripts {
     // Enumerate existing events
     enum Event: String {
         case userLoggedIn = "user_logged_in"
+        case userLoggedOut = "user_logged_out"
         case notificationPermissionRequested = "notification_permission_requested"
         case notificationPermissionRemoved = "notification_permission_removed"
     }
 
-    typealias UserLoggedAction = () -> Void
+    typealias UserLoggedInAction = () -> Void
+    typealias UserLoggedOutAction = () -> Void
 
     var scripts: [UserScript]
-    var userLoggedAction: UserLoggedAction?
+    var userLoggedInAction: UserLoggedInAction?
+    var userLoggedOutAction: UserLoggedOutAction?
 
     required init() {
         scripts = [
@@ -153,7 +156,9 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
 
             switch Event(rawValue: eventName) {
             case .userLoggedIn:
-                userLoggedAction?()
+                userLoggedInAction?()
+            case .userLoggedOut:
+                userLoggedOutAction?()
             case .notificationPermissionRequested:
                 NotificationStatus.requestPermission()
             case .notificationPermissionRemoved:

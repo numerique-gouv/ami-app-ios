@@ -89,7 +89,8 @@ extension HomeView {
             // Init `urlChangeAction` property after fully initialized `self` because closure is referencing `self`.
             // No clean way to pass this closure in the `SwiftUIWebView.ViewModel.init` call.
             webViewViewModel.urlChangeAction = handleUrlChange
-            userScripts.userLoggedAction = checkNotificationStatus
+            userScripts.userLoggedInAction = userLoginActions
+            userScripts.userLoggedOutAction = userLogoutActions
             onboardingViewViewModel.eventReceiver = { event in
                 switch event {
                 case .isDismissed:
@@ -98,6 +99,11 @@ extension HomeView {
                     self.isPresentingOnboardingView = false
                 }
             }
+        }
+
+        private func userLoginActions() {
+            // Check if user made a choice about allowing Push notifications reception.
+            checkNotificationStatus()
         }
 
         private func checkNotificationStatus() {
@@ -111,6 +117,16 @@ extension HomeView {
             Task {
                 isPresentingOnboardingView = await NotificationStatus.notificationsAuthorizationStatus() == .notDetermined
             }
+        }
+
+        private func userLogoutActions() {
+            // Reset Notification status check when on logout to recheck it on next login.
+            checkNotificationStatusDone = false
+
+            // TODO: we should reset web session here to destroy any user data.
+            // Currently, on next login, FC find the previous token and reconnect automatically with previous profile.
+
+            webViewViewModel.goBackToRootUrl()
         }
 
         func partnerViewModel(for url: URL) -> PartnerView.ViewModel {
