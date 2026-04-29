@@ -29,7 +29,7 @@ extension HomeView {
         var isPresentingOnboardingView = false
         // Temporarily display back button when on OIDC page.
         var showBackButton = false
-        
+
         private var checkNotificationStatusDone = false
 
         var selectedPartner: Partner?
@@ -41,7 +41,7 @@ extension HomeView {
 
         @Sendable
         private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
-            showSettings = url?.absoluteString.hasSuffix("/#/settings") ?? false
+            showSettings = url?.absoluteString.hasSuffix("/#/preferences") ?? false
             isOnContactPage = url?.absoluteString.hasSuffix("/#/contact") ?? false
 
             print("[HomeView-ViewModel]: URL Change Action \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage)")
