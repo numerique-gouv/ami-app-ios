@@ -14,6 +14,8 @@ import WebKit
 extension HomeView {
     @Observable
     class ViewModel: NSObject {
+        // The name of the cookie containing the authentication token.
+        private static let AUTHENTICATION_COOKIE_NAME = "token"
         enum Partner: Hashable {
             case generic(URL)
         }
@@ -21,7 +23,7 @@ extension HomeView {
         private let notificationManager: NotificationManager
         let webViewViewModel: SwiftUIWebView.ViewModel
         let settingsViewViewModel: SettingsView.ViewModel
-        var onboardingViewViewModel: OnboardingView.ViewModel
+        var onboardingViewViewModel: OnboardingView.ViewModel?
 
         var isOnContactPage = false
         var showSettings = false
@@ -72,7 +74,8 @@ extension HomeView {
         init(rootUrl: URL, notificationManager: NotificationManager) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let userScripts = HomeUserScripts()
-            let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
+            let webViewViewModel = SwiftUIWebView.ViewModel(configuration: SwiftUIWebView.sharedConfiguration,
+                                                            rootUrl: rootUrl,
                                                             userScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.notificationManager = notificationManager
@@ -82,7 +85,6 @@ extension HomeView {
                     await webViewViewModel.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
                 }
             })
-            onboardingViewViewModel = OnboardingView.ViewModel(applicationRootUrl: rootUrl, notificationManager: notificationManager)
 
             super.init()
 
@@ -93,14 +95,6 @@ extension HomeView {
             webViewViewModel.urlChangeAction = handleUrlChange
             userScripts.userLoggedInAction = userLoginActions
             userScripts.userLoggedOutAction = userLogoutActions
-            onboardingViewViewModel.eventReceiver = { event in
-                switch event {
-                case .isDismissed:
-                    // Go back to root URL (to leave web page)
-                    self.webViewViewModel.goBackToRootUrl()
-                    self.isPresentingOnboardingView = false
-                }
-            }
         }
 
         private func userLoginActions() {
@@ -118,6 +112,23 @@ extension HomeView {
             checkNotificationStatusDone = true
             Task {
                 isPresentingOnboardingView = await NotificationStatus.notificationsAuthorizationStatus() == .notDetermined
+
+            // Prepare Onboarding View Model now that we have all required datas.
+            notificationManager.userAuthenticationToken = userAuthenticationToken
+            onboardingViewViewModel = OnboardingView.ViewModel(applicationRootUrl: webViewViewModel.rootUrl,
+                                                               notificationManager: notificationManager)
+            onboardingViewViewModel?.eventReceiver = { event in
+                switch event {
+                case .isDismissed:
+                    // Go back to root URL (to leave web page)
+                    self.webViewViewModel.goBackToRootUrl()
+                    self.isPresentingOnboardingView = false
+                    self.onboardingViewViewModel = nil
+                }
+            }
+
+            Task { @MainActor in
+                isPresentingOnboardingView = true
             }
         }
 
@@ -129,6 +140,18 @@ extension HomeView {
             // Currently, on next login, FC find the previous token and reconnect automatically with previous profile.
 
             webViewViewModel.goBackToRootUrl()
+        }
+
+        // Get the auth token from cookie store.
+        // Return nil if no token is found.
+        private var getUserAuthenticationToken: String? {
+            get async {
+                await webViewViewModel.configuration
+                    .websiteDataStore
+                    .httpCookieStore
+                    .allCookies()
+                    .first(where: { $0.name == Self.AUTHENTICATION_COOKIE_NAME })?.value.replacingOccurrences(of: "\"", with: "")
+            }
         }
 
         func partnerViewModel(for url: URL) -> PartnerView.ViewModel {
