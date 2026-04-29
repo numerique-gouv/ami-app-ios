@@ -69,7 +69,9 @@ struct HomeView: View {
                       dismissButton: .default(Text("Ok")))
             }
             .sheet(isPresented: $viewModel.isPresentingOnboardingView) {
-                OnboardingView(viewModel: viewModel.onboardingViewViewModel)
+                if let onboardingViewViewModel = viewModel.onboardingViewViewModel {
+                    OnboardingView(viewModel: onboardingViewViewModel)
+                }
             }
             .navigationTitle(AMIL10n.amiTitle)
             .navigationBarHidden(true)

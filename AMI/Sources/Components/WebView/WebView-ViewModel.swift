@@ -11,7 +11,11 @@ import WebKit
 
 extension SwiftUIWebView {
     // Configguration that can be shared by all SwiftUIWebView to access the same cookie store.
-    static let sharedConfiguration = WKWebViewConfiguration()
+    static let sharedConfiguration = {
+        let configuration = WKWebViewConfiguration()
+        // Here, we can customize webView configuration. especially on `webSiteDataStore`.
+        return configuration
+    }()
 
     @Observable
     class ViewModel: NSObject {
@@ -47,7 +51,7 @@ extension SwiftUIWebView {
         private var canGoBackObserver: NSKeyValueObservation?
         private var urlChangeObserver: NSKeyValueObservation?
 
-        init(configuration: WKWebViewConfiguration = SwiftUIWebView.sharedConfiguration,
+        init(configuration: WKWebViewConfiguration,
              rootUrl: URL,
              userScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
@@ -253,7 +257,8 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
 
 extension SwiftUIWebView.ViewModel {
     static let `default` = {
-        let model = SwiftUIWebView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
+        let model = SwiftUIWebView.ViewModel(configuration: WKWebViewConfiguration(),
+                                             rootUrl: URL(string: "https://numerique.gouv.fr")!,
                                              userScripts: HomeUserScripts())
         model.delegate = WebViewDelegateSimulatorImplementation()
         #if DEBUG
