@@ -43,17 +43,6 @@ extension HomeView {
         private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
             let urlString = url?.absoluteString ?? ""
             isOnContactPage = urlString.hasSuffix("/#/contact")
-//            isExternalProcess = !urlString.hasPrefix(webViewViewModel.rootUrl.absoluteString)
-
-//            Task { @MainActor in
-//                if self.showSettings,
-//                   self.webViewViewModel.webView?.canGoBack ?? false {
-//                    // As new page should not be handled by webview, reset webView last step navigation (to clean history).
-//                    self.webViewViewModel.webView?.goBack()
-//                    // Force `showSettings` to true because it is reset to false by the `goBack` command.
-//                    self.showSettings = true
-//                }
-//            }
             if let route = findNativeRoute(for: urlString) {
                 Task { @MainActor in
                     switch route {
