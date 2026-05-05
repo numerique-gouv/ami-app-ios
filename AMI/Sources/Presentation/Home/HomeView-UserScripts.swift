@@ -176,7 +176,7 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
             case .notificationPermissionRequested:
                 NotificationStatus.requestPermission()
             case .notificationPermissionRemoved:
-                notificationManager.openSettings()
+                NotificationStatus.openSettings()
             case .navigateTo:
                 onNavigate?(data)
             default:

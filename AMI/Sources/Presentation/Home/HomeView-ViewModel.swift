@@ -29,7 +29,7 @@ extension HomeView {
         var isPresentingOnboardingView = false
         // Temporarily display back button when on OIDC page.
         var showBackButton = false
-        
+
         private var checkNotificationStatusDone = false
 
         var selectedPartner: Partner?
@@ -42,16 +42,18 @@ extension HomeView {
         @Sendable
         private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
             let urlString = url?.absoluteString ?? ""
-            isOnContactPage = urlString.hasSuffix("/#/contact") ?? false
-            isExternalProcess = !urlString.hasPrefix(webViewViewModel.rootUrl.absoluteString)
+            isOnContactPage = urlString.hasSuffix("/#/contact")
+//            isExternalProcess = !urlString.hasPrefix(webViewViewModel.rootUrl.absoluteString)
 
-            Task { @MainActor in
-                if self.showSettings,
-                   self.webViewViewModel.webView?.canGoBack ?? false {
-                    // As new page should not be handled by webview, reset webView last step navigation (to clean history).
-                    self.webViewViewModel.webView?.goBack()
-                    // Force `showSettings` to true because it is reset to false by the `goBack` command.
-                    self.showSettings = true
+//            Task { @MainActor in
+//                if self.showSettings,
+//                   self.webViewViewModel.webView?.canGoBack ?? false {
+//                    // As new page should not be handled by webview, reset webView last step navigation (to clean history).
+//                    self.webViewViewModel.webView?.goBack()
+//                    // Force `showSettings` to true because it is reset to false by the `goBack` command.
+//                    self.showSettings = true
+//                }
+//            }
             if let route = findNativeRoute(for: urlString) {
                 Task { @MainActor in
                     switch route {
@@ -61,7 +63,7 @@ extension HomeView {
                 }
             }
 
-            print("[HomeView-ViewModel]: URL Change Action \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage) - external: \(isExternalProcess)")
+            print("[HomeView-ViewModel]: URL Change Action \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage)")
         }
 
         func shareLogs() async {
@@ -100,7 +102,7 @@ extension HomeView {
             webViewViewModel.urlChangeAction = handleUrlChange
             userScripts.userLoggedInAction = userLoginActions
             userScripts.userLoggedOutAction = userLogoutActions
-            homeUserScripts.onNavigate = { [weak self] data in
+            userScripts.onNavigate = { [weak self] data in
                 if let url = data as? String {
                     Task { @MainActor in
                         self?.handleRoute(routeString: url)
@@ -214,7 +216,6 @@ extension HomeView.ViewModel: WebViewDelegate {
 }
 
 extension HomeView.ViewModel: WebRouteManagerProtocol {
-    @MainActor
     func handleRoute(routeString: String) {
         if let route = findNativeRoute(for: routeString) {
             print("[HomeView-ViewModel]: Native route detected, navigating app to \(route)")

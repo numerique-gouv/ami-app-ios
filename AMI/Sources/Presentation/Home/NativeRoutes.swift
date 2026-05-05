@@ -8,11 +8,11 @@ enum NativeRoute {
 }
 
 let nativeRoutes: [String: NativeRoute] = [
-    "/#/settings": .settings
+    "/#/settings": .settings,
 ]
 
 func findNativeRoute(for url: String) -> NativeRoute? {
-    nativeRoutes.first { (path, _) in url.contains(path) }?.value
+    nativeRoutes.first { path, _ in url.contains(path) }?.value
 }
 
 protocol WebRouteManagerProtocol {
