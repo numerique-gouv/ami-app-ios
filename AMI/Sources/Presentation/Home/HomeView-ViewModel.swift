@@ -29,7 +29,7 @@ extension HomeView {
         var isPresentingOnboardingView = false
         // Temporarily display back button when on OIDC page.
         var showBackButton = false
-        
+
         private var checkNotificationStatusDone = false
 
         var selectedPartner: Partner?
@@ -41,20 +41,18 @@ extension HomeView {
 
         @Sendable
         private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
-            showSettings = url?.absoluteString.hasSuffix("/#/settings") ?? false
-            isOnContactPage = url?.absoluteString.hasSuffix("/#/contact") ?? false
-
-            print("[HomeView-ViewModel]: URL Change Action \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage)")
-
-            Task { @MainActor in
-                if self.showSettings,
-                   self.webViewViewModel.webView?.canGoBack ?? false {
-                    // As new page should not be handled by webview, reset webView last step navigation (to clean history).
-                    self.webViewViewModel.webView?.goBack()
-                    // Force `showSettings` to true because it is reset to false by the `goBack` command.
-                    self.showSettings = true
+            let urlString = url?.absoluteString ?? ""
+            isOnContactPage = urlString.hasSuffix("/#/contact")
+            if let route = findNativeRoute(for: urlString) {
+                Task { @MainActor in
+                    switch route {
+                    case .settings:
+                        self.showSettings = true
+                    }
                 }
             }
+
+            print("[HomeView-ViewModel]: URL Change Action \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage)")
         }
 
         func shareLogs() async {
@@ -93,6 +91,13 @@ extension HomeView {
             webViewViewModel.urlChangeAction = handleUrlChange
             userScripts.userLoggedInAction = userLoginActions
             userScripts.userLoggedOutAction = userLogoutActions
+            userScripts.onNavigate = { [weak self] data in
+                if let url = data as? String {
+                    Task { @MainActor in
+                        self?.handleRoute(routeString: url)
+                    }
+                }
+            }
             onboardingViewViewModel.eventReceiver = { event in
                 switch event {
                 case .isDismissed:
@@ -196,5 +201,20 @@ extension HomeView.ViewModel: WebViewDelegate {
 
     func navigationDidFailed(withError error: Error) {
         print("[WebViewDelegate navigationDidFailed] failed with error \(error)")
+    }
+}
+
+extension HomeView.ViewModel: WebRouteManagerProtocol {
+    func handleRoute(routeString: String) {
+        if let route = findNativeRoute(for: routeString) {
+            print("[HomeView-ViewModel]: Native route detected, navigating app to \(route)")
+            switch route {
+            case .settings:
+                showSettings = true
+            }
+        } else {
+            guard let url = URL(string: routeString, relativeTo: webViewViewModel.rootUrl) else { return }
+            webViewViewModel.navigate(to: url)
+        }
     }
 }

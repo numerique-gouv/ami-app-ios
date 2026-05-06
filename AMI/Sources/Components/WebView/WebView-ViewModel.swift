@@ -165,6 +165,10 @@ extension SwiftUIWebView {
             }
             webView.go(to: firstItem)
         }
+
+        func navigate(to url: URL) {
+            webView?.load(URLRequest(url: url))
+        }
     }
 }
 
