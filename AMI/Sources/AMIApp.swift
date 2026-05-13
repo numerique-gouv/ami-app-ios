@@ -57,6 +57,14 @@ struct AMIApp: App {
                 view.interactivePopGestureRecognizer?.isEnabled = true
                 view.interactivePopGestureRecognizer?.delegate = nil
             }
+
+            // Banners container
+            VStack(spacing: 0) {
+                ForEach(appState.bannerManager.banners) { banner in
+                    InformationBanner(data: banner)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
         }
         .animation(.easeInOut(duration: 0.3), value: appState.bannerManager.banners.count)
         .onReceive(NotificationCenter.default.publisher(for: .pendingUrl)) { notification in
