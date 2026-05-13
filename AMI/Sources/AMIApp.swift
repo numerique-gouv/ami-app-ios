@@ -43,13 +43,6 @@ struct AMIApp: App {
                 #else
                     EmptyView()
                 #endif
-
-                VStack(spacing: 0) {
-                    ForEach(appState.bannerManager.banners) { banner in
-                        InformationBanner(data: banner)
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                    }
-                }
             }
             // On SwiftUI, removing the defaut Navigation Back button disable the Swipe Back gesture.
             // We reactivate it via trhe underlying UIKit UINavigationController.
