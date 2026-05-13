@@ -5,6 +5,7 @@
 //  Created by Aline Bonnet on 05/12/2025.
 //
 
+import AmiDesignSystem
 import SwiftUI
 
 struct ReviewAppView: View {
@@ -23,8 +24,8 @@ struct ReviewAppView: View {
             ForEach(reviewApps) { reviewApp in
                 if let reviewAppUrl = URL(string: reviewApp.url) {
                     NavigationLink(value: reviewAppUrl) {
-                        Tile(title: reviewApp.title,
-                             content: reviewApp.description ?? "")
+                        TileView(title: reviewApp.title,
+                                 content: reviewApp.description ?? "")
                     }
                 }
             }
