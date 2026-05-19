@@ -137,7 +137,8 @@ extension HomeView {
                 break
             case .authorized, .provisional, .ephemeral:
                 // Always call `registerForRemoteNotifications` to refresh Apns token if necessary.
-                // Apple recommends it ("Each time your app launches, it must register with APNs"): https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/HandlingRemoteNotifications.html
+                // Apple recommends it ("Each time your app launches, it must register with APNs")
+                //   https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/HandlingRemoteNotifications.html
                 await MainActor.run {
                     UIApplication.shared.registerForRemoteNotifications()
                 }
