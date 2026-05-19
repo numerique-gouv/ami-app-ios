@@ -40,7 +40,7 @@ class NotificationManager: NSObject {
 
     func registerDeviceForRemoteNotificationsToBackend(token: String) {
         guard let baseUrl else {
-            AppLog.service.warning("\(AppLog.logHeader(caller: self, function: #function)) Base url is not defined")
+            AppLog.service.warning("\(AppLog.logHeader(self, function: #function)) Base url is not defined")
             return
         }
 
@@ -62,7 +62,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
 
         AppLog.service.notice(
             """
-            \(AppLog.logHeader(caller: self, function: #function)) Notification received while app is in foreground:
+            \(AppLog.logHeader(self, function: #function)) Notification received while app is in foreground:
             \tNotification title: \(notification.request.content.title)
             \t\(notification.request.content.body)
             \tNotification data: \(userInfo)
@@ -81,7 +81,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
 
         AppLog.service.notice(
             """
-                    \(AppLog.logHeader(caller: self, function: #function)) User tapped notification:
+                    \(AppLog.logHeader(self, function: #function)) User tapped notification:
                     \tNotification title: \(response.notification.request.content.title)")
                     \tNotification body: \(response.notification.request.content.body)")
                     \tNotification data: \(userInfo)")
@@ -91,7 +91,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
 
         // Handle different action types
         if response.actionIdentifier == UNNotificationDefaultActionIdentifier {
-            AppLog.service.notice("\(AppLog.logHeader(caller: self, function: #function)) User tapped the notification banner, navigating to the notifications page")
+            AppLog.service.notice("\(AppLog.logHeader(self, function: #function)) User tapped the notification banner, navigating to the notifications page")
 
             // Handle reception of notification (review app for instance)
             if let appUrlString = userInfo["app_url"] as? String,
@@ -99,12 +99,12 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
                 handleIncomingNotificationUrl(url: targetApplicationUrl)
             }
         } else if response.actionIdentifier == UNNotificationDismissActionIdentifier {
-            AppLog.service.notice("\(AppLog.logHeader(caller: self, function: #function)) User dismissed the notification")
+            AppLog.service.notice("\(AppLog.logHeader(self, function: #function)) User dismissed the notification")
         }
     }
 
     private func handleIncomingNotificationUrl(url: URL) {
-        AppLog.service.notice("\(AppLog.logHeader(caller: self, function: #function)) app_url received: \(url)")
+        AppLog.service.notice("\(AppLog.logHeader(self, function: #function)) app_url received: \(url)")
         guard let notificationsURL = URL(string: "/#/notifications", relativeTo: url) else {
             return
         }
@@ -118,10 +118,10 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
 extension NotificationManager: MessagingDelegate {
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         guard let fcmToken else {
-            AppLog.service.warning("\(AppLog.logHeader(caller: self, function: #function)) FCM token is nil")
+            AppLog.service.warning("\(AppLog.logHeader(self, function: #function)) FCM token is nil")
             return
         }
 
-        AppLog.service.notice("\(AppLog.logHeader(caller: self, function: #function)) didReceiveRegistrationToken: \(fcmToken, privacy: .private)")
+        AppLog.service.notice("\(AppLog.logHeader(self, function: #function)) didReceiveRegistrationToken: \(fcmToken, privacy: .private)")
     }
 }

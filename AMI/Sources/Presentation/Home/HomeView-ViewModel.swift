@@ -47,7 +47,7 @@ extension HomeView {
             // swiftformat:disable redundantSelf
             AppLog.viewModel.notice(
                 """
-                \(AppLog.logHeader(caller: self, function: #function)) URL Change Action \(url?.debugDescription ?? "<nil>")
+                \(AppLog.logHeader(self, function: #function)) URL Change Action \(url?.debugDescription ?? "<nil>")
                 \tsettings: \(self.showSettings)
                 \tcontact: \(self.isOnContactPage)
                 \texternal: \(self.isExternalProcess)
@@ -191,18 +191,18 @@ extension HomeView.ViewModel: WebViewDelegate {
     }
 
     func navigationWillStart(navigationAction: WKNavigationAction) {
-        AppLog.viewModel.notice("\(AppLog.logHeader(caller: self, function: #function)) NavigationWillStart")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self, function: #function)) NavigationWillStart")
     }
 
     func navigationDidStart() {
-        AppLog.viewModel.notice("\(AppLog.logHeader(caller: self, function: #function)) NavigationDidStart")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self, function: #function)) NavigationDidStart")
     }
 
     func navigationDidFinish() {
-        AppLog.viewModel.notice("\(AppLog.logHeader(caller: self, function: #function)) NavigationDidFinish")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self, function: #function)) NavigationDidFinish")
     }
 
     func navigationDidFailed(withError error: Error) {
-        AppLog.viewModel.notice("\(AppLog.logHeader(caller: self, function: #function)) NavigationDidFailed] failed with error \(error)")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self, function: #function)) NavigationDidFailed] failed with error \(error)")
     }
 }
