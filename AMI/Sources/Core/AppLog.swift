@@ -19,7 +19,7 @@ enum AppLog {
     static let viewModel = Logger(subsystem: AppBundle.identifier(), category: "viewModel")
     static let service = Logger(subsystem: AppBundle.identifier(), category: "service")
 
-    static func logHeader(caller: Any? = nil, function: String) -> String {
+    static func logHeader(_ caller: Any? = nil, function: String = #function) -> String {
         switch caller {
         case let .some(caller): "[\(type(of: caller)) - \(function)]"
         case .none: "[<no-caller> - \(function)]"

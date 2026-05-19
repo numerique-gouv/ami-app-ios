@@ -10,7 +10,7 @@ class NetworkMonitor: ObservableObject {
 
     private init() {
         monitor.pathUpdateHandler = { [weak self] path in
-            AppLog.service.notice("\(AppLog.logHeader(caller: self, function: #function)) Network status changed to \(path.status)")
+            AppLog.service.notice("\(AppLog.logHeader(self, function: #function)) Network status changed to \(path.status)")
             DispatchQueue.main.async {
                 self?.isConnected = path.status == .satisfied
             }

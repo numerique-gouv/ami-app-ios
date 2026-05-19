@@ -41,7 +41,7 @@ class RegisterDevice {
 
     func registerDevice(baseUrl: URL, token: String, webviewConfiguration: WKWebViewConfiguration) async {
         guard let authToken = await getAuthToken(webviewConfiguration: webviewConfiguration) else {
-            AppLog.service.warning("\(AppLog.logHeader(caller: self, function: #function)) ⚠️ No 'token' cookie found - cannot register device")
+            AppLog.service.warning("\(AppLog.logHeader(self, function: #function)) ⚠️ No 'token' cookie found - cannot register device")
             return
         }
 
@@ -51,7 +51,7 @@ class RegisterDevice {
 
         AppLog.service.notice(
             """
-            \(AppLog.logHeader(caller: self, function: #function)) ✅ Registering device
+            \(AppLog.logHeader(self, function: #function)) ✅ Registering device
             \tfcmToken=\(token, privacy: .private)
             \tdeviceId=\(deviceId, privacy: .private)
             \tmodel=\(deviceModel)
@@ -86,13 +86,13 @@ class RegisterDevice {
 
             if let httpResponse = response as? HTTPURLResponse {
                 if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
-                    AppLog.service.notice("\(AppLog.logHeader(caller: self, function: #function)) ✅ Device registered successfully")
+                    AppLog.service.notice("\(AppLog.logHeader(self, function: #function)) ✅ Device registered successfully")
                 } else {
-                    AppLog.service.warning("\(AppLog.logHeader(caller: self, function: #function)) ⚠️ Device registration failed with status \(httpResponse.statusCode)")
+                    AppLog.service.warning("\(AppLog.logHeader(self, function: #function)) ⚠️ Device registration failed with status \(httpResponse.statusCode)")
                 }
             }
         } catch {
-            AppLog.service.error("\(AppLog.logHeader(caller: self, function: #function)) ❌ Device registration error: \(error.localizedDescription)")
+            AppLog.service.error("\(AppLog.logHeader(self, function: #function)) ❌ Device registration error: \(error.localizedDescription)")
         }
     }
 }

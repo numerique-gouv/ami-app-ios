@@ -79,7 +79,7 @@ struct AMIApp: App {
     }
 
     private func connectivityDidChange(isConnected: Bool) {
-        AppLog.app.notice("\(AppLog.logHeader(caller: self, function: #function)) Received a network status change, isConnected=\(isConnected)")
+        AppLog.app.notice("\(AppLog.logHeader(self, function: #function)) Received a network status change, isConnected=\(isConnected)")
         if isConnected {
             if let id = offlineBannerId {
                 bannerManager.dismissBanner(id: id)
@@ -101,7 +101,7 @@ struct AMIApp: App {
             notificationActivatedHomeViewModelId = nil
             return
         }
-        AppLog.app.notice("\(AppLog.logHeader(caller: self, function: #function)) Notification Received: \(appReviewUrl)")
+        AppLog.app.notice("\(AppLog.logHeader(self, function: #function)) Notification Received: \(appReviewUrl)")
 
         notificationTriggeredHomeViewModel = HomeView.ViewModel(rootUrl: appReviewUrl.absoluteURL, notificationManager: Self.notificationManager)
         // Change view ID to force refresh.
