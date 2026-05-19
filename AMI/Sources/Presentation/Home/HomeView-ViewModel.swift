@@ -50,7 +50,6 @@ extension HomeView {
                 \(AppLog.logHeader(self, function: #function)) URL Change Action \(url?.debugDescription ?? "<nil>")
                 \tsettings: \(self.showSettings)
                 \tcontact: \(self.isOnContactPage)
-                \texternal: \(self.isExternalProcess)
                 """
             )
             // swiftformat:enable redundantSelf
