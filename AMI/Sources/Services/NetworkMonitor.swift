@@ -41,3 +41,14 @@ extension NWPath.Status: @retroactive CustomStringConvertible {
         }
     }
 }
+
+extension NWPath.Status: @retroactive CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .requiresConnection: "requires connection"
+        case .satisfied: "satisfied"
+        case .unsatisfied: "unsatisfied"
+        @unknown default: "unknown NWPath.Status"
+        }
+    }
+}
