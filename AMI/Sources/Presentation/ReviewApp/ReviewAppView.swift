@@ -9,7 +9,7 @@ import AmiDesignSystem
 import SwiftUI
 
 struct ReviewAppView: View {
-    @EnvironmentObject var webService: WebService
+//    @EnvironmentObject var webService: WebService
     @State private var reviewApps: [ReviewApp] = []
     @Bindable var viewModel: ReviewAppView.ViewModel
 
@@ -41,5 +41,5 @@ struct ReviewAppView: View {
 #Preview {
     let viewModel = ReviewAppView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: NotificationManager())
     ReviewAppView(viewModel: viewModel)
-        .environmentObject(WebService())
+//        .environmentObject(WebService())
 }
