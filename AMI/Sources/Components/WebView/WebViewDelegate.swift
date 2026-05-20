@@ -32,7 +32,7 @@ extension WebViewDelegate {
 
 class WebViewDelegateSimulatorImplementation: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
-        print("[WebViewDelegate] Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
+        AppLog.view.notice("\(AppLog.logHeader(self, function: #function)) Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
         return true
     }
 

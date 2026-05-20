@@ -99,18 +99,17 @@ extension PartnerUserScripts: WebViewUserScriptsProtocol {
               let level = body["level"] as? String,
               let logMessage = body["message"] as? String else { return }
 
-        let prefix = "[PartnerUserScripts Console]"
         switch level {
         case "error":
-            print("\(prefix) ❌ ERROR: \(logMessage)")
+            AppLog.view.error("\(AppLog.logHeader(self, function: #function)) ❌ ERROR: \(logMessage)")
         case "warn":
-            print("\(prefix) ⚠️ WARN: \(logMessage)")
+            AppLog.view.warning("\(AppLog.logHeader(self, function: #function)) ⚠️ WARN: \(logMessage)")
         case "info":
-            print("\(prefix) ℹ️ INFO: \(logMessage)")
+            AppLog.view.info("\(AppLog.logHeader(self, function: #function)) ℹ️ INFO: \(logMessage)")
         case "debug":
-            print("\(prefix) 🔍 DEBUG: \(logMessage)")
+            AppLog.view.debug("\(AppLog.logHeader(self, function: #function)) 🔍 DEBUG: \(logMessage)")
         default:
-            print("\(prefix) 📝 LOG: \(logMessage)")
+            AppLog.view.notice("\(AppLog.logHeader(self, function: #function)) 📝 LOG: \(logMessage)")
         }
     }
 }
