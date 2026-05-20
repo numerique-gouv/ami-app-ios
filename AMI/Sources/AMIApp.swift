@@ -34,7 +34,7 @@ struct AMIApp: App {
                         HomeView(viewModel: appState.notificationTriggeredHomeViewModel)
                             .id(notificationActivatedHomeViewModelId)
                     } else {
-                        ReviewAppView(viewModel: ReviewAppView.ViewModel(notificationManager: Self.notificationManager))
+                        ReviewAppView(viewModel: ReviewAppView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: AMIAppState.notificationManager))
                             .environmentObject(WebService())
                     }
                 #elseif IS_AMI_PRODUCTION

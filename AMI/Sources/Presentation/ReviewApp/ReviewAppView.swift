@@ -20,7 +20,7 @@ struct ReviewAppView: View {
         Text("Choix de la review")
             .font(.title)
         ScrollView {
-            ForEach(reviewApps) { reviewApp in
+            ForEach(viewModel.reviewApps) { reviewApp in
                 if let reviewAppUrl = URL(string: reviewApp.url) {
                     NavigationLink(value: reviewAppUrl) {
                         Tile(title: reviewApp.title,
@@ -34,18 +34,11 @@ struct ReviewAppView: View {
                 }
             }
         }
-        .task {
-            Task {
-                try await webService.getReviewApps()
-                reviewApps.removeAll()
-                reviewApps.append(contentsOf: webService.reviewApps)
-            }
-        }
     }
 }
 
 #Preview {
-    let viewModel = ReviewAppView.ViewModel(notificationManager: NotificationManager())
+    let viewModel = ReviewAppView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: NotificationManager())
     ReviewAppView(viewModel: viewModel)
         .environmentObject(WebService())
 }
