@@ -46,4 +46,4 @@ packages:
   AMI-Design-System:
     url: https://github.com/numerique-gouv/ami-design-system-ios
 #    version: 0.1.0
-    revision: 64de0ea2c8721ca40bea9fd9aa24f6b6dfb9e0ae
+    revision: fbf13bbf58946a21128eb7aeca9f507b577179e9
