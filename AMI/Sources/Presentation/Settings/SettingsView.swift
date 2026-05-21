@@ -6,6 +6,7 @@
 //  Copyright © 2026 DINUM. All rights reserved.
 //
 
+import AmiDesignSystem
 import SwiftUI
 
 struct SettingsView: View {
@@ -26,21 +27,31 @@ struct SettingsView: View {
     }
 
     @ViewBuilder
-    private var notificationToggle: some View {
+    private var notificationStatus: some View {
         Toggle(isOn: $viewModel.isNotificationsActive) {
             Text(AMIL10n.settingsNotificationsAllowTitle)
         }
         .toggleStyle(SwitchToggleStyle(tint: .accentColor)) // needed for Toggle widget.
-        // Use deprecated version of `onChange` to handle iOS back to iOS 15.
-        .onChange(of: viewModel.isNotificationsActive) { newValue in
-            viewModel.toggleNotificationPermissions(allowNotifications: newValue)
+        .disabled(true) // Can't change the settings using the toggle.
+    }
+
+    @ViewBuilder
+    private var modifyNotificationSettings: some View {
+        Button {
+            viewModel.updateNotificationPermissions(allowNotifications: !viewModel.isNotificationsActive)
+        } label: {
+            Text("modifier")
         }
+        .buttonStyle(ButtonStyleDsfr(type: .secondary))
     }
 
     var body: some View {
         NavigationStack {
             List {
-                notificationToggle
+                notificationStatus
+                    .listRowSeparator(.hidden)
+                modifyNotificationSettings
+                    .fixedSize()
             }
             .toolbar {
                 toolbar

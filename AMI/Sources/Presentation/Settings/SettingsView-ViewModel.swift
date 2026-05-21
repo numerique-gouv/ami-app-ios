@@ -34,7 +34,7 @@ extension SettingsView {
             notificationsSettingDidChangeAction?(notificationsActiveNewValue)
         }
 
-        func toggleNotificationPermissions(allowNotifications: Bool) {
+        func updateNotificationPermissions(allowNotifications: Bool) {
             guard !isAutoUpdated else {
                 isAutoUpdated = false
                 return
