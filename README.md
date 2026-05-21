@@ -33,6 +33,8 @@ The project is described using 2 files:
 
 ## Information
 
+- SwiftGenPlugin (used by AmiDesignSystem) must be authorized to build the project.
+
 - SwiftGen is used in Xcode pre-build script to automatically generate Swift code (in `AMI/Sources/Generated` folder) for String, Color and Image resources.
   - **Strings**
     - SwiftGen handle strings localization automatically
