@@ -147,7 +147,7 @@ extension SwiftUIWebView {
             do {
                 // Execute javaScript script
                 _ = try await webView.evaluateJavaScript(script)
-                AppLog.viewModel.notice("\(AppLog.logHeader(self)) RriteInLocalStorage success - `\(key)` = `\(value, privacy: .private)`")
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) WriteInLocalStorage success - `\(key)` = `\(value, privacy: .private)`")
             } catch {
                 AppLog.viewModel.notice("\(AppLog.logHeader(self)) WriteInLocalStorage failed to set key `\(key)` to value `\(value, privacy: .private)`: \(error)")
             }
