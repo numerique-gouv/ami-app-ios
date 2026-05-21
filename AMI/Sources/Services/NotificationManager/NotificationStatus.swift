@@ -31,14 +31,14 @@ enum NotificationStatus {
     static func requestNotificationsActivation() async {
         do {
             if try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) {
-                print("[NotificationManager]: Notification authorization granted: \(true)")
+                AppLog.service.notice("\(AppLog.logHeader(self)) Notification authorization granted: \(true)")
                 await MainActor.run {
                     UIApplication.shared.registerForRemoteNotifications()
                     InformationBannerManager.shared.showBanner(.validation, title: "Les notifications ont été activées")
                 }
             }
         } catch {
-            print("[NotificationManager]: Error requesting notification authorization: \(error)")
+            AppLog.service.error("\(AppLog.logHeader(self)) Error requesting notification authorization: \(error)")
         }
     }
 
@@ -46,13 +46,13 @@ enum NotificationStatus {
         Task {
             switch await notificationsAuthorizationStatus() {
             case .denied:
-                print("[NotificationManager]: Permission denied - opening settings")
+                AppLog.service.notice("\(AppLog.logHeader(self)) Permission denied - opening settings")
                 openSettings()
             case .notDetermined:
-                print("[NotificationManager]: Permission not determined, trying to open the OS popup")
+                AppLog.service.notice("\(AppLog.logHeader(self)) Permission not determined, trying to open the OS popup")
                 await requestNotificationsActivation()
             default:
-                print("[NotificationManager]: Permission already granted or provisional")
+                AppLog.service.notice("\(AppLog.logHeader(self)) Permission already granted or provisional")
             }
         }
     }
@@ -63,7 +63,20 @@ enum NotificationStatus {
 
     static func isNotificationEnabled() async -> Bool {
         let status = await notificationsAuthorizationStatus()
-        print("[NotificationManager]: Authorization status: \(status.rawValue) (\(status))")
+        AppLog.service.notice("\(AppLog.logHeader(self)) Authorization status: \(status.rawValue) (\(status))")
         return status == .authorized
+    }
+}
+
+extension UNAuthorizationStatus: @retroactive CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .notDetermined: "notDetermined"
+        case .denied: "denied"
+        case .authorized: "authorized"
+        case .provisional: "provisional"
+        case .ephemeral: "ephemeral"
+        @unknown default: "Unknown UNAuthorizationStatus"
+        }
     }
 }

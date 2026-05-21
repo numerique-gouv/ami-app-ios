@@ -36,7 +36,7 @@ class AMIAppState: NSObject {
     }
 
     func connectivityDidChange(state: NetworkMonitor.EventType) {
-        print("Main App: received a network status change, isConnected=\(state == .connected ? "Connected" : "Not connected")")
+        AppLog.app.notice("\(AppLog.logHeader(self)) Received a network status change, isConnected=\(state == .connected ? "Connected" : "Not connected")")
         switch state {
         case .connected:
             if let id = offlineBannerId {
@@ -64,7 +64,7 @@ class AMIAppState: NSObject {
             notificationActivatedHomeViewModelId = nil
             return
         }
-        print("[AmiApp] Notification Received: \(appReviewUrl)")
+        AppLog.app.notice("\(AppLog.logHeader(self)) Notification Received: \(appReviewUrl)")
 
         notificationTriggeredHomeViewModel = HomeView.ViewModel(rootUrl: appReviewUrl.absoluteURL, notificationManager: Self.notificationManager)
         // Change view ID to force refresh.
