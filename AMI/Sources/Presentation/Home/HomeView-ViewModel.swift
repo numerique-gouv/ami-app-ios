@@ -85,6 +85,7 @@ extension HomeView {
             self.webViewViewModel = webViewViewModel
             self.notificationManager = notificationManager
             settingsViewViewModel = SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) notificationsSettingDidChangeAction")
                 Task { @MainActor in
                     await webViewViewModel.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
                 }
