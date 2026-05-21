@@ -20,7 +20,15 @@ extension HomeView {
 
         private let notificationManager: NotificationManager
         let webViewViewModel: SwiftUIWebView.ViewModel
-        let settingsViewViewModel: SettingsView.ViewModel
+        var settingsViewViewModel: SettingsView.ViewModel {
+            SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) notificationsSettingDidChangeAction")
+                Task { @MainActor in
+                    await self.webViewViewModel.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
+                }
+            })
+        }
+
         var onboardingViewViewModel: OnboardingView.ViewModel
 
         var isOnContactPage = false
@@ -78,18 +86,11 @@ extension HomeView {
         }
 
         init(rootUrl: URL, notificationManager: NotificationManager) {
-            // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let userScripts = HomeUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                                             userScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.notificationManager = notificationManager
-            settingsViewViewModel = SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
-                AppLog.viewModel.notice("\(AppLog.logHeader(self)) notificationsSettingDidChangeAction")
-                Task { @MainActor in
-                    await webViewViewModel.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
-                }
-            })
             onboardingViewViewModel = OnboardingView.ViewModel(applicationRootUrl: rootUrl, notificationManager: notificationManager)
 
             super.init()
