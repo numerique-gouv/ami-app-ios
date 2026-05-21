@@ -32,23 +32,23 @@ extension WebViewDelegate {
 
 class WebViewDelegateSimulatorImplementation: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
-        AppLog.view.notice("\(AppLog.logHeader(self, function: #function)) Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
+        AppLog.view.notice("\(AppLog.logHeader(self)) Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
         return true
     }
 
     func navigationWillStart() {
-        AppLog.view.notice("\(AppLog.logHeader(self, function: #function)) Navigation will start")
+        AppLog.view.notice("\(AppLog.logHeader(self)) Navigation will start")
     }
 
     func navigationDidStart() {
-        AppLog.view.notice("\(AppLog.logHeader(self, function: #function)) Navigation did start")
+        AppLog.view.notice("\(AppLog.logHeader(self)) Navigation did start")
     }
 
     func navigationDidFinish() {
-        AppLog.view.notice("\(AppLog.logHeader(self, function: #function)) Navigation did finish")
+        AppLog.view.notice("\(AppLog.logHeader(self)) Navigation did finish")
     }
 
     func navigationDidFailed(withError error: Error) {
-        AppLog.view.notice("\(AppLog.logHeader(self, function: #function)) Navigation did failed with error: \(error)")
+        AppLog.view.notice("\(AppLog.logHeader(self)) Navigation did failed with error: \(error)")
     }
 }
