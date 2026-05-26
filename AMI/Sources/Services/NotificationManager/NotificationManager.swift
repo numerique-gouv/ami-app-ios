@@ -21,10 +21,6 @@ class NotificationManager: NSObject {
         super.init()
     }
 
-//    func setApplicationRootUrl(url: URL) {
-//        self.baseUrl = url
-//    }
-
     func registerForRemoteNotifications(baseUrl: URL) async {
         self.baseUrl = baseUrl
 
