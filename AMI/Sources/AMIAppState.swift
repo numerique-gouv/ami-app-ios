@@ -22,6 +22,10 @@ class AMIAppState: NSObject {
     // State to force refresh view when a notification is tapped by the user.
     var notificationActivatedHomeViewModelId: UUID?
 
+    #if IS_AMI_STAGING
+        let reviewAppViewModel = ReviewAppView.ViewModel(notificationManager: AMIAppState.notificationManager)
+    #endif
+
     override init() {
         Self.defaultHomeViewModel = HomeView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: Self.notificationManager)
         notificationTriggeredHomeViewModel = Self.defaultHomeViewModel
