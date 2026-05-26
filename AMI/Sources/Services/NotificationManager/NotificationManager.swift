@@ -21,6 +21,10 @@ class NotificationManager: NSObject {
         super.init()
     }
 
+//    func setApplicationRootUrl(url: URL) {
+//        self.baseUrl = url
+//    }
+
     func registerForRemoteNotifications(baseUrl: URL) async {
         self.baseUrl = baseUrl
 
@@ -44,7 +48,7 @@ class NotificationManager: NSObject {
             return
         }
 
-        // Execute `regsiterDevice` task in background job.
+        // Execute `registerDevice` task in background job.
         Task(priority: .background) {
             await RegisterDevice().registerDevice(baseUrl: baseUrl,
                                                   token: token,
