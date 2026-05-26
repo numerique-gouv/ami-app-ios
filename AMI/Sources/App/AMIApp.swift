@@ -10,10 +10,6 @@ import SwiftUI
 
 @main
 struct AMIApp: App {
-    // Static properties
-    private static let notificationManager = NotificationManager()
-    private static var defaultHomeViewModel = HomeView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: Self.notificationManager)
-
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @Bindable var appState = AMIAppState()
 
@@ -34,11 +30,10 @@ struct AMIApp: App {
                         HomeView(viewModel: appState.notificationTriggeredHomeViewModel)
                             .id(notificationActivatedHomeViewModelId)
                     } else {
-                        ReviewAppView(viewModel: ReviewAppView.ViewModel(notificationManager: Self.notificationManager))
-                            .environmentObject(WebService())
+                        ReviewAppView(viewModel: ReviewAppView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: AMIAppState.notificationManager))
                     }
                 #elseif IS_AMI_PRODUCTION
-                    HomeView(viewModel: Self.defaultHomeViewModel)
+                    HomeView(viewModel: AMIAppState.defaultHomeViewModel)
                         .id(appState.notificationActivatedHomeViewModelId ?? UUID())
                 #else
                     EmptyView()

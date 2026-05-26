@@ -12,12 +12,20 @@ import WebKit
 extension ReviewAppView {
     @Observable
     class ViewModel: NSObject {
+        let rootUrl: URL
         let notificationManager: NotificationManager
+        var reviewApps: [ReviewApp] = []
 
         private var viewModels = [URL: AnyObject]()
 
-        init(notificationManager: NotificationManager) {
+        init(rootUrl: URL, notificationManager: NotificationManager) {
+            self.rootUrl = rootUrl
             self.notificationManager = notificationManager
+            super.init()
+
+            Task {
+                try? await self.fetchReviewApps()
+            }
         }
 
         func reviewModel(for url: URL) -> AnyObject {
@@ -27,6 +35,17 @@ extension ReviewAppView {
                 return viewModel
             }
             return viewModel
+        }
+
+        func fetchReviewApps() async throws {
+            let url = rootUrl.appending(path: "dev-utils/review-apps")
+
+            let request = URLRequest(url: url)
+
+            let (data, _) = try await URLSession.shared.data(for: request)
+            let decoder = JSONDecoder()
+            let body = try decoder.decode([ReviewApp].self, from: data)
+            reviewApps = body
         }
     }
 }
