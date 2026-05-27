@@ -192,7 +192,14 @@ extension HomeView {
             notificationManager.setUserAuthenticationToken(token)
         }
 
+        private func resetNotificationManagerUserAuthentificationToken() {
+            notificationManager.setUserAuthenticationToken(nil)
+        }
+
         private func userLogoutActions() {
+            // Reset NotificationManager `userAuthenticationToken`.
+            resetNotificationManagerUserAuthentificationToken()
+
             // Reset Notification status check when on logout to recheck it on next login.
             resetLastOnboardingPresentationTime()
 
