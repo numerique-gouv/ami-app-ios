@@ -136,8 +136,6 @@ extension HomeView {
             Date.now.timeIntervalSince(lastCheckNotificationTime) > Self.MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION
         }
 
-        private func checkNotificationStatus() {
-            // User logged event is called too often.
         private func setLastOnboardingPresentationTimeToNow() {
             lastCheckNotificationTime = .now
         }
@@ -175,29 +173,10 @@ extension HomeView {
             }
 
             // Only check Notifications Status once par session.
-            // TODO: reset `checkNotificationStatusDone` on user disconnection.
-            guard !checkNotificationStatusDone else {
             guard shouldPresentOnboardingView else {
                 return
             }
-            checkNotificationStatusDone = true
-            Task {
-                isPresentingOnboardingView = await NotificationStatus.notificationsAuthorizationStatus() == .notDetermined
             setLastOnboardingPresentationTimeToNow()
-
-            // Prepare Onboarding View Model now that we have all required datas.
-            notificationManager.userAuthenticationToken = userAuthenticationToken
-            onboardingViewViewModel = OnboardingView.ViewModel(applicationRootUrl: webViewViewModel.rootUrl,
-                                                               notificationManager: notificationManager)
-            onboardingViewViewModel?.eventReceiver = { event in
-                switch event {
-                case .isDismissed:
-                    // Go back to root URL (to leave web page)
-                    self.webViewViewModel.goBackToRootUrl()
-                    self.isPresentingOnboardingView = false
-                    self.onboardingViewViewModel = nil
-                }
-            }
 
             Task { @MainActor in
                 isPresentingOnboardingView = true
