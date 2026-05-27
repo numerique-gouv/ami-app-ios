@@ -34,7 +34,7 @@ class RegisterDevice {
         AppLog.service.notice(
             """
             \(AppLog.logHeader(self)) ✅ Registering device
-            \tfcmToken=\(token, privacy: .private)
+            \tfcmToken=\(apnsToken, privacy: .private)
             \tdeviceId=\(deviceId, privacy: .private)
             \tmodel=\(deviceModel)
             \tplatform=ios app_version=\(appVersion)
