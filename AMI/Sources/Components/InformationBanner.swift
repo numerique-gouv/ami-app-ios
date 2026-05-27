@@ -230,6 +230,7 @@ struct InformationBanner: View {
     }
 }
 
+// swiftlint:disable applog_over_print
 #Preview("Warning") {
     InformationBanner(
         informationType: .warning,
@@ -349,3 +350,5 @@ struct InformationBanner: View {
     }
     .preferredColorScheme(.dark)
 }
+
+// swiftlint:enable applog_over_print

@@ -59,18 +59,18 @@ extension PartnerView.ViewModel: WebViewDelegate {
     }
 
     func navigationWillStart(navigationAction: WKNavigationAction) {
-        print("[WebViewDelegate navigationWillStart]")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationWillStart")
     }
 
     func navigationDidStart() {
-        print("[WebViewDelegate navigationDidStart]")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidStart")
     }
 
     func navigationDidFinish() {
-        print("[WebViewDelegate navigationDidFinish]")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFinish")
     }
 
     func navigationDidFailed(withError error: Error) {
-        print("[WebViewDelegate navigationDidFailed] failed with error \(error)")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFailed] failed with error \(error)")
     }
 }

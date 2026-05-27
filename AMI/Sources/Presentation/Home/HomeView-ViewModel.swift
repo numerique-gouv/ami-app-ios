@@ -24,8 +24,32 @@ extension HomeView {
 
         private let notificationManager: NotificationManager
         let webViewViewModel: SwiftUIWebView.ViewModel
-        let settingsViewViewModel: SettingsView.ViewModel
-        var onboardingViewViewModel: OnboardingView.ViewModel?
+
+        // Make `settingsViewViewModel` a computed property initialized on demand with available environment.
+        var settingsViewViewModel: SettingsView.ViewModel {
+            SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) notificationsSettingDidChangeAction")
+                Task { @MainActor in
+                    await self.webViewViewModel.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
+                }
+            })
+        }
+
+        // Make `onboardingViewViewModel` a computed property initialized on demand with available environment.
+        var onboardingViewViewModel: OnboardingView.ViewModel {
+            let onboardingViewViewModel = OnboardingView.ViewModel(applicationRootUrl: webViewViewModel.rootUrl,
+                                                                   notificationManager: notificationManager)
+            onboardingViewViewModel.eventReceiver = { event in
+                switch event {
+                case .isDismissed:
+                    // Go back to root URL (to leave web page)
+                    self.webViewViewModel.goBackToRootUrl()
+                    self.isPresentingOnboardingView = false
+                }
+            }
+
+            return onboardingViewViewModel
+        }
 
         var isOnContactPage = false
         var showSettings = false
@@ -48,7 +72,15 @@ extension HomeView {
             let shoudlShowNotificationsSettings = SpecialWebPageUrl.notificationsSettings.match(url)
             isOnContactPage = SpecialWebPageUrl.contact.match(url)
 
-            print("[HomeView-ViewModel]: URL Change Action \(url?.debugDescription ?? "<nil>")\n\tsettings: \(showSettings) - contact: \(isOnContactPage)")
+            // swiftformat:disable redundantSelf
+            AppLog.viewModel.notice(
+                """
+                \(AppLog.logHeader(self)) URL Change Action \(url?.debugDescription ?? "<nil>")
+                \tsettings: \(self.showSettings)
+                \tcontact: \(self.isOnContactPage)
+                """
+            )
+            // swiftformat:enable redundantSelf
 
             Task { @MainActor in
                 if shoudlShowNotificationsSettings,
@@ -74,19 +106,12 @@ extension HomeView {
         }
 
         init(rootUrl: URL, notificationManager: NotificationManager) {
-            // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let userScripts = HomeUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(configuration: SwiftUIWebView.sharedConfiguration,
                                                             rootUrl: rootUrl,
                                                             userScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.notificationManager = notificationManager
-            settingsViewViewModel = SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
-                print("[HomeView-ViewModel]: notificationsSettingDidChangeAction")
-                Task { @MainActor in
-                    await webViewViewModel.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
-                }
-            })
 
             super.init()
 
@@ -101,6 +126,7 @@ extension HomeView {
 
         private func userLoginActions() {
             // Check if user made a choice about allowing Push notifications reception.
+            checkNotificationStatus()
             Task {
                 await checkNotificationStatus()
             }
@@ -110,6 +136,8 @@ extension HomeView {
             Date.now.timeIntervalSince(lastCheckNotificationTime) > Self.MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION
         }
 
+        private func checkNotificationStatus() {
+            // User logged event is called too often.
         private func setLastOnboardingPresentationTimeToNow() {
             lastCheckNotificationTime = .now
         }
@@ -147,9 +175,14 @@ extension HomeView {
             }
 
             // Only check Notifications Status once par session.
+            // TODO: reset `checkNotificationStatusDone` on user disconnection.
+            guard !checkNotificationStatusDone else {
             guard shouldPresentOnboardingView else {
                 return
             }
+            checkNotificationStatusDone = true
+            Task {
+                isPresentingOnboardingView = await NotificationStatus.notificationsAuthorizationStatus() == .notDetermined
             setLastOnboardingPresentationTimeToNow()
 
             // Prepare Onboarding View Model now that we have all required datas.
@@ -245,18 +278,18 @@ extension HomeView.ViewModel: WebViewDelegate {
     }
 
     func navigationWillStart(navigationAction: WKNavigationAction) {
-        print("[WebViewDelegate navigationWillStart]")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationWillStart")
     }
 
     func navigationDidStart() {
-        print("[WebViewDelegate navigationDidStart]")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidStart")
     }
 
     func navigationDidFinish() {
-        print("[WebViewDelegate navigationDidFinish]")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFinish")
     }
 
     func navigationDidFailed(withError error: Error) {
-        print("[WebViewDelegate navigationDidFailed] failed with error \(error)")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFailed] failed with error \(error)")
     }
 }

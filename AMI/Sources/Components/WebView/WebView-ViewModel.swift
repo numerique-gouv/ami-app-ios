@@ -120,7 +120,7 @@ extension SwiftUIWebView {
         @MainActor // `evaluateJavaScript` must be used from main thread only.
         func readInLocalStorage(key: String) async -> Any? {
             guard let webView else {
-                print("[WebView-ViewModel]: readInLocalStorage not called because no webView initialzed")
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) ReadInLocalStorage not called because no webView initialzed")
                 return nil
             }
 
@@ -130,10 +130,10 @@ extension SwiftUIWebView {
             do {
                 // Execute javaScript script
                 let value = try await webView.evaluateJavaScript(script)
-                print("[WebView-ViewModel]: readInLocalStorage success - `\(key)` -> `\(value.debugDescription)`")
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) ReadInLocalStorage success - `\(key)` -> `\(value.debugDescription, privacy: .private)`")
                 return value
             } catch {
-                print("[WebView-ViewModel]: readInLocalStorage failed to read key `\(key)`: \(error)")
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) ReadInLocalStorage failed to read key `\(key)`: \(error)")
                 return nil
             }
         }
@@ -141,7 +141,7 @@ extension SwiftUIWebView {
         @MainActor // `evaluateJavaScript` must be used from main thread only.
         func writeInLocalStorage(key: String, value: String) async {
             guard let webView else {
-                print("[WebView-ViewModel]: writeInLocalStorage not called because no webView initialzed")
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) WriteInLocalStorage not called because no webView initialzed")
                 return
             }
 
@@ -151,9 +151,9 @@ extension SwiftUIWebView {
             do {
                 // Execute javaScript script
                 _ = try await webView.evaluateJavaScript(script)
-                print("[WebView-ViewModel]: writeInLocalStorage success - `\(key)` = `\(value)`")
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) WriteInLocalStorage success - `\(key)` = `\(value, privacy: .private)`")
             } catch {
-                print("[WebView-ViewModel]: writeInLocalStorage failed to set key `\(key)` to value `\(value)`: \(error)")
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) WriteInLocalStorage failed to set key `\(key)` to value `\(value, privacy: .private)`: \(error)")
             }
         }
 
@@ -175,31 +175,31 @@ extension SwiftUIWebView {
 extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         // Dispatch message to message handler, passing the view model to be able to act on it.
-        print("userContentController didReceive message: \(message.name)")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) didReceive message: \(message.name)")
         userScripts?.userScriptEmittedMessage(message, for: self)
     }
 }
 
 extension SwiftUIWebView.ViewModel: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
-        print("[WebViewDelegate] Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) heck if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
         return true
     }
 
     func navigationWillStart() {
-        print("[WebViewDelegate] Navigation will start")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation will start")
     }
 
     func navigationDidStart() {
-        print("[WebViewDelegate] Navigation did start")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation did start")
     }
 
     func navigationDidFinish() {
-        print("[WebViewDelegate] Navigation did finish")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation did finish")
     }
 
     func navigationDidFailed(withError error: Error) {
-        print("[WebViewDelegate] Navigation did failed with error: \(error)")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation did failed with error: \(error)")
     }
 }
 
@@ -265,7 +265,7 @@ extension SwiftUIWebView.ViewModel {
             model.acceptSelfSignedCertificate = true
         #endif
         model.urlChangeAction = { _, url in
-            print("[SwiftUIWebView.ViewModel] url did change to \(url.debugDescription)")
+            AppLog.viewModel.notice("\(AppLog.logHeader(SwiftUIWebView.ViewModel.self)) Url did change to \(url.debugDescription)")
         }
         return model
     }()

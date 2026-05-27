@@ -21,7 +21,7 @@ enum AppBundle {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown version"
     }
 
-    static func id() -> String {
+    static func identifier() -> String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleIdentifier") as? String ?? "Unknown Id"
     }
 }

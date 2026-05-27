@@ -22,6 +22,10 @@ class AMIAppState: NSObject {
     // State to force refresh view when a notification is tapped by the user.
     var notificationActivatedHomeViewModelId: UUID?
 
+    #if IS_AMI_STAGING
+        let reviewAppViewModel = ReviewAppView.ViewModel(notificationManager: AMIAppState.notificationManager)
+    #endif
+
     override init() {
         Self.defaultHomeViewModel = HomeView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: Self.notificationManager)
         notificationTriggeredHomeViewModel = Self.defaultHomeViewModel
@@ -36,7 +40,7 @@ class AMIAppState: NSObject {
     }
 
     func connectivityDidChange(state: NetworkMonitor.EventType) {
-        print("Main App: received a network status change, isConnected=\(state == .connected ? "Connected" : "Not connected")")
+        AppLog.app.notice("\(AppLog.logHeader(self)) Received a network status change, isConnected=\(state == .connected ? "Connected" : "Not connected")")
         switch state {
         case .connected:
             if let id = offlineBannerId {
@@ -64,7 +68,7 @@ class AMIAppState: NSObject {
             notificationActivatedHomeViewModelId = nil
             return
         }
-        print("[AmiApp] Notification Received: \(appReviewUrl)")
+        AppLog.app.notice("\(AppLog.logHeader(self)) Notification Received: \(appReviewUrl)")
 
         notificationTriggeredHomeViewModel = HomeView.ViewModel(rootUrl: appReviewUrl.absoluteURL, notificationManager: Self.notificationManager)
         // Change view ID to force refresh.

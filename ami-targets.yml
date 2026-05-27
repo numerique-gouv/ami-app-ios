@@ -118,6 +118,8 @@ targetTemplates:
     - package: SwiftUI-Introspect
       product: SwiftUIIntrospect
       embed: false
+    - package: AMI-Design-System
+      product: AmiDesignSystem
     
     sources:
     - path: AMI

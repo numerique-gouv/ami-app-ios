@@ -34,9 +34,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
         FirebaseApp.configure(options: options)
         #if IS_AMI_STAGING
-            print("Firebase configured with \(firebaseConfigFilename).plist for environment: STAGING")
+            AppLog.app.notice("\(AppLog.logHeader(self)) Firebase configured with \(firebaseConfigFilename).plist for environment: STAGING")
         #else
-            print("Firebase configured with \(firebaseConfigFilename).plist for environment: PRODUCTION")
+            AppLog.app.notice("\(type(of: self)) Firebase configured with \(firebaseConfigFilename).plist for environment: PRODUCTION")
         #endif
 
         // Set Messaging Delegate to receive FCM token updates
@@ -44,7 +44,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        print("[AppDelegate]: Received APNS device token")
+        AppLog.app.notice("\(AppLog.logHeader(self)) Received APNS device token")
 
         // Pass APNS token to Firebase for proper notification delivery
         // Messaging delegate (NotificationManager) method `messaging:didReceiveRegistrationToken:` will be called only if apnsToken did change from previous one.
@@ -59,7 +59,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        print("[AppDelegate]: Failed to register for remote notifications: \(error)")
-        print("[AppDelegate]: This is normal in the simulator - FCM will still work for testing")
+        AppLog.app.notice("\(AppLog.logHeader(self)) Failed to register for remote notifications: \(error)")
+        AppLog.app.notice("\(AppLog.logHeader(self)) This is normal in the simulator - FCM will still work for testing")
     }
 }

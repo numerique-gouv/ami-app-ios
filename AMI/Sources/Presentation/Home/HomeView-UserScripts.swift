@@ -132,18 +132,17 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
               let level = body["level"] as? String,
               let logMessage = body["message"] as? String else { return }
 
-        let prefix = "[HomeUserScripts Console]"
         switch level {
         case "error":
-            print("\(prefix) ❌ ERROR: \(logMessage)")
+            AppLog.view.error("\(AppLog.logHeader(self)) ❌ ERROR: \(logMessage)")
         case "warn":
-            print("\(prefix) ⚠️ WARN: \(logMessage)")
+            AppLog.view.warning("\(AppLog.logHeader(self)) ⚠️ WARN: \(logMessage)")
         case "info":
-            print("\(prefix) ℹ️ INFO: \(logMessage)")
+            AppLog.view.info("\(AppLog.logHeader(self)) ℹ️ INFO: \(logMessage)")
         case "debug":
-            print("\(prefix) 🔍 DEBUG: \(logMessage)")
+            AppLog.view.debug("\(AppLog.logHeader(self)) 🔍 DEBUG: \(logMessage)")
         default:
-            print("\(prefix) 📝 LOG: \(logMessage)")
+            AppLog.view.notice("\(AppLog.logHeader(self)) 📝 LOG: \(logMessage)")
         }
     }
 
@@ -152,7 +151,7 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
         if let messageBody = message.body as? [String: Any],
            let eventName = messageBody["event"] as? String {
             let data = messageBody["data"]
-            print("[HomeUserScripts]: Event received: \(eventName) - \(String(describing: data))")
+            AppLog.view.notice("\(AppLog.logHeader(self)) Event received: \(eventName) - \(String(describing: data))")
 
             switch Event(rawValue: eventName) {
             case .userLoggedIn:
