@@ -17,7 +17,7 @@ class NotificationManager: NSObject {
     // It is used to call the correct endpoint for device registration.
     private var baseUrl: URL?
     // userAuthenticationToken will be set after user logged in successfully.
-    var userAuthenticationToken: String?
+    private var userAuthenticationToken: String?
 
     override init() {
         super.init()
@@ -62,6 +62,10 @@ class NotificationManager: NSObject {
                                                   apnsToken: apnsToken,
                                                   userAuthenticationToken: userAuthenticationToken)
         }
+    }
+
+    func setUserAuthenticationToken(_ token: String?) {
+        userAuthenticationToken = token
     }
 }
 

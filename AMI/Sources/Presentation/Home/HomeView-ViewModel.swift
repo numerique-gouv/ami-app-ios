@@ -129,6 +129,18 @@ extension HomeView {
         private func userLoginActions() {
             // Check if user made a choice about allowing Push notifications reception.
             Task {
+                guard let userAuthenticationToken = await getUserAuthenticationToken else {
+                    // Unable to get user authentication token. Exit.
+                    AppLog.viewModel.notice("\(AppLog.logHeader(self)) Unable to get User Authentication token")
+                    return
+                }
+
+                // Set NotificationManager `userAuthenticationToken` now we have it
+                // because a token renew can happen anytime if user already allowed notifications.
+                setNotificationManagerUserAuthentificationToken(userAuthenticationToken)
+
+                // Now that user is logged and we have its authentication token, we can proceed to
+                // check its notification status and register to backebd if needed.
                 await checkNotificationStatus()
             }
         }
@@ -146,12 +158,6 @@ extension HomeView {
         }
 
         private func checkNotificationStatus() async {
-            guard let userAuthenticationToken = await getUserAuthenticationToken else {
-                // Unable to get user authentication token. Exit.
-                print("[HomeView-ViewModel] getUserAuthenticationToken: Unable to get User Authentication token")
-                return
-            }
-
             var shouldPresentOnboardingView = false
 
             switch await NotificationStatus.notificationsAuthorizationStatus() {
@@ -182,6 +188,10 @@ extension HomeView {
             Task { @MainActor in
                 isPresentingOnboardingView = true
             }
+        }
+
+        private func setNotificationManagerUserAuthentificationToken(_ token: String) {
+            notificationManager.setUserAuthenticationToken(token)
         }
 
         private func userLogoutActions() {
