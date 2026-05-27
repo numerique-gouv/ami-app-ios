@@ -176,7 +176,7 @@ extension HomeView {
                     UIApplication.shared.registerForRemoteNotifications()
                 }
             @unknown default:
-                print("[HomeView-ViewModel] checkNotificationStatus: Unknown Notification Authorization Status")
+                AppLog.viewModel.warning("\(AppLog.logHeader(self)) Unknown Notification Authorization Status")
             }
 
             // Only check Notifications Status once par session.
