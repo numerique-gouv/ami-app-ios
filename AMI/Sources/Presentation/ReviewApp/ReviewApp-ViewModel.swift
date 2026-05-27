@@ -12,14 +12,13 @@ import WebKit
 extension ReviewAppView {
     @Observable
     class ViewModel: NSObject {
-        let rootUrl: URL
+        let rootUrl = Config.shared.BASE_URL // This root URL is always the same. No need to make it a parameter.
         let notificationManager: NotificationManager
         var reviewApps: [ReviewApp] = []
 
         private var viewModels = [URL: AnyObject]()
 
-        init(rootUrl: URL, notificationManager: NotificationManager) {
-            self.rootUrl = rootUrl
+        init(notificationManager: NotificationManager) {
             self.notificationManager = notificationManager
             super.init()
 

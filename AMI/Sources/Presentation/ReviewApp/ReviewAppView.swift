@@ -38,6 +38,6 @@ struct ReviewAppView: View {
 }
 
 #Preview {
-    let viewModel = ReviewAppView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: NotificationManager())
+    let viewModel = ReviewAppView.ViewModel(notificationManager: NotificationManager())
     ReviewAppView(viewModel: viewModel)
 }

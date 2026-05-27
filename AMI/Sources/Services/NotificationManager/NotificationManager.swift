@@ -44,7 +44,7 @@ class NotificationManager: NSObject {
             return
         }
 
-        // Execute `regsiterDevice` task in background job.
+        // Execute `registerDevice` task in background job.
         Task(priority: .background) {
             await RegisterDevice().registerDevice(baseUrl: baseUrl,
                                                   token: token,

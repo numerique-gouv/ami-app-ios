@@ -30,7 +30,7 @@ struct AMIApp: App {
                         HomeView(viewModel: appState.notificationTriggeredHomeViewModel)
                             .id(notificationActivatedHomeViewModelId)
                     } else {
-                        ReviewAppView(viewModel: ReviewAppView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: AMIAppState.notificationManager))
+                        ReviewAppView(viewModel: ReviewAppView.ViewModel(notificationManager: AMIAppState.notificationManager))
                     }
                 #elseif IS_AMI_PRODUCTION
                     HomeView(viewModel: AMIAppState.defaultHomeViewModel)
