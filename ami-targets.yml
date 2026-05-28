@@ -109,17 +109,18 @@ targetTemplates:
         scripts/ami-xcode-pass-swiftformat.sh
 
     dependencies:
+    - package: AMI-Design-System
+      product: AmiDesignSystem
     - package: Firebase
       product: FirebaseCore
       embed: false
     - package: Firebase
       product: FirebaseMessaging
       embed: false
+    - package: KeychainAccess
     - package: SwiftUI-Introspect
       product: SwiftUIIntrospect
       embed: false
-    - package: AMI-Design-System
-      product: AmiDesignSystem
     
     sources:
     - path: AMI
