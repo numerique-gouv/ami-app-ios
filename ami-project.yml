@@ -37,13 +37,16 @@ include:
 - path: ami-targets.yml
 
 packages:
-  Firebase:
-    url: https://github.com/firebase/firebase-ios-sdk
-    version: 12.7.0
-  SwiftUI-Introspect:
-    url: https://github.com/siteline/swiftui-introspect.git
-    version: 26.0.0
   AMI-Design-System:
     url: https://github.com/numerique-gouv/ami-design-system-ios
 #    version: 0.1.0
     revision: 64de0ea2c8721ca40bea9fd9aa24f6b6dfb9e0ae
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    version: 12.7.0
+  KeychainAccess:
+    url: https://github.com/kishikawakatsumi/KeychainAccess
+    minorVersion: 4.2.2
+  SwiftUI-Introspect:
+    url: https://github.com/siteline/swiftui-introspect.git
+    version: 26.0.0
