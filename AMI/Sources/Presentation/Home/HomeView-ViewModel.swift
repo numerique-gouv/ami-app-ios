@@ -141,10 +141,11 @@ extension HomeView {
             // Reset Notification status check when on logout to recheck it on next login.
             checkNotificationStatusDone = false
 
-            // TODO: we should reset web session here to destroy any user data.
-            // Currently, on next login, FC find the previous token and reconnect automatically with previous profile.
-
-            webViewViewModel.goBackToRootUrl()
+            Task { @MainActor in
+                // Remove all session data to avoid reusing them on next connection.
+                await webViewViewModel.deleteSessionLocalData()
+                webViewViewModel.goBackToRootUrl()
+            }
         }
 
         func partnerViewModel(for url: URL) -> PartnerView.ViewModel {
