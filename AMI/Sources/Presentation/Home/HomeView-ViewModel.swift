@@ -39,8 +39,10 @@ extension HomeView {
                 switch event {
                 case .isDismissed:
                     // Go back to root URL (to leave web page)
-                    self.webViewViewModel.goBackToRootUrl()
-                    self.isPresentingOnboardingView = false
+                    Task { @MainActor in
+                        self.webViewViewModel.goBackToRootUrl()
+                        self.isPresentingOnboardingView = false
+                    }
                 }
             }
 

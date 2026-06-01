@@ -157,6 +157,7 @@ extension SwiftUIWebView {
             webView?.goBack()
         }
 
+        @MainActor
         func goBackToRootUrl() {
             guard let webView,
                   let firstItem = webView.backForwardList.backList.first,
