@@ -144,7 +144,7 @@ extension HomeView {
             checkNotificationStatusDone = false
 
             Task { @MainActor in
-                // Remove all session data to avoid reusing them on next connection.
+                // Remove all session data to avoid reusing automatically them on next connection.
                 await webViewViewModel.deleteSessionLocalData()
                 webViewViewModel.goBackToRootUrl()
             }
