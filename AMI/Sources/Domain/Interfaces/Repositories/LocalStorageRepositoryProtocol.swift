@@ -46,7 +46,7 @@ protocol LocalStorageRepositoryProtocol {
     ///   - value: The JSON-serializable value to store.
     ///   - secureLevel: The security level determining the storage mechanism to use.
     /// - Returns: A `Result` containing `true` on success, or a ``LocalStorageErrorType`` on failure.
-    func writeJSON(key: String, value: Any, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType>
+    func writeJSON(key: String, value: some Encodable, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType>
 
     // MARK: - Read
 
@@ -76,35 +76,15 @@ protocol LocalStorageRepositoryProtocol {
     ///   - key: The key of the value to retrieve.
     ///   - secureLevel: The security level determining the storage mechanism to use.
     /// - Returns: A `Result` containing the stored value on success, or a ``LocalStorageErrorType`` on failure.
-    func readJSON(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Any, LocalStorageErrorType>
+    func readJSON<T>(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<T, LocalStorageErrorType>
+        where T: Decodable
 
     // MARK: - Delete
 
-    /// Deletes a `Bool` value from the local storage for the given key.
+    /// Deletes a  value from the local storage for the given key.
     /// - Parameters:
     ///   - key: The key of the value to delete.
     ///   - secureLevel: The security level determining the storage mechanism to use.
     /// - Returns: A `Result` containing `true` on success, or a ``LocalStorageErrorType`` on failure.
-    func deleteBool(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType>
-
-    /// Deletes an `Int` value from the local storage for the given key.
-    /// - Parameters:
-    ///   - key: The key of the value to delete.
-    ///   - secureLevel: The security level determining the storage mechanism to use.
-    /// - Returns: A `Result` containing `true` on success, or a ``LocalStorageErrorType`` on failure.
-    func deleteInt(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType>
-
-    /// Deletes a `String` value from the local storage for the given key.
-    /// - Parameters:
-    ///   - key: The key of the value to delete.
-    ///   - secureLevel: The security level determining the storage mechanism to use.
-    /// - Returns: A `Result` containing `true` on success, or a ``LocalStorageErrorType`` on failure.
-    func deleteString(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType>
-
-    /// Deletes a JSON-serializable value from the local storage for the given key.
-    /// - Parameters:
-    ///   - key: The key of the value to delete.
-    ///   - secureLevel: The security level determining the storage mechanism to use.
-    /// - Returns: A `Result` containing `true` on success, or a ``LocalStorageErrorType`` on failure.
-    func deleteJSON(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType>
+    func delete(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType>
 }

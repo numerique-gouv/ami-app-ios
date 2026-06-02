@@ -14,7 +14,7 @@ enum LocalStorageErrorType: Error {
     case keyNotFound
 
     /// The type of the stored value does not match the expected type, or the value cannot be converted to the expected type.
-    case typeMismatch
+    case typeMismatch(Error)
 
     /// Writing to the storage failed (UserDefaults/DataStore or Keychain/KeyStore).
     case writeFailed
