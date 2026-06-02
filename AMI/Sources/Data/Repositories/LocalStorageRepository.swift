@@ -87,7 +87,16 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
         }
     }
 
-    func writeJSON(key: String, value: some Encodable, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
+    /// Encodes any `Encodable` value as JSON `Data` and persists it under the given key.
+    /// The value must also conform to `Codable` — a runtime check is performed.
+    /// - Parameters:
+    ///   - key: The key under which the value will be saved.
+    ///   - value: The `Codable` value to serialize as JSON. It must be `Codable` to be `Decodable` later when reading.
+    ///   - secureLevel: Determines which storage backend is used.
+    /// - Returns: `.success(true)` on success, or `.failure(.typeMismatch)` if the value
+    ///   is not `Codable` or if JSON encoding fails.
+    /// - Note: The `Codable` conformance check should be replaced with a better error in a future iteration.
+    func writeJSON(key: String, value: some Codable, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         guard let codableValue = value as? Codable else {
             // TODO: better error generation
             return .failure(.typeMismatch(NSError()))
