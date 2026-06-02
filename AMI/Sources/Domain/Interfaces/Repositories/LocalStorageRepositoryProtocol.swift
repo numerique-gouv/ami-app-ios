@@ -43,10 +43,10 @@ protocol LocalStorageRepositoryProtocol {
     /// Writes a JSON-serializable value to the local storage for the given key.
     /// - Parameters:
     ///   - key: The key under which the value will be stored.
-    ///   - value: The JSON-serializable value to store.
+    ///   - value: The JSON-serializable value to store. It must adopt the Codable protocol to be Encodable now and Decodable later.
     ///   - secureLevel: The security level determining the storage mechanism to use.
     /// - Returns: A `Result` containing `true` on success, or a ``LocalStorageErrorType`` on failure.
-    func writeJSON(key: String, value: some Encodable, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType>
+    func writeJSON(key: String, value: some Codable, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType>
 
     // MARK: - Read
 
