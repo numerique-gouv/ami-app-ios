@@ -164,5 +164,6 @@ targets:
       OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_STAGING
 
     sources:
+    - path: targets/staging/Sources
     - path: targets/staging/SupportingFiles
 #--------------------------------------------------------------------------------
