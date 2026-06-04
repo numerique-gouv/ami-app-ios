@@ -97,9 +97,9 @@ struct LocalStorageRepositoryLowTests {
 
     @Test("readBool fails with typeMismatch error")
     func readBool_typeMismatch() async {
-        sut.readBoolKeyStringSecureLevelLocalStorageSecureLevelTypeResultBoolLocalStorageErrorTypeReturnValue = .failure(.typeMismatch(NSError()))
+        sut.readBoolKeyStringSecureLevelLocalStorageSecureLevelTypeResultBoolLocalStorageErrorTypeReturnValue = .failure(.typeMismatch)
         let result = await sut.readBool(key: "bool_key", secureLevel: .low)
-        #expect(result == .failure(.typeMismatch(NSError())))
+        #expect(result == .failure(.typeMismatch))
     }
 
     @Test("readInt retrieves a stored Int value successfully")
@@ -121,9 +121,9 @@ struct LocalStorageRepositoryLowTests {
 
     @Test("readInt fails with typeMismatch error")
     func readInt_typeMismatch() async {
-        sut.readIntKeyStringSecureLevelLocalStorageSecureLevelTypeResultIntLocalStorageErrorTypeReturnValue = .failure(.typeMismatch(NSError()))
+        sut.readIntKeyStringSecureLevelLocalStorageSecureLevelTypeResultIntLocalStorageErrorTypeReturnValue = .failure(.typeMismatch)
         let result = await sut.readInt(key: "int_key", secureLevel: .low)
-        #expect(result == .failure(.typeMismatch(NSError())))
+        #expect(result == .failure(.typeMismatch))
     }
 
     @Test("readString retrieves a stored String value successfully")
@@ -145,9 +145,9 @@ struct LocalStorageRepositoryLowTests {
 
     @Test("readString fails with typeMismatch error")
     func readString_typeMismatch() async {
-        sut.readStringKeyStringSecureLevelLocalStorageSecureLevelTypeResultStringLocalStorageErrorTypeReturnValue = .failure(.typeMismatch(NSError()))
+        sut.readStringKeyStringSecureLevelLocalStorageSecureLevelTypeResultStringLocalStorageErrorTypeReturnValue = .failure(.typeMismatch)
         let result = await sut.readString(key: "string_key", secureLevel: .low)
-        #expect(result == .failure(.typeMismatch(NSError())))
+        #expect(result == .failure(.typeMismatch))
     }
 
     // MARK: - Delete
