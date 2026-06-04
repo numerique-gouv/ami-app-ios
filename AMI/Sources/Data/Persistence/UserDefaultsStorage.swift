@@ -59,8 +59,11 @@ extension UserDefaultsStorage: StorageProtocol {
     ///   - key: A unique string identifier for the data. Must not be empty.
     ///
     /// - Note: UserDefaults automatically handles data persistence and synchronization.
-    func writeData(_ value: Data, forKey key: KeyType) {
-        store.setValue(value, forKey: key)
+    func writeData(_ data: Data, forKey key: KeyType) async -> Result<Bool, LocalStorageErrorType> {
+        await Task.detached(priority: .userInitiated) {
+            store.setValue(data, forKey: key)
+            return Result<Bool, LocalStorageErrorType>.success(true)
+        }.value
     }
 
     /// Retrieves binary data from UserDefaults for the specified key.
@@ -68,16 +71,25 @@ extension UserDefaultsStorage: StorageProtocol {
     ///
     /// - Parameter key: The unique string identifier for the stored data.
     /// - Returns: The stored binary data if found, or `nil` if no data exists for the key.
-    func readData(forKey key: KeyType) -> Data? {
-        store.data(forKey: key)
+    func readData(forKey key: KeyType) async -> Result<Data, LocalStorageErrorType> {
+        await Task.detached(priority: .userInitiated) {
+            switch store.object(forKey: key) {
+            case .none: Result<Data, LocalStorageErrorType>.failure(.keyNotFound)
+            case let .some(storedValue as Data): Result<Data, LocalStorageErrorType>.success(storedValue)
+            default: Result<Data, LocalStorageErrorType>.failure(.typeMismatch)
+            }
+        }.value
     }
 
     /// Removes stored data from UserDefaults for the specified key.
     /// This operation is permanent and cannot be undone. No error occurs if the key doesn't exist.
     ///
     /// - Parameter key: The unique string identifier for the data to remove.
-    func deleteData(forKey key: KeyType) {
-        store.removeObject(forKey: key)
+    func deleteData(forKey key: KeyType) async -> Result<Bool, LocalStorageErrorType> {
+        await Task.detached(priority: .userInitiated) {
+            store.removeObject(forKey: key)
+            return Result<Bool, LocalStorageErrorType>.success(true)
+        }.value
     }
 }
 
