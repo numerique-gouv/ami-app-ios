@@ -19,19 +19,7 @@ enum LocalStorageErrorType: Error, Equatable {
     /// Type conversion or data encoding/decoding failed.
     /// This occurs when the stored data cannot be converted to the expected type,
     /// or when JSON encoding/decoding fails.
-    case typeMismatch(Error)
-
-    /// Writing data to the storage backend failed.
-    /// This can occur due to disk space issues, permission problems, or other I/O errors.
-    case writeFailed
-
-    /// Deleting a key from the storage backend failed.
-    /// This typically indicates underlying storage system issues.
-    case deleteFailed
-
-    /// User authentication is required but was not initiated.
-    /// This occurs when trying to access high-security data without triggering authentication.
-    case authenticationRequired
+    case typeMismatch
 
     /// User authentication was attempted but failed.
     /// This happens when biometric authentication or passcode entry fails.
@@ -49,17 +37,13 @@ enum LocalStorageErrorType: Error, Equatable {
     /// This occurs when biometrics are disabled or locked due to too many failed attempts.
     case biometryNotAvailable
 
+    case biometryLockout
+
+    case passcodeNotSet
+
     /// The device's secure hardware (Secure Enclave) is unavailable.
     /// This indicates a hardware-level security issue.
     case secureHardwareUnavailable
-
-    /// Data encryption operation failed.
-    /// This typically indicates a cryptographic system error.
-    case encryptionFailed
-
-    /// Data decryption operation failed.
-    /// This can occur due to corrupted data or wrong decryption keys.
-    case decryptionFailed
 
     /// The requested storage operation is not supported.
     /// This indicates a protocol method that hasn't been implemented.
@@ -67,7 +51,7 @@ enum LocalStorageErrorType: Error, Equatable {
 
     /// An unspecified error occurred during storage operations.
     /// Used as a fallback for unexpected errors with the underlying error attached.
-    case unknown(Error)
+    case unknownError(Error?)
 }
 
 // Define Equatable for Error
