@@ -1,5 +1,6 @@
 excluded:
   - AMI/Sources/Generated/*
+  - target/unitTests/Sources/*
   
 #disabled_rules: # rule identifiers turned on by default to exclude from running
 #  - identifier_name #rule for checking variable conditions (Upper case , lower case , underscore )
