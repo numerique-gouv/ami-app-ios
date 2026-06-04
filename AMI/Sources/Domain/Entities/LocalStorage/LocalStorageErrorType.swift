@@ -8,47 +8,73 @@
 
 import Foundation
 
-/// Describes the errors that can occur when storing data locally on the device.
-enum LocalStorageErrorType: Error {
-    /// The requested key does not exist in the storage.
+/// Comprehensive error types that can occur during local storage operations.
+/// These errors cover all aspects of the storage system including access failures,
+/// authentication issues, and hardware limitations.
+enum LocalStorageErrorType: Error, Equatable {
+    /// The requested key does not exist in the storage backend.
+    /// This error is returned when attempting to read a value that was never stored.
     case keyNotFound
 
-    /// The type of the stored value does not match the expected type, or the value cannot be converted to the expected type.
+    /// Type conversion or data encoding/decoding failed.
+    /// This occurs when the stored data cannot be converted to the expected type,
+    /// or when JSON encoding/decoding fails.
     case typeMismatch(Error)
 
-    /// Writing to the storage failed (UserDefaults/DataStore or Keychain/KeyStore).
+    /// Writing data to the storage backend failed.
+    /// This can occur due to disk space issues, permission problems, or other I/O errors.
     case writeFailed
 
-    /// Deleting the key from the storage failed.
+    /// Deleting a key from the storage backend failed.
+    /// This typically indicates underlying storage system issues.
     case deleteFailed
 
-    /// A biometric or passcode authentication is required but was not presented.
+    /// User authentication is required but was not initiated.
+    /// This occurs when trying to access high-security data without triggering authentication.
     case authenticationRequired
 
-    /// The biometric or passcode authentication was denied by the user.
+    /// User authentication was attempted but failed.
+    /// This happens when biometric authentication or passcode entry fails.
     case authenticationFailed
 
-    /// The authentication was cancelled by the user.
+    /// User cancelled the authentication process.
+    /// This occurs when the user dismisses the authentication prompt.
     case authenticationCancelled
 
-    /// No biometry is enrolled on the device (no Face ID / Touch ID).
+    /// No biometric authentication is enrolled on the device.
+    /// This indicates the user has not set up Face ID, Touch ID, or equivalent.
     case biometryNotEnrolled
 
-    /// The biometric sensor is unavailable (disabled, or locked after too many failed attempts).
+    /// Biometric sensor is unavailable or locked.
+    /// This occurs when biometrics are disabled or locked due to too many failed attempts.
     case biometryNotAvailable
 
-    /// The secure processor (Secure Enclave) is unavailable.
+    /// The device's secure hardware (Secure Enclave) is unavailable.
+    /// This indicates a hardware-level security issue.
     case secureHardwareUnavailable
 
-    /// Encrypting the value failed.
+    /// Data encryption operation failed.
+    /// This typically indicates a cryptographic system error.
     case encryptionFailed
 
-    /// Decrypting the value failed.
+    /// Data decryption operation failed.
+    /// This can occur due to corrupted data or wrong decryption keys.
     case decryptionFailed
 
-    /// The requested operation does not match any known method of the protocol.
+    /// The requested storage operation is not supported.
+    /// This indicates a protocol method that hasn't been implemented.
     case storageMethodNotFound
 
-    /// An uncategorized error, with the underlying error as an associated value.
+    /// An unspecified error occurred during storage operations.
+    /// Used as a fallback for unexpected errors with the underlying error attached.
     case unknown(Error)
+}
+
+// Define Equatable for Error
+public extension Equatable where Self: Error {
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        let lhsError = lhs as NSError
+        let rhsError = rhs as NSError
+        return lhsError.domain == rhsError.domain && lhsError.code == rhsError.code
+    }
 }
