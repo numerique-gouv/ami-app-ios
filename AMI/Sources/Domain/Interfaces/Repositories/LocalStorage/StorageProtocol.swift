@@ -16,14 +16,14 @@ protocol StorageProtocol {
     /// - Parameters:
     ///   - data: The binary data to store.
     ///   - key: The unique identifier for the stored data.
-    func writeData(_ data: Data, forKey key: String)
+    func writeData(_ data: Data, forKey key: String) async -> Result<Bool, LocalStorageErrorType>
 
     /// Retrieves stored binary data for the given key.
     /// - Parameter key: The unique identifier for the stored data.
     /// - Returns: The stored binary data, or `nil` if no data exists for the key.
-    func readData(forKey key: String) -> Data?
+    func readData(forKey key: String) async -> Result<Data, LocalStorageErrorType>
 
     /// Removes stored data for the given key.
     /// - Parameter key: The unique identifier for the data to remove.
-    func deleteData(forKey key: String)
+    func deleteData(forKey key: String) async -> Result<Bool, LocalStorageErrorType>
 }
