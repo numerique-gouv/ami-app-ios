@@ -9,59 +9,96 @@
 import Foundation
 import KeychainAccess
 
-/// A secure storage abstraction layer over the system Keychain.
-/// Provides a simple key-value interface for persisting sensitive binary data,
-/// scoped to the app's bundle identifier as the Keychain service.
+/// A secure storage implementation using the system Keychain for data persistence.
+/// This class provides encrypted storage for sensitive data with automatic service scoping
+/// based on the app's bundle identifier. All data is securely stored in the iOS/macOS Keychain
+/// and can optionally require biometric authentication for access.
+///
+/// ## Authentication Requirements
+/// - `false`: Standard Keychain encryption without biometric protection
+/// - `true`: Keychain encryption with biometric/passcode protection (not yet implemented)
+///
+/// ## Usage
+/// ```swift
+/// let storage = KeychainStorage()
+/// let data = "sensitive data".data(using: .utf8)!
+/// storage.writeData(data, forKey: "api_token", requireAuthentication: false)
+/// ```
 struct KeychainStorage {
-
     /// The key type used to identify stored values.
     typealias KeyType = String
 
     /// The underlying `Keychain` instance used for secure persistence.
     private let store: Keychain
 
-    /// Creates a new `KeychainStorage` instance scoped to the app's bundle identifier.
-    /// The Keychain service is automatically set to `AppBundle.identifier()`.
+    /// Creates a new `KeychainStorage` instance automatically scoped to the app's bundle identifier.
+    /// The Keychain service name is set to the app's bundle ID to ensure data isolation
+    /// between different applications.
+    ///
+    /// - Note: Uses `AppBundle.identifier()` to determine the service scope.
     init() {
         store = Keychain(service: AppBundle.identifier())
     }
+}
 
-    /// Securely persists a `Data` value associated with the given key.
-    /// Overwrites any existing value stored under the same key.
+extension KeychainStorage: SecureStorageProtocol {
+    /// Securely stores binary data in the Keychain for the specified key with optional authentication requirement.
+    /// The data is encrypted using the system's Keychain encryption mechanisms.
+    /// Any existing data for the same key will be overwritten.
+    ///
     /// - Parameters:
-    ///   - value: The binary data to store securely in the Keychain.
-    ///   - key: The key under which the data will be saved.
-    ///   - secureLevel: The security level to apply when storing the data.
-    func writeData(_ value: Data, forKey key: KeyType, secureLevel: LocalStorageSecureLevelType) {
+    ///   - value: The binary data to store securely. Must not be empty.
+    ///   - key: A unique string identifier for the data. Must not be empty.
+    ///   - requireAuthentication: Whether accessing this data should require biometric/passcode authentication.
+    ///
+    /// - Note: Authentication requirement with biometric protection is not yet implemented.
+    ///   All data currently uses standard Keychain storage regardless of this parameter.
+    func writeData(_ value: Data, forKey key: KeyType, requireAuthentication: Bool) {
         store[data: key] = value
     }
 
-    /// Retrieves the `Data` value associated with the given key from the Keychain.
+    /// Retrieves securely stored binary data from the Keychain for the specified key.
+    /// The data is automatically decrypted using the system's Keychain mechanisms.
+    ///
     /// - Parameters:
-    ///   - key: The key identifying the stored value.
-    ///   - secureLevel: The security level associated with the stored data.
-    /// - Returns: The stored `Data`, or `nil` if no value exists for the key.
-    func readData(forKey key: KeyType, secureLevel: LocalStorageSecureLevelType) -> Data? {
+    ///   - key: The unique string identifier for the stored data.
+    ///   - requireAuthentication: Whether this data requires biometric/passcode authentication to access.
+    /// - Returns: The decrypted binary data if found, or `nil` if no data exists for the key.
+    ///
+    /// - Note: For data requiring authentication, this method should prompt for biometric/passcode
+    ///   authentication, but this is not yet implemented.
+    func readData(forKey key: KeyType, requireAuthentication: Bool) -> Data? {
         store[data: key]
     }
 
-    /// Removes the value associated with the given key from the Keychain.
-    /// Setting the value to `nil` effectively deletes the entry.
-    /// Has no effect if no value exists for the key.
+    /// Permanently removes stored data from the Keychain for the specified key.
+    /// This operation is irreversible and will completely delete the encrypted data.
+    /// No error is generated if the key doesn't exist.
+    ///
     /// - Parameters:
-    ///   - key: The key identifying the value to remove.
-    ///   - secureLevel: The security level associated with the stored data.
-    func deleteData(forKey key: KeyType, secureLevel: LocalStorageSecureLevelType) {
+    ///   - key: The unique string identifier for the data to remove.
+    ///   - requireAuthentication: Whether removing this data requires biometric/passcode authentication.
+    ///
+    /// - Note: Authentication requirement for data deletion is not yet implemented.
+    ///   Data can currently be deleted regardless of this parameter.
+    /// - Important: This operation cannot be undone. Ensure you really want to delete the data.
+    func deleteData(forKey key: KeyType, requireAuthentication: Bool) {
         store[data: key] = nil
     }
 }
 
-/// Adds debug support for `KeychainStorage`.
+/// Provides debugging support for KeychainStorage by exposing internal state.
+/// This extension allows developers to inspect the contents of the Keychain store
+/// during development and testing phases.
+///
+/// - Warning: The debug description may contain sensitive information and should
+///   never be logged or exposed in production builds.
 extension KeychainStorage: CustomDebugStringConvertible {
-
-    /// A human-readable representation of the Keychain store contents.
-    /// Delegates to the underlying `Keychain` instance's debug description.
-    /// Useful for debugging — ensure this is never exposed in production logs.
+    /// A human-readable representation of the Keychain store's configuration and state.
+    /// Delegates to the underlying `Keychain` instance for detailed information.
+    ///
+    /// - Important: This may contain sensitive debugging information and should only
+    ///   be used during development. Ensure debug logs are disabled in production.
     var debugDescription: String {
         store.debugDescription
     }
