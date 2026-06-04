@@ -8,42 +8,45 @@
 
 import Foundation
 
-```swift
 /// A repository that unifies access to both unprotected and protected local storage.
 /// Routes read/write/delete operations to the appropriate storage backend
 /// (`UserDefaults` or Keychain) based on the requested security level.
 struct LocalStorageRepository {
-
     /// Storage backend for non-sensitive data, backed by `UserDefaults`.
-    private let unprotectedStorage: UserDefaultsStorage
+    private let storage: any StorageProtocol
 
     /// Storage backend for sensitive data, backed by the system Keychain.
-    private let protectedStorage: KeychainStorage
+    private let secureStorage: any SecureStorageProtocol
 
     /// Creates a new `LocalStorageRepository` with default storage backends.
     /// - `unprotectedStorage` uses `UserDefaults.standard`.
     /// - `protectedStorage` uses the app-scoped `KeychainStorage`.
-    init() {
-        unprotectedStorage = UserDefaultsStorage(store: .standard)
-        protectedStorage = KeychainStorage()
+    init(storage: any StorageProtocol = UserDefaultsStorage(store: .standard),
+         secureStorage: any SecureStorageProtocol = KeychainStorage()) {
+        self.storage = storage
+        self.secureStorage = secureStorage
     }
 }
 
 extension LocalStorageRepository: LocalStorageRepositoryProtocol {
-
-    /// Routes a raw `Data` write to the appropriate storage backend based on `secureLevel`.
-    /// - `.low` → `UserDefaults`
-    /// - `.medium` / `.high` → Keychain
+    /// Routes a raw `Data` write operation to the appropriate storage backend based on the security level.
+    /// This is the core routing method that determines whether data goes to UserDefaults or Keychain.
+    ///
+    /// ## Routing Logic
+    /// - `.low` → UserDefaults (unencrypted, fast access)
+    /// - `.medium` → Keychain (encrypted, secure)
+    /// - `.high` → Keychain with biometric protection (encrypted, highly secure)
+    ///
     /// - Parameters:
-    ///   - key: The key under which the data will be saved.
-    ///   - value: The binary data to persist.
-    ///   - secureLevel: Determines which storage backend is used.
-    /// - Returns: `.success(true)` on completion. Never fails at this layer.
+    ///   - key: The unique identifier under which the data will be stored.
+    ///   - value: The binary data to persist to the chosen backend.
+    ///   - secureLevel: Determines the storage mechanism and security level.
+    /// - Returns: `.success(true)` on successful storage. Never fails at this abstraction layer.
     private func writeData(key: String, value: Data, secureLevel: LocalStorageSecureLevelType) -> Result<Bool, LocalStorageErrorType> {
         switch secureLevel {
-        case .low: unprotectedStorage.writeData(value, forKey: key)
-        case .medium: protectedStorage.writeData(value, forKey: key, secureLevel: .medium)
-        case .high: protectedStorage.writeData(value, forKey: key, secureLevel: .high)
+        case .low: storage.writeData(value, forKey: key)
+        case .medium: secureStorage.writeData(value, forKey: key, requireAuthentication: false)
+        case .high: secureStorage.writeData(value, forKey: key, requireAuthentication: true)
         }
         return .success(true)
     }
@@ -87,62 +90,79 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
         }
     }
 
-    /// Encodes any `Encodable` value as JSON `Data` and persists it under the given key.
-    /// The value must also conform to `Codable` — a runtime check is performed.
+    /// Encodes a `Codable` value as JSON and stores it securely.
+    /// This method provides type-safe storage for complex data structures by serializing
+    /// them to JSON before routing to the appropriate storage backend.
+    ///
+    /// ## Type Safety
+    /// The value must conform to `Codable` (both `Encodable` and `Decodable`) to ensure
+    /// it can be both stored and retrieved successfully. A runtime check verifies this.
+    ///
     /// - Parameters:
-    ///   - key: The key under which the value will be saved.
-    ///   - value: The `Codable` value to serialize as JSON. It must be `Codable` to be `Decodable` later when reading.
-    ///   - secureLevel: Determines which storage backend is used.
-    /// - Returns: `.success(true)` on success, or `.failure(.typeMismatch)` if the value
-    ///   is not `Codable` or if JSON encoding fails.
-    /// - Note: The `Codable` conformance check should be replaced with a better error in a future iteration.
+    ///   - key: The unique identifier under which the JSON data will be stored.
+    ///   - value: The `Codable` value to serialize and store. Must be both encodable and decodable.
+    ///   - secureLevel: Determines the storage mechanism (UserDefaults vs Keychain).
+    /// - Returns: `.success(true)` on successful encoding and storage, or `.failure(.typeMismatch)`
+    ///   if the value cannot be encoded to JSON or lacks proper `Codable` conformance.
+    ///
+    /// - Important: The runtime `Codable` check should be replaced with compile-time safety in future versions.
     func writeJSON(key: String, value: some Codable, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
-        guard let codableValue = value as? Codable else {
-            // TODO: better error generation
-            return .failure(.typeMismatch(NSError()))
-        }
-        return switch codableValue.toData {
+        switch value.toData {
         case let .failure(error): .failure(.typeMismatch(error))
         case let .success(data): writeData(key: key, value: data, secureLevel: secureLevel)
         }
     }
 
-    /// Reads raw `Data` from the appropriate storage backend and decodes it into the expected type `T`.
-    /// Routes to `UserDefaults` for `.low` security, or Keychain for `.medium` / `.high`.
+    /// Reads and decodes stored data from the appropriate backend into the specified type.
+    /// This is the core retrieval method that handles routing, data fetching, and JSON decoding.
+    ///
+    /// ## Backend Routing
+    /// - `.low` → Reads from UserDefaults (unencrypted)
+    /// - `.medium` → Reads from Keychain (encrypted)
+    /// - `.high` → Reads from Keychain with biometric protection (not yet implemented)
+    ///
     /// - Parameters:
-    ///   - type: The `Decodable` type to decode the stored data into.
-    ///   - key: The key identifying the stored value.
-    ///   - secureLevel: Determines which storage backend is used.
-    /// - Returns: `.success(T)` if the key exists and decoding succeeds,
-    ///   `.failure(.keyNotFound)` if missing, or `.failure(.typeMismatch)` if decoding fails.
-    /// - Note: Biometric/passcode failure handling for `.high` security is not yet implemented.
+    ///   - type: The `Decodable` type to decode the stored JSON data into.
+    ///   - key: The unique identifier for the stored data.
+    ///   - secureLevel: Determines which storage backend to query.
+    /// - Returns: `.success(T)` with the decoded value if found and valid,
+    ///   `.failure(.keyNotFound)` if no data exists, or `.failure(.typeMismatch)` if decoding fails.
+    ///
+    /// - Important: High security level should implement biometric authentication but currently
+    ///   falls back to standard Keychain access.
     private func readDataAsType<T>(_ type: T.Type = T.self, key: String, secureLevel: LocalStorageSecureLevelType) -> Result<T, LocalStorageErrorType>
         where T: Decodable {
         switch secureLevel {
         case .low:
-            switch unprotectedStorage.readData(forKey: key) {
+            switch storage.readData(forKey: key) {
             case .none: .failure(.keyNotFound)
             case let .some(data): decodeData(type, data: data)
             }
         case .medium:
-            switch protectedStorage.readData(forKey: key, secureLevel: .medium) {
+            switch secureStorage.readData(forKey: key, requireAuthentication: false) {
             case .none: .failure(.keyNotFound)
             case let .some(data): decodeData(type, data: data)
             }
         case .high:
             // TODO: handle biometric/passcode failures
-            switch protectedStorage.readData(forKey: key, secureLevel: .high) {
+            switch secureStorage.readData(forKey: key, requireAuthentication: true) {
             case .none: .failure(.keyNotFound)
             case let .some(data): decodeData(type, data: data)
             }
         }
     }
 
-    /// Attempts to decode raw `Data` into the specified `Decodable` type using `JSONDecoder`.
+    /// Attempts to decode raw binary data into the specified `Decodable` type using JSON deserialization.
+    /// This is a utility method that handles the JSON decoding process with proper error wrapping.
+    ///
     /// - Parameters:
-    ///   - type: The target `Decodable` type.
-    ///   - data: The raw binary data to decode.
-    /// - Returns: `.success(T)` if decoding succeeds, or `.failure(.typeMismatch)` if it fails.
+    ///   - type: The target `Decodable` type for deserialization.
+    ///   - data: The raw binary data containing JSON to decode.
+    /// - Returns: `.success(T)` with the decoded object if deserialization succeeds,
+    ///   or `.failure(.typeMismatch)` with the underlying JSON decoding error.
+    ///
+    /// - Note: Uses `JSONDecoder` with default settings. Future versions might support
+    ///   custom decoding strategies or date formatters.
     private func decodeData<T>(_ type: T.Type = T.self, data: Data) -> Result<T, LocalStorageErrorType>
         where T: Decodable {
         do {
@@ -196,28 +216,45 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     ///   - secureLevel: Determines which storage backend is used.
     /// - Returns: `.success(true)` on completion. Does not verify prior key existence.
     /// - Note: Key presence check before deletion is not yet implemented.
-    func delete(key: String, secureLevel: LocalStorageSecureLevelType) -> Result<Bool, LocalStorageErrorType> {
+    func delete(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch secureLevel {
         case .low:
             // TODO: Should check for key presence?
-            unprotectedStorage.deleteData(forKey: key)
+            storage.deleteData(forKey: key)
             return .success(true)
         case .medium:
             // TODO: Should check for key presence?
-            protectedStorage.deleteData(forKey: key, secureLevel: .medium)
+            secureStorage.deleteData(forKey: key, requireAuthentication: false)
             return .success(true)
         case .high:
             // TODO: Should check for key presence?
-            protectedStorage.deleteData(forKey: key, secureLevel: .high)
+            secureStorage.deleteData(forKey: key, requireAuthentication: true)
             return .success(true)
         }
     }
 }
 
 extension Encodable {
-    /// Encodes any `Encodable` value into JSON `Data` using `JSONEncoder`.
-    /// Convenience property used throughout the storage layer to serialize values before persisting.
-    /// - Returns: `.success(Data)` if encoding succeeds, or `.failure(Error)` if it fails.
+    /// Convenience property for encoding any `Encodable` value to JSON `Data`.
+    /// This extension provides a unified encoding interface used throughout the storage layer
+    /// to serialize values before persistence.
+    ///
+    /// ## Usage
+    /// ```swift
+    /// let user = User(name: "John", age: 30)
+    /// switch user.toData {
+    /// case .success(let data):
+    ///     // Store the JSON data
+    /// case .failure(let error):
+    ///     // Handle encoding error
+    /// }
+    /// ```
+    ///
+    /// - Returns: `.success(Data)` containing the JSON representation if encoding succeeds,
+    ///   or `.failure(Error)` with the underlying encoding error if it fails.
+    ///
+    /// - Note: Uses `JSONEncoder` with default settings. Custom encoding strategies
+    ///   may be needed for complex types with special formatting requirements.
     var toData: Result<Data, Error> {
         do {
             return try .success(JSONEncoder().encode(self))
@@ -226,4 +263,3 @@ extension Encodable {
         }
     }
 }
-```
