@@ -30,6 +30,15 @@ final class Config {
             "idp.france-identite.gouv.fr", // FI Francae Identité
             "oidc.a3bc.io", // FI trustme
         ]
+    #elseif IS_AMI_UNIT_TESTS
+        let BASE_URL = URL(string: "https://ami-back-staging.osc-fr1.scalingo.io/")!
+        let OIDC_HOSTS = [
+            "fcp-low.sbx.dev-franceconnect.fr",
+            "fip1-low.sbx.fcp.fournisseur-d-identite.fr", // Démo eIDAS faible
+            "auth.vip.cnav.fr", // CNAV
+            "franceconnect.gouv.fr", // Utilisé par le bouton "Revenir sur AMI" de dev-franceconnect.fr
+            "ami-fc-proxy-dev.osc-fr1.scalingo.io", // Utilisé par le bouton "Revenir sur AMI" de dev-franceconnect.fr
+        ]
     #endif
 
     private init() {}
