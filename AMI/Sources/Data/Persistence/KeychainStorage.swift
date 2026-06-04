@@ -8,6 +8,7 @@
 
 import Foundation
 import KeychainAccess
+import LocalAuthentication
 
 /// A secure storage implementation using the system Keychain for data persistence.
 /// This class provides encrypted storage for sensitive data with automatic service scoping
@@ -31,6 +32,18 @@ struct KeychainStorage {
     /// The underlying `Keychain` instance used for secure persistence.
     private let store: Keychain
 
+    /// The synchronization policy to use for any item stored in Keychain: prevent synchronizatioin through iCloud.
+    private let synchronizationPolicy = false
+    /// The accessibility policy to use for any item stored in Keychain:
+    /// - The data in the keychain item cannot be accessed after a restart until the device has been unlocked once by the user
+    /// - Items with this attribute do not migrate to a new device. Thus, after restoring from a backup of a different device, these items will not be present.
+    private let accessibilityPolicy: Accessibility = .whenPasscodeSetThisDeviceOnly
+    /// The authentication policy to use for items stored in Keychain with authentication required.
+
+    private let readAuthenticationContext = LAContext()
+
+    private let authenticationPrompt = "Access to protected data"
+
     /// Creates a new `KeychainStorage` instance automatically scoped to the app's bundle identifier.
     /// The Keychain service name is set to the app's bundle ID to ensure data isolation
     /// between different applications.
@@ -53,8 +66,25 @@ extension KeychainStorage: SecureStorageProtocol {
     ///
     /// - Note: Authentication requirement with biometric protection is not yet implemented.
     ///   All data currently uses standard Keychain storage regardless of this parameter.
-    func writeData(_ value: Data, forKey key: KeyType, requireAuthentication: Bool) {
-        store[data: key] = value
+    func writeData(_ data: Data, forKey key: KeyType, requireAuthentication: Bool) async -> Result<Bool, LocalStorageErrorType> {
+        await Task.detached(priority: .userInitiated) {
+            do {
+                if requireAuthentication {
+                    try store
+                        .synchronizable(synchronizationPolicy)
+                        .accessibility(accessibilityPolicy)
+                        .set(data, key: key, ignoringAttributeSynchronizable: false)
+                } else {
+                    try store
+                        .synchronizable(synchronizationPolicy)
+                        .accessibility(accessibilityPolicy)
+                        .set(data, key: key, ignoringAttributeSynchronizable: false)
+                }
+                return Result<Bool, LocalStorageErrorType>.success(true)
+            } catch {
+                return Result<Bool, LocalStorageErrorType>.failure(.typeMismatch)
+            }
+        }.value
     }
 
     /// Retrieves securely stored binary data from the Keychain for the specified key.
@@ -67,8 +97,69 @@ extension KeychainStorage: SecureStorageProtocol {
     ///
     /// - Note: For data requiring authentication, this method should prompt for biometric/passcode
     ///   authentication, but this is not yet implemented.
-    func readData(forKey key: KeyType, requireAuthentication: Bool) -> Data? {
-        store[data: key]
+    func readData(forKey key: KeyType, requireAuthentication: Bool) async -> Result<Data, LocalStorageErrorType> {
+        await Task.detached(priority: .userInitiated) {
+            do {
+                // If authentication is required to read keychain value, evaluate LAContext policiy.
+                if requireAuthentication {
+                    var canEvaluatePolicyError: NSError?
+                    guard readAuthenticationContext.canEvaluatePolicy(.deviceOwnerAuthentication, error: &canEvaluatePolicyError) else {
+                        throw canEvaluatePolicyError ?? LocalStorageErrorType.unknownError(nil)
+                    }
+
+                    try await readAuthenticationContext.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: authenticationPrompt)
+                }
+
+                if let storedValue = try store.getData(key, ignoringAttributeSynchronizable: false) {
+                    return .success(storedValue)
+                } else {
+                    return .failure(.keyNotFound)
+                }
+            } catch let error as LocalStorageErrorType {
+                return Result<Data, LocalStorageErrorType>.failure(error)
+            } catch let error as LAError {
+                switch error.code {
+                case .userCancel, .systemCancel, .appCancel:
+                    return .failure(.authenticationCancelled)
+
+                    //                case .userFallback:
+                    //                    // User wants password — present your own credential UI
+                    //                    break
+
+                case .authenticationFailed:
+                    // Wrong finger/face repeatedly — inform the user
+                    return .failure(.authenticationFailed)
+
+                case .biometryLockout:
+                    // Re-attempt with .deviceOwnerAuthentication to let passcode unlock biometry
+                    return .failure(.biometryLockout)
+
+                case .biometryNotAvailable:
+                    // Hardware state changed mid-session — fall back gracefully
+                    return .failure(.biometryNotAvailable)
+
+                case .biometryNotEnrolled:
+                    // Hardware state changed mid-session — fall back gracefully
+                    return .failure(.biometryNotEnrolled)
+
+                case .passcodeNotSet:
+                    return .failure(.passcodeNotSet)
+
+                case .invalidContext:
+                    // Create a new LAContext and retry
+                    return .failure(.unknownError(error))
+
+                case .notInteractive:
+                    // Don't set interactionNotAllowed = true if you need the prompt
+                    return .failure(.unknownError(error))
+
+                default:
+                    return .failure(.unknownError(error))
+                }
+            } catch {
+                return .failure(.unknownError(error))
+            }
+        }.value
     }
 
     /// Permanently removes stored data from the Keychain for the specified key.
@@ -82,8 +173,15 @@ extension KeychainStorage: SecureStorageProtocol {
     /// - Note: Authentication requirement for data deletion is not yet implemented.
     ///   Data can currently be deleted regardless of this parameter.
     /// - Important: This operation cannot be undone. Ensure you really want to delete the data.
-    func deleteData(forKey key: KeyType, requireAuthentication: Bool) {
-        store[data: key] = nil
+    func deleteData(forKey key: KeyType, requireAuthentication: Bool) async -> Result<Bool, LocalStorageErrorType> {
+        await Task.detached(priority: .userInitiated) {
+            do {
+                try store.remove(key, ignoringAttributeSynchronizable: false)
+                return Result<Bool, LocalStorageErrorType>.success(true)
+            } catch {
+                return Result<Bool, LocalStorageErrorType>.failure(.keyNotFound)
+            }
+        }.value
     }
 }
 

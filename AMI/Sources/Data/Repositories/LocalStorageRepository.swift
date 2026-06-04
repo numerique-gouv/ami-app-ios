@@ -42,13 +42,12 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     ///   - value: The binary data to persist to the chosen backend.
     ///   - secureLevel: Determines the storage mechanism and security level.
     /// - Returns: `.success(true)` on successful storage. Never fails at this abstraction layer.
-    private func writeData(key: String, value: Data, secureLevel: LocalStorageSecureLevelType) -> Result<Bool, LocalStorageErrorType> {
+    private func writeData(key: String, data: Data, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch secureLevel {
-        case .low: storage.writeData(value, forKey: key)
-        case .medium: secureStorage.writeData(value, forKey: key, requireAuthentication: false)
-        case .high: secureStorage.writeData(value, forKey: key, requireAuthentication: true)
+        case .low: await storage.writeData(data, forKey: key)
+        case .medium: await secureStorage.writeData(data, forKey: key, requireAuthentication: false)
+        case .high: await secureStorage.writeData(data, forKey: key, requireAuthentication: true)
         }
-        return .success(true)
     }
 
     /// Encodes a `Bool` value to `Data` and persists it under the given key.
@@ -59,8 +58,8 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// - Returns: `.success(true)` on success, or `.failure(.typeMismatch)` if encoding fails.
     func writeBool(key: String, value: Bool, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch value.toData {
-        case let .failure(error): .failure(.typeMismatch(error))
-        case let .success(data): writeData(key: key, value: data, secureLevel: secureLevel)
+        case .failure: .failure(.typeMismatch)
+        case let .success(data): await writeData(key: key, data: data, secureLevel: secureLevel)
         }
     }
 
@@ -72,8 +71,8 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// - Returns: `.success(true)` on success, or `.failure(.typeMismatch)` if encoding fails.
     func writeInt(key: String, value: Int, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch value.toData {
-        case let .failure(error): .failure(.typeMismatch(error))
-        case let .success(data): writeData(key: key, value: data, secureLevel: secureLevel)
+        case .failure: .failure(.typeMismatch)
+        case let .success(data): await writeData(key: key, data: data, secureLevel: secureLevel)
         }
     }
 
@@ -85,8 +84,8 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// - Returns: `.success(true)` on success, or `.failure(.typeMismatch)` if encoding fails.
     func writeString(key: String, value: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch value.toData {
-        case let .failure(error): .failure(.typeMismatch(error))
-        case let .success(data): writeData(key: key, value: data, secureLevel: secureLevel)
+        case .failure: .failure(.typeMismatch)
+        case let .success(data): await writeData(key: key, data: data, secureLevel: secureLevel)
         }
     }
 
@@ -108,8 +107,8 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// - Important: The runtime `Codable` check should be replaced with compile-time safety in future versions.
     func writeJSON(key: String, value: some Codable, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch value.toData {
-        case let .failure(error): .failure(.typeMismatch(error))
-        case let .success(data): writeData(key: key, value: data, secureLevel: secureLevel)
+        case .failure: .failure(.typeMismatch)
+        case let .success(data): await writeData(key: key, data: data, secureLevel: secureLevel)
         }
     }
 
@@ -130,24 +129,24 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     ///
     /// - Important: High security level should implement biometric authentication but currently
     ///   falls back to standard Keychain access.
-    private func readDataAsType<T>(_ type: T.Type = T.self, key: String, secureLevel: LocalStorageSecureLevelType) -> Result<T, LocalStorageErrorType>
+    private func readDataAsType<T>(_ type: T.Type = T.self, key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<T, LocalStorageErrorType>
         where T: Decodable {
         switch secureLevel {
         case .low:
-            switch storage.readData(forKey: key) {
-            case .none: .failure(.keyNotFound)
-            case let .some(data): decodeData(type, data: data)
+            switch await storage.readData(forKey: key) {
+            case let .success(data): decodeData(type, data: data)
+            case let .failure(error): .failure(error)
             }
         case .medium:
-            switch secureStorage.readData(forKey: key, requireAuthentication: false) {
-            case .none: .failure(.keyNotFound)
-            case let .some(data): decodeData(type, data: data)
+            switch await secureStorage.readData(forKey: key, requireAuthentication: false) {
+            case let .success(data): decodeData(type, data: data)
+            case let .failure(error): .failure(error)
             }
         case .high:
             // TODO: handle biometric/passcode failures
-            switch secureStorage.readData(forKey: key, requireAuthentication: true) {
-            case .none: .failure(.keyNotFound)
-            case let .some(data): decodeData(type, data: data)
+            switch await secureStorage.readData(forKey: key, requireAuthentication: true) {
+            case let .success(data): decodeData(type, data: data)
+            case let .failure(error): .failure(error)
             }
         }
     }
@@ -168,7 +167,7 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
         do {
             return try .success(JSONDecoder().decode(T.self, from: data))
         } catch {
-            return .failure(.typeMismatch(error))
+            return .failure(.typeMismatch)
         }
     }
 
@@ -178,7 +177,7 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     ///   - secureLevel: Determines which storage backend is used.
     /// - Returns: `.success(Bool)` or a relevant `.failure`.
     func readBool(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
-        readDataAsType(Bool.self, key: key, secureLevel: secureLevel)
+        await readDataAsType(Bool.self, key: key, secureLevel: secureLevel)
     }
 
     /// Reads and decodes an `Int` value stored under the given key.
@@ -187,7 +186,7 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     ///   - secureLevel: Determines which storage backend is used.
     /// - Returns: `.success(Int)` or a relevant `.failure`.
     func readInt(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Int, LocalStorageErrorType> {
-        readDataAsType(Int.self, key: key, secureLevel: secureLevel)
+        await readDataAsType(Int.self, key: key, secureLevel: secureLevel)
     }
 
     /// Reads and decodes a `String` value stored under the given key.
@@ -196,7 +195,7 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     ///   - secureLevel: Determines which storage backend is used.
     /// - Returns: `.success(String)` or a relevant `.failure`.
     func readString(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<String, LocalStorageErrorType> {
-        readDataAsType(String.self, key: key, secureLevel: secureLevel)
+        await readDataAsType(String.self, key: key, secureLevel: secureLevel)
     }
 
     /// Reads and decodes a JSON-encoded value of type `T` stored under the given key.
@@ -206,7 +205,7 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// - Returns: `.success(T)` if found and decodable, or a relevant `.failure`.
     func readJSON<T>(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<T, LocalStorageErrorType>
         where T: Decodable {
-        readDataAsType(T.self, key: key, secureLevel: secureLevel)
+            await readDataAsType(T.self, key: key, secureLevel: secureLevel)
     }
 
     /// Deletes the value associated with the given key from the appropriate storage backend.
@@ -220,16 +219,22 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
         switch secureLevel {
         case .low:
             // TODO: Should check for key presence?
-            storage.deleteData(forKey: key)
-            return .success(true)
+            return switch await storage.deleteData(forKey: key) {
+            case let .success(success): .success(success)
+            case let .failure(error): .failure(error)
+            }
         case .medium:
             // TODO: Should check for key presence?
-            secureStorage.deleteData(forKey: key, requireAuthentication: false)
-            return .success(true)
+            return switch await secureStorage.deleteData(forKey: key, requireAuthentication: false) {
+            case let .success(success): .success(success)
+            case let .failure(error): .failure(error)
+            }
         case .high:
             // TODO: Should check for key presence?
-            secureStorage.deleteData(forKey: key, requireAuthentication: true)
-            return .success(true)
+            return switch await secureStorage.deleteData(forKey: key, requireAuthentication: true) {
+            case let .success(success): .success(success)
+            case let .failure(error): .failure(error)
+            }
         }
     }
 }
