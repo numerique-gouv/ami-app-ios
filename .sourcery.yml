@@ -1,0 +1,12 @@
+sources:
+  - AMI/
+
+templates:
+  - Tools/Sourcery/AutoMockable.stencil
+
+output:
+  targets/unitTests/Sources/Generated/Mocks-Generated.swift
+
+args:
+  autoMockableImports:
+    - Foundation
