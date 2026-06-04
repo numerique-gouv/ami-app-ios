@@ -17,18 +17,18 @@ protocol SecureStorageProtocol {
     ///   - data: The binary data to store securely.
     ///   - key: The unique identifier for the stored data.
     ///   - requireAuthentication: Whether accessing this data should require biometric/passcode authentication.
-    func writeData(_ data: Data, forKey key: String, requireAuthentication: Bool)
+    func writeData(_ data: Data, forKey key: String, requireAuthentication: Bool) async -> Result<Bool, LocalStorageErrorType>
 
     /// Retrieves securely stored binary data for the given key with authentication if required.
     /// - Parameters:
     ///   - key: The unique identifier for the stored data.
     ///   - requireAuthentication: Whether this data requires biometric/passcode authentication to access.
     /// - Returns: The stored binary data, or `nil` if no data exists for the key or authentication fails.
-    func readData(forKey key: String, requireAuthentication: Bool) -> Data?
+    func readData(forKey key: String, requireAuthentication: Bool) async -> Result<Data, LocalStorageErrorType>
 
     /// Removes securely stored data for the given key with authentication if required.
     /// - Parameters:
     ///   - key: The unique identifier for the data to remove.
     ///   - requireAuthentication: Whether removing this data requires biometric/passcode authentication.
-    func deleteData(forKey key: String, requireAuthentication: Bool)
+    func deleteData(forKey key: String, requireAuthentication: Bool) async -> Result<Bool, LocalStorageErrorType>
 }
