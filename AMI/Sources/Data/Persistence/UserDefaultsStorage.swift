@@ -91,7 +91,8 @@ struct UserDefaultsStorage {
             switch store.object(forKey: key) {
             case .none: .failure(.keyNotFound)
             case let .some(storedValue as Data): .success(storedValue)
-            default: .failure(.typeMismatch)
+            default: // The read value is not of type Data.
+                .failure(.typeMismatch)
             }
         }.value
     }

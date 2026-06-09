@@ -37,7 +37,9 @@ enum LocalStorageErrorType: Error, Equatable {
     /// This occurs when biometrics are disabled or locked due to too many failed attempts.
     case biometryNotAvailable
 
-    case biometryLockout
+    case tooManyAttemps
+
+    case deviceIsLocked
 
     case passcodeNotSet
 
@@ -48,6 +50,8 @@ enum LocalStorageErrorType: Error, Equatable {
     /// The requested storage operation is not supported.
     /// This indicates a protocol method that hasn't been implemented.
     case storageMethodNotFound
+
+    case dataIsTooLarge
 
     /// An unspecified error occurred during storage operations.
     /// Used as a fallback for unexpected errors with the underlying error attached.
