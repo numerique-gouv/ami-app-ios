@@ -9,7 +9,7 @@
 import Foundation
 
 /// A storage implementation using UserDefaults for persisting non-sensitive binary data.
-/// This class provides a simple key-value interface for storing data that doesn't require
+/// This struct provides a simple key-value interface for storing data that doesn't require
 /// encryption or special security measures. Data is stored in the app's UserDefaults domain
 /// and persists across app launches.
 ///
@@ -20,15 +20,15 @@ import Foundation
 /// - Cached data that can be safely exposed
 ///
 /// ## Security Considerations
-/// Data stored through this class is not encrypted and can be read by anyone with access
+/// Data stored through this struct is not encrypted and can be read by anyone with access
 /// to the device's file system or backup files. Never use this for sensitive information
 /// such as passwords, tokens, or personal data.
 ///
 /// ## Usage
 /// ```swift
-/// let storage = UserDefaultsStorage(store: .standard)
+/// let storage = UserDefaultsStorage(for: "userPreferences")
 /// let data = "preference value".data(using: .utf8)!
-/// storage.writeData(data, forKey: "user_preference")
+/// await storage.writeData(data, forKey: "user_preference")
 /// ```
 struct UserDefaultsStorage {
     /// The key type used to identify stored values.
@@ -37,19 +37,19 @@ struct UserDefaultsStorage {
     /// The underlying `UserDefaults` instance used for persistence.
     private let store: UserDefaults
 
-    /// Creates a new UserDefaultsStorage instance with the specified UserDefaults store.
+    /// Creates a new UserDefaultsStorage instance with the specified user store identifier.
     /// This allows for flexible storage targeting different UserDefaults domains
-    /// such as standard, group containers, or test-specific stores.
+    /// such as user-specific stores, feature-specific namespaces, or test-specific stores.
     ///
-    /// - Parameter store: The UserDefaults instance to use for data persistence.
-    ///   Common values include `.standard` for app-wide storage or custom instances
-    ///   for group containers or testing isolation.
+    /// - Parameter userStoreID: A unique identifier for the UserDefaults suite.
+    ///   This will be combined with the app bundle identifier to create a unique suite name.
+    ///   Should be descriptive of the storage purpose (e.g., "userPreferences", "cache").
     ///
-    /// - Note: creation can fail in the following situation:
+    /// - Note: Initialization can fail in the following situations:
     ///    - userStoreID is an empty string
     ///    - userStoreID exactly matches your bundle ID (conflicts with the standard default database)
-    ///    - userStoreID starts wih `group.` but:
-    ///      - the application doesn't embed the correct entitlement.
+    ///    - userStoreID starts with `group.` but:
+    ///      - the application doesn't embed the correct entitlement
     ///      - the entitlement exists but the suite name doesn't exactly match the registered group identifier
     ///      - the App Group isn't enabled in your Apple Developer Portal for your App Bundle ID
     init(for userStoreID: String) {
@@ -64,8 +64,10 @@ struct UserDefaultsStorage {
     /// Any existing data for the same key will be replaced.
     ///
     /// - Parameters:
-    ///   - value: The binary data to store. Can be any valid Data object.
+    ///   - data: The binary data to store. Can be any valid Data object.
     ///   - key: A unique string identifier for the data. Must not be empty.
+    ///
+    /// - Returns: A Result containing `true` on success or an error on failure.
     ///
     /// - Note: UserDefaults automatically handles data persistence and synchronization.
     func writeData(_ data: Data, forKey key: KeyType) async -> Result<Bool, LocalStorageErrorType> {
@@ -76,10 +78,10 @@ struct UserDefaultsStorage {
     }
 
     /// Retrieves binary data from UserDefaults for the specified key.
-    /// Returns the exact data that was previously stored, or nil if no data exists.
+    /// Returns the exact data that was previously stored, or an error if no data exists.
     ///
     /// - Parameter key: The unique string identifier for the stored data.
-    /// - Returns: The stored binary data if found, or `nil` if no data exists for the key.
+    /// - Returns: A Result containing the stored binary data on success, or an error if the key is not found or there's a type mismatch.
     func readData(forKey key: KeyType) async -> Result<Data, LocalStorageErrorType> {
         await Task.detached(priority: .userInitiated) {
             switch store.object(forKey: key) {
@@ -94,6 +96,7 @@ struct UserDefaultsStorage {
     /// This operation is permanent and cannot be undone. No error occurs if the key doesn't exist.
     ///
     /// - Parameter key: The unique string identifier for the data to remove.
+    /// - Returns: A Result containing `true` on successful removal or an error on failure.
     func deleteData(forKey key: KeyType) async -> Result<Bool, LocalStorageErrorType> {
         await Task.detached(priority: .userInitiated) {
             store.removeObject(forKey: key)
