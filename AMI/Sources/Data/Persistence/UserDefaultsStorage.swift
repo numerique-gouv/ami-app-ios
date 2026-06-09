@@ -44,9 +44,17 @@ struct UserDefaultsStorage {
     /// - Parameter store: The UserDefaults instance to use for data persistence.
     ///   Common values include `.standard` for app-wide storage or custom instances
     ///   for group containers or testing isolation.
+    ///
+    /// - Note: creation can fail in the following situation:
+    ///    - userStoreID is an empty string
+    ///    - userStoreID exactly matches your bundle ID (conflicts with the standard default database)
+    ///    - userStoreID starts wih `group.` but:
+    ///      - the application doesn't embed the correct entitlement.
+    ///      - the entitlement exists but the suite name doesn't exactly match the registered group identifier
+    ///      - the App Group isn't enabled in your Apple Developer Portal for your App Bundle ID
     init(for userStoreID: String) {
         guard let userStore = UserDefaults(suiteName: "\(AppBundle.identifier()).\(userStoreID)") else {
-            fatalError("\(AppLog.logHeader(UserDefaultsStorage.self)) Unable to create UserDefaults store for user \(userStoreID)")
+            fatalError("\(AppLog.logHeader(UserDefaultsStorage.self)) Unable to create UserDefaults suite for user store ID: \(userStoreID)")
         }
         store = userStore
     }
