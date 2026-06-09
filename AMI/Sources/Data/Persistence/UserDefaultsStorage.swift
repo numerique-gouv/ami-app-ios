@@ -37,6 +37,8 @@ struct UserDefaultsStorage {
     /// The underlying `UserDefaults` instance used for persistence.
     private let store: UserDefaults
 
+    private let currentUserStoreID: String
+
     /// Creates a new UserDefaultsStorage instance with the specified user store identifier.
     /// This allows for flexible storage targeting different UserDefaults domains
     /// such as user-specific stores, feature-specific namespaces, or test-specific stores.
@@ -53,10 +55,12 @@ struct UserDefaultsStorage {
     ///      - the entitlement exists but the suite name doesn't exactly match the registered group identifier
     ///      - the App Group isn't enabled in your Apple Developer Portal for your App Bundle ID
     init(for userStoreID: String) {
-        guard let userStore = UserDefaults(suiteName: "\(AppBundle.identifier()).\(userStoreID)") else {
-            fatalError("\(AppLog.logHeader(UserDefaultsStorage.self)) Unable to create UserDefaults suite for user store ID: \(userStoreID)")
+        let currentUserStoreID = "\(AppBundle.identifier()).\(userStoreID)"
+        guard let userStore = UserDefaults(suiteName: currentUserStoreID) else {
+            fatalError("\(AppLog.logHeader(UserDefaultsStorage.self)) Unable to create UserDefaults suite for user store ID: \(currentUserStoreID)")
         }
         store = userStore
+        self.currentUserStoreID = currentUserStoreID
     }
 
     /// Stores binary data in UserDefaults for the specified key.
@@ -101,6 +105,30 @@ struct UserDefaultsStorage {
         await Task.detached(priority: .userInitiated) {
             store.removeObject(forKey: key)
             return Result<Bool, LocalStorageErrorType>.success(true)
+        }.value
+    }
+
+    /// Removes all stored data from this UserDefaults suite.
+    /// This operation permanently deletes the entire persistent domain associated with
+    /// the current user store, effectively clearing all key-value pairs that were stored
+    /// through this storage instance.
+    ///
+    /// - Warning: This is a destructive operation that cannot be undone. All data
+    ///   stored in this UserDefaults suite will be permanently lost.
+    ///
+    /// - Note: This method is synchronous and completes immediately. The deletion
+    ///   affects only the specific UserDefaults suite created with the current
+    ///   `userStoreID`, not the entire UserDefaults system.
+    ///
+    /// ## Use Cases
+    /// - Clearing all user preferences during logout
+    /// - Resetting application state during troubleshooting
+    /// - Implementing "clear all data" functionality
+    /// - Cleaning up during app uninstall or reset
+    func deleteAll() async -> Result<Bool, LocalStorageErrorType> {
+        await Task.detached(priority: .userInitiated) {
+            store.removePersistentDomain(forName: currentUserStoreID)
+            return .success(true)
         }.value
     }
 }
