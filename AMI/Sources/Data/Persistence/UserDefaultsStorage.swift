@@ -77,7 +77,7 @@ struct UserDefaultsStorage {
     func writeData(_ data: Data, forKey key: KeyType) async -> Result<Bool, LocalStorageErrorType> {
         await Task.detached(priority: .userInitiated) {
             store.setValue(data, forKey: key)
-            return Result<Bool, LocalStorageErrorType>.success(true)
+            return .success(true)
         }.value
     }
 
@@ -89,9 +89,9 @@ struct UserDefaultsStorage {
     func readData(forKey key: KeyType) async -> Result<Data, LocalStorageErrorType> {
         await Task.detached(priority: .userInitiated) {
             switch store.object(forKey: key) {
-            case .none: Result<Data, LocalStorageErrorType>.failure(.keyNotFound)
-            case let .some(storedValue as Data): Result<Data, LocalStorageErrorType>.success(storedValue)
-            default: Result<Data, LocalStorageErrorType>.failure(.typeMismatch)
+            case .none: .failure(.keyNotFound)
+            case let .some(storedValue as Data): .success(storedValue)
+            default: .failure(.typeMismatch)
             }
         }.value
     }
@@ -104,7 +104,7 @@ struct UserDefaultsStorage {
     func deleteData(forKey key: KeyType) async -> Result<Bool, LocalStorageErrorType> {
         await Task.detached(priority: .userInitiated) {
             store.removeObject(forKey: key)
-            return Result<Bool, LocalStorageErrorType>.success(true)
+            return .success(true)
         }.value
     }
 

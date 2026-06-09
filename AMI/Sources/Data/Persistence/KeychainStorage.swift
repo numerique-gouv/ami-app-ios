@@ -81,9 +81,9 @@ struct KeychainStorage {
                         .accessibility(accessibilityPolicy)
                         .set(data, key: key, ignoringAttributeSynchronizable: false)
                 }
-                return Result<Bool, LocalStorageErrorType>.success(true)
+                return .success(true)
             } catch {
-                return Result<Bool, LocalStorageErrorType>.failure(.typeMismatch)
+                return .failure(.typeMismatch)
             }
         }.value
     }
@@ -116,12 +116,13 @@ struct KeychainStorage {
                 } else {
                     return .failure(.keyNotFound)
                 }
-            } catch let error as LocalStorageErrorType {
-                return Result<Data, LocalStorageErrorType>.failure(error)
             } catch let error as LAError {
-                switch error.code {
-                case .userCancel, .systemCancel, .appCancel:
-                    return .failure(.authenticationCancelled)
+                return .failure(mapLAError(error))
+            } catch {
+                return .failure(.unknownError(error))
+            }
+        }.value
+    }
 
                     //                case .userFallback:
                     //                    // User wants password — present your own credential UI
@@ -178,9 +179,9 @@ struct KeychainStorage {
         await Task.detached(priority: .userInitiated) {
             do {
                 try store.remove(key, ignoringAttributeSynchronizable: false)
-                return Result<Bool, LocalStorageErrorType>.success(true)
+                return .success(true)
             } catch {
-                return Result<Bool, LocalStorageErrorType>.failure(.keyNotFound)
+                return .failure(.keyNotFound)
             }
         }.value
     }
