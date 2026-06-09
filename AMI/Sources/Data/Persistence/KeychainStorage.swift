@@ -32,6 +32,8 @@ struct KeychainStorage {
     /// The underlying `Keychain` instance used for secure persistence.
     private let store: Keychain
 
+    private let currentUserStoreID: String
+
     /// The synchronization policy to use for any item stored in Keychain: prevent synchronizatioin through iCloud.
     private let synchronizationPolicy = false
     /// The accessibility policy to use for any item stored in Keychain:
@@ -50,7 +52,8 @@ struct KeychainStorage {
     ///
     /// - Note: Uses `AppBundle.identifier()` to determine the service scope.
     init(for userStoreID: String) {
-        store = Keychain(service: "\(AppBundle.identifier()).\(userStoreID)")
+        currentUserStoreID = "\(AppBundle.identifier()).\(userStoreID)"
+        store = Keychain(service: currentUserStoreID)
     }
 
     /// Securely stores binary data in the Keychain for the specified key with optional authentication requirement.
@@ -180,6 +183,10 @@ struct KeychainStorage {
                 return Result<Bool, LocalStorageErrorType>.failure(.keyNotFound)
             }
         }.value
+    }
+
+    func deleteAll(requireAuthentication: Bool) async -> Result<Bool, LocalStorageErrorType> {
+        .success(true)
     }
 }
 
