@@ -82,8 +82,12 @@ struct KeychainStorage {
                         .set(data, key: key, ignoringAttributeSynchronizable: false)
                 }
                 return .success(true)
+            } catch let error as LAError {
+                return .failure(mapLAError(error))
+            } catch let error as Status {
+                return .failure(mapKeychainAccessStatus(error))
             } catch {
-                return .failure(.typeMismatch)
+                return .failure(.unknownError(error))
             }
         }.value
     }
@@ -108,6 +112,8 @@ struct KeychainStorage {
                 }
             } catch let error as LAError {
                 return .failure(mapLAError(error))
+            } catch let error as Status {
+                return .failure(mapKeychainAccessStatus(error))
             } catch {
                 return .failure(.unknownError(error))
             }
@@ -130,7 +136,7 @@ struct KeychainStorage {
 
         case .biometryLockout:
             // Re-attempt with .deviceOwnerAuthentication to let passcode unlock biometry
-            .biometryLockout
+            .tooManyAttemps
 
         case .biometryNotAvailable:
             // Hardware state changed mid-session — fall back gracefully
@@ -143,16 +149,64 @@ struct KeychainStorage {
         case .passcodeNotSet:
             .passcodeNotSet
 
+        case .userFallback,
+             .notInteractive:
+            .authenticationCancelled
+
         case .invalidContext:
             // Create a new LAContext and retry
-            .unknownError(error)
+            .secureHardwareUnavailable
 
-        case .notInteractive:
-            // Don't set interactionNotAllowed = true if you need the prompt
-            .unknownError(error)
+        case .biometryDisconnected:
+            .biometryNotAvailable
 
         default:
             .unknownError(error)
+        }
+    }
+
+    func mapKeychainAccessStatus(_ status: Status) -> LocalStorageErrorType {
+        switch status {
+        case .itemNotFound:
+            .keyNotFound
+
+        case .authFailed,
+             .invalidAccessCredentials,
+             .insufficientCredentials:
+            .authenticationFailed
+
+        case .userCanceled:
+            .authenticationCancelled
+
+        case .interactionNotAllowed,
+             .inDarkWake,
+             .dataNotAvailable,
+             .notLoggedIn:
+            .deviceIsLocked
+
+        case .interactionRequired:
+            .authenticationCancelled
+
+        case .dataTooLarge,
+             .fileTooBig:
+            .dataIsTooLarge
+
+        case .notAvailable,
+             .deviceFailed,
+             .deviceReset,
+             .deviceError,
+             .deviceVerifyFailed,
+             .serviceNotAvailable:
+            .secureHardwareUnavailable
+
+        case .missingEntitlement,
+             .noAccessForItem,
+             .privilegeNotGranted,
+             .privilegeNotSupported:
+            .authenticationFailed
+
+        default:
+            .unknownError(status)
         }
     }
 
