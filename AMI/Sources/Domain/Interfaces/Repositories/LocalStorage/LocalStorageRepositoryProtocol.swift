@@ -15,6 +15,9 @@ import Foundation
 /// storage mechanism used (e.g. UserDefaults or Keychain).
 /// All operations are asynchronous and return a `Result` type indicating success or a ``LocalStorageErrorType`` failure.
 protocol LocalStorageRepositoryProtocol {
+    /// Create a LocalStorageRepository dedicated to a user to try to isolate its data from other users' data.
+    init(for userStoreID: String)
+
     // MARK: - Write
 
     /// Writes a `Bool` value to the local storage for the given key.

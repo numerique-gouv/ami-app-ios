@@ -49,12 +49,10 @@ struct KeychainStorage {
     /// between different applications.
     ///
     /// - Note: Uses `AppBundle.identifier()` to determine the service scope.
-    init() {
-        store = Keychain(service: AppBundle.identifier())
+    init(for userStoreID: String) {
+        store = Keychain(service: "\(AppBundle.identifier()).\(userStoreID)")
     }
-}
 
-extension KeychainStorage: SecureStorageProtocol {
     /// Securely stores binary data in the Keychain for the specified key with optional authentication requirement.
     /// The data is encrypted using the system's Keychain encryption mechanisms.
     /// Any existing data for the same key will be overwritten.
