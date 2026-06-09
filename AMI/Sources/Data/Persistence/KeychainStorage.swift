@@ -40,6 +40,7 @@ struct KeychainStorage {
     /// - The data in the keychain item cannot be accessed after a restart until the device has been unlocked once by the user
     /// - Items with this attribute do not migrate to a new device. Thus, after restoring from a backup of a different device, these items will not be present.
     private let accessibilityPolicy: Accessibility = .whenPasscodeSetThisDeviceOnly
+    private let authenticationPolicy: AuthenticationPolicy = .biometryAny
     /// The authentication policy to use for items stored in Keychain with authentication required.
 
     private let readAuthenticationContext = LAContext()
@@ -65,15 +66,14 @@ struct KeychainStorage {
     ///   - key: A unique string identifier for the data. Must not be empty.
     ///   - requireAuthentication: Whether accessing this data should require biometric/passcode authentication.
     ///
-    /// - Note: Authentication requirement with biometric protection is not yet implemented.
-    ///   All data currently uses standard Keychain storage regardless of this parameter.
+    /// - Note: Writing data with `requireAuthentication` set to `true` triggers biometric autrhentication.
     func writeData(_ data: Data, forKey key: KeyType, requireAuthentication: Bool) async -> Result<Bool, LocalStorageErrorType> {
         await Task.detached(priority: .userInitiated) {
             do {
                 if requireAuthentication {
                     try store
                         .synchronizable(synchronizationPolicy)
-                        .accessibility(accessibilityPolicy)
+                        .accessibility(accessibilityPolicy, authenticationPolicy: authenticationPolicy)
                         .set(data, key: key, ignoringAttributeSynchronizable: false)
                 } else {
                     try store
@@ -101,16 +101,6 @@ struct KeychainStorage {
     func readData(forKey key: KeyType, requireAuthentication: Bool) async -> Result<Data, LocalStorageErrorType> {
         await Task.detached(priority: .userInitiated) {
             do {
-                // If authentication is required to read keychain value, evaluate LAContext policiy.
-                if requireAuthentication {
-                    var canEvaluatePolicyError: NSError?
-                    guard readAuthenticationContext.canEvaluatePolicy(.deviceOwnerAuthentication, error: &canEvaluatePolicyError) else {
-                        throw canEvaluatePolicyError ?? LocalStorageErrorType.unknownError(nil)
-                    }
-
-                    try await readAuthenticationContext.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: authenticationPrompt)
-                }
-
                 if let storedValue = try store.getData(key, ignoringAttributeSynchronizable: false) {
                     return .success(storedValue)
                 } else {
@@ -124,45 +114,111 @@ struct KeychainStorage {
         }.value
     }
 
-                    //                case .userFallback:
-                    //                    // User wants password — present your own credential UI
-                    //                    break
+    /// Maps LocalAuthentication framework errors to our local storage error types.
+    /// This method reduces complexity by centralizing LAError handling logic.
+    ///
+    /// - Parameter error: The LAError to map to a LocalStorageErrorType.
+    /// - Returns: The corresponding LocalStorageErrorType for the given LAError.
+    private func mapLAError(_ error: LAError) -> LocalStorageErrorType {
+        switch error.code {
+        case .userCancel, .systemCancel, .appCancel:
+            .authenticationCancelled
 
-                case .authenticationFailed:
-                    // Wrong finger/face repeatedly — inform the user
-                    return .failure(.authenticationFailed)
+        case .authenticationFailed:
+            // Wrong finger/face repeatedly — inform the user
+            .authenticationFailed
 
-                case .biometryLockout:
-                    // Re-attempt with .deviceOwnerAuthentication to let passcode unlock biometry
-                    return .failure(.biometryLockout)
+        case .biometryLockout:
+            // Re-attempt with .deviceOwnerAuthentication to let passcode unlock biometry
+            .biometryLockout
 
-                case .biometryNotAvailable:
-                    // Hardware state changed mid-session — fall back gracefully
-                    return .failure(.biometryNotAvailable)
+        case .biometryNotAvailable:
+            // Hardware state changed mid-session — fall back gracefully
+            .biometryNotAvailable
 
-                case .biometryNotEnrolled:
-                    // Hardware state changed mid-session — fall back gracefully
-                    return .failure(.biometryNotEnrolled)
+        case .biometryNotEnrolled:
+            // Hardware state changed mid-session — fall back gracefully
+            .biometryNotEnrolled
 
-                case .passcodeNotSet:
-                    return .failure(.passcodeNotSet)
+        case .passcodeNotSet:
+            .passcodeNotSet
 
-                case .invalidContext:
-                    // Create a new LAContext and retry
-                    return .failure(.unknownError(error))
+        case .invalidContext:
+            // Create a new LAContext and retry
+            .unknownError(error)
 
-                case .notInteractive:
-                    // Don't set interactionNotAllowed = true if you need the prompt
-                    return .failure(.unknownError(error))
+        case .notInteractive:
+            // Don't set interactionNotAllowed = true if you need the prompt
+            .unknownError(error)
 
-                default:
-                    return .failure(.unknownError(error))
-                }
-            } catch {
-                return .failure(.unknownError(error))
-            }
-        }.value
+        default:
+            .unknownError(error)
+        }
     }
+
+//        await Task.detached(priority: .userInitiated) {
+//            do {
+//                // If authentication is required to read keychain value, evaluate LAContext policiy.
+//                if requireAuthentication {
+//                    var canEvaluatePolicyError: NSError?
+//                    guard readAuthenticationContext.canEvaluatePolicy(.deviceOwnerAuthentication, error: &canEvaluatePolicyError) else {
+//                        throw canEvaluatePolicyError ?? LocalStorageErrorType.unknownError(nil)
+//                    }
+//
+//                    try await readAuthenticationContext.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: authenticationPrompt)
+//                }
+//
+//                if let storedValue = try store.getData(key, ignoringAttributeSynchronizable: false) {
+//                    return .success(storedValue)
+//                } else {
+//                    return .failure(.keyNotFound)
+//                }
+//            } catch let error as LocalStorageErrorType {
+//                return .failure(error)
+//            } catch let error as LAError {
+//                switch error.code {
+//                case .userCancel, .systemCancel, .appCancel:
+//                    return .failure(.authenticationCancelled)
+//
+//                    //                case .userFallback:
+//                    //                    // User wants password — present your own credential UI
+//                    //                    break
+//
+//                case .authenticationFailed:
+//                    // Wrong finger/face repeatedly — inform the user
+//                    return .failure(.authenticationFailed)
+//
+//                case .biometryLockout:
+//                    // Re-attempt with .deviceOwnerAuthentication to let passcode unlock biometry
+//                    return .failure(.biometryLockout)
+//
+//                case .biometryNotAvailable:
+//                    // Hardware state changed mid-session — fall back gracefully
+//                    return .failure(.biometryNotAvailable)
+//
+//                case .biometryNotEnrolled:
+//                    // Hardware state changed mid-session — fall back gracefully
+//                    return .failure(.biometryNotEnrolled)
+//
+//                case .passcodeNotSet:
+//                    return .failure(.passcodeNotSet)
+//
+//                case .invalidContext:
+//                    // Create a new LAContext and retry
+//                    return .failure(.unknownError(error))
+//
+//                case .notInteractive:
+//                    // Don't set interactionNotAllowed = true if you need the prompt
+//                    return .failure(.unknownError(error))
+//
+//                default:
+//                    return .failure(.unknownError(error))
+//                }
+//            } catch {
+//                return .failure(.unknownError(error))
+//            }
+//        }.value
+//    }
 
     /// Permanently removes stored data from the Keychain for the specified key.
     /// This operation is irreversible and will completely delete the encrypted data.
