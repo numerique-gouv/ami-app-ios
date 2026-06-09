@@ -13,18 +13,15 @@ import Foundation
 /// (`UserDefaults` or Keychain) based on the requested security level.
 struct LocalStorageRepository {
     /// Storage backend for non-sensitive data, backed by `UserDefaults`.
-    private let storage: any StorageProtocol
+    private let storage: UserDefaultsStorage
 
     /// Storage backend for sensitive data, backed by the system Keychain.
-    private let secureStorage: any SecureStorageProtocol
+    private let secureStorage: KeychainStorage
 
-    /// Creates a new `LocalStorageRepository` with default storage backends.
-    /// - `unprotectedStorage` uses `UserDefaults.standard`.
-    /// - `protectedStorage` uses the app-scoped `KeychainStorage`.
-    init(storage: any StorageProtocol = UserDefaultsStorage(store: .standard),
-         secureStorage: any SecureStorageProtocol = KeychainStorage()) {
-        self.storage = storage
-        self.secureStorage = secureStorage
+    /// Creates a new `LocalStorageRepository`.
+    init(for userStoreID: String) {
+        storage = UserDefaultsStorage(for: userStoreID)
+        secureStorage = KeychainStorage(for: userStoreID)
     }
 }
 
@@ -219,19 +216,19 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
         switch secureLevel {
         case .low:
             // TODO: Should check for key presence?
-            return switch await storage.deleteData(forKey: key) {
+            switch await storage.deleteData(forKey: key) {
             case let .success(success): .success(success)
             case let .failure(error): .failure(error)
             }
         case .medium:
             // TODO: Should check for key presence?
-            return switch await secureStorage.deleteData(forKey: key, requireAuthentication: false) {
+            switch await secureStorage.deleteData(forKey: key, requireAuthentication: false) {
             case let .success(success): .success(success)
             case let .failure(error): .failure(error)
             }
         case .high:
             // TODO: Should check for key presence?
-            return switch await secureStorage.deleteData(forKey: key, requireAuthentication: true) {
+            switch await secureStorage.deleteData(forKey: key, requireAuthentication: true) {
             case let .success(success): .success(success)
             case let .failure(error): .failure(error)
             }

@@ -44,12 +44,13 @@ struct UserDefaultsStorage {
     /// - Parameter store: The UserDefaults instance to use for data persistence.
     ///   Common values include `.standard` for app-wide storage or custom instances
     ///   for group containers or testing isolation.
-    init(store: UserDefaults) {
-        self.store = store
+    init(for userStoreID: String) {
+        guard let userStore = UserDefaults(suiteName: "\(AppBundle.identifier()).\(userStoreID)") else {
+            fatalError("\(AppLog.logHeader(UserDefaultsStorage.self)) Unable to create UserDefaults store for user \(userStoreID)")
+        }
+        store = userStore
     }
-}
 
-extension UserDefaultsStorage: StorageProtocol {
     /// Stores binary data in UserDefaults for the specified key.
     /// The data is persisted immediately and will be available across app launches.
     /// Any existing data for the same key will be replaced.
