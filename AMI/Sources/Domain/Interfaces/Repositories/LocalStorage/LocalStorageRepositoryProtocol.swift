@@ -76,6 +76,8 @@ protocol LocalStorageRepositoryProtocol {
     ///   - secureLevel: The security level determining the storage mechanism to use.
     /// - Returns: A `Result` containing `true` on success, or a ``LocalStorageErrorType`` on failure.
     func delete(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType>
+
+    func deleteAll(secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType>
 }
 
 // sourcery:end
