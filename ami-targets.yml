@@ -135,6 +135,14 @@ targetTemplates:
       PRODUCT_NAME: $(APP_NAME)
       PRODUCT_BUNDLE_IDENTIFIER: $(BASE_BUNDLE_IDENTIFIER)
     
+#    preBuildScripts:
+#      - name: 🧙 Sourcery - Generate mocks to test UseCases
+#        runOnlyWhenInstalling: false
+#        basedOnDependencyAnalysis: false
+#        shell: /bin/sh
+#        script: |
+#          scripts/ami-xcode-pass-sourcery.sh
+    
     dependencies:
     - package: AMI-Design-System
       product: AmiDesignSystem
