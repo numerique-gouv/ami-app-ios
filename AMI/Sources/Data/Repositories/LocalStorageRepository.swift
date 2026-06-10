@@ -201,7 +201,7 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     ///   - secureLevel: Determines which storage backend is used.
     /// - Returns: `.success(T)` if found and decodable, or a relevant `.failure`.
     func readJSON<T>(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<T, LocalStorageErrorType>
-    where T: Decodable {
+        where T: Decodable {
         await readDataAsType(T.self, key: key, secureLevel: secureLevel)
     }
 
