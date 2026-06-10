@@ -8,7 +8,6 @@
 
 import Foundation
 
-// sourcery: AutoMockable
 /// Defines the interface for the LocalStorage system's Data layer repository.
 ///
 /// This protocol provides a unified interface for reading, writing, and deleting data
@@ -217,8 +216,6 @@ protocol LocalStorageRepositoryProtocol {
     func deleteAll(secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType>
 }
 
-// sourcery:end
-
 /// Extension protocol providing JSON serialization capabilities for complex objects.
 ///
 /// This protocol extends the base storage functionality to support storing and retrieving
@@ -252,8 +249,6 @@ protocol LocalStorageRepositoryProtocol {
 protocol LocalStorageRepositoryJSONProtocol {
     // MARK: - JSON Write Operations
 
-    // Sourcery can't generate a valid ``ReturnValue`` property for generic method. Skip these methods.
-    // sourcery: skip
     /// Stores a JSON-serializable object in local storage with the specified security level.
     ///
     /// The object must conform to `Codable` to ensure it can be both encoded for storage
@@ -286,8 +281,6 @@ protocol LocalStorageRepositoryJSONProtocol {
 
     // MARK: - JSON Read Operations
 
-    // Sourcery can't generate a valid ``ReturnValue`` property for generic method. Skip these methods.
-    // sourcery: skip
     /// Retrieves and deserializes a JSON-stored object from local storage.
     ///
     /// This method retrieves binary data from the appropriate storage backend and
