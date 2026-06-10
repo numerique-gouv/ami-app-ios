@@ -140,7 +140,6 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
             case let .failure(error): .failure(error)
             }
         case .high:
-            // TODO: handle biometric/passcode failures
             switch await secureStorage.readData(forKey: key, requireAuthentication: true) {
             case let .success(data): decodeData(type, data: data)
             case let .failure(error): .failure(error)
@@ -206,28 +205,60 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     }
 
     /// Deletes the value associated with the given key from the appropriate storage backend.
-    /// Routes to `UserDefaults` for `.low` security, or Keychain for `.medium` / `.high`.
+    /// This method routes deletion operations to the correct storage system based on the security level
+    /// used when the data was originally stored.
+    ///
+    /// ## Backend Routing
+    /// - `.low` → Deletes from UserDefaults (unencrypted storage)
+    /// - `.medium` → Deletes from Keychain without authentication requirement
+    /// - `.high` → Deletes from Keychain with biometric/passcode authentication
+    ///
+    /// ## Behavior
+    /// - **Idempotent**: Safe to call multiple times with the same key
+    /// - **No Verification**: Does not check if the key exists before attempting deletion
+    /// - **Silent Success**: Returns success even if the key was not present
+    /// - **Authentication**: High security level may prompt for device authentication
+    ///
+    /// ## Error Scenarios
+    /// - **Low Security**: Rarely fails; UserDefaults deletions are generally reliable
+    /// - **Medium/High Security**: May fail if Keychain access is restricted or device is locked
+    /// - **Authentication Failure**: High security deletion fails if user cancels authentication
+    ///
+    /// ## Usage Examples
+    /// ```swift
+    /// // Delete non-sensitive cached data
+    /// await repository.delete(key: "userPreferences", secureLevel: .low)
+    ///
+    /// // Delete sensitive authentication token
+    /// await repository.delete(key: "authToken", secureLevel: .medium)
+    ///
+    /// // Delete highly sensitive biometric-protected data
+    /// await repository.delete(key: "encryptionKey", secureLevel: .high)
+    /// ```
+    ///
     /// - Parameters:
-    ///   - key: The key identifying the value to remove.
-    ///   - secureLevel: Determines which storage backend is used.
-    /// - Returns: `.success(true)` on completion. Does not verify prior key existence.
-    /// - Note: Key presence check before deletion is not yet implemented.
+    ///   - key: The unique identifier of the value to remove. Must match the key used during storage.
+    ///   - secureLevel: Determines which storage backend is queried. Should match the security level
+    ///     used when storing the data to ensure deletion targets the correct backend.
+    /// - Returns: `.success(true)` if the deletion operation completes successfully,
+    ///   or `.failure(LocalStorageErrorType)` if system-level errors prevent the operation.
+    ///
+    /// - Important: Always use the same security level for deletion that was used for storage.
+    ///   Using a different security level will attempt to delete from the wrong backend,
+    ///   leaving the actual data intact in the original storage location.
     func delete(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch secureLevel {
         case .low:
-            // TODO: Should check for key presence?
             switch await storage.deleteData(forKey: key) {
             case let .success(success): .success(success)
             case let .failure(error): .failure(error)
             }
         case .medium:
-            // TODO: Should check for key presence?
             switch await secureStorage.deleteData(forKey: key, requireAuthentication: false) {
             case let .success(success): .success(success)
             case let .failure(error): .failure(error)
             }
         case .high:
-            // TODO: Should check for key presence?
             switch await secureStorage.deleteData(forKey: key, requireAuthentication: true) {
             case let .success(success): .success(success)
             case let .failure(error): .failure(error)
