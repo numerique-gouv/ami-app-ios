@@ -55,7 +55,7 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// - Returns: `.success(true)` on success, or `.failure(.typeMismatch)` if encoding fails.
     func writeBool(key: String, value: Bool, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch value.toData {
-        case .failure: .failure(.typeMismatch)
+        case .failure: .failure(.typeMismatch(LocalStorageImplementationErrorType.valueTypeIsNotData))
         case let .success(data): await writeData(key: key, data: data, secureLevel: secureLevel)
         }
     }
@@ -68,7 +68,7 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// - Returns: `.success(true)` on success, or `.failure(.typeMismatch)` if encoding fails.
     func writeInt(key: String, value: Int, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch value.toData {
-        case .failure: .failure(.typeMismatch)
+        case .failure: .failure(.typeMismatch(LocalStorageImplementationErrorType.valueTypeIsNotData))
         case let .success(data): await writeData(key: key, data: data, secureLevel: secureLevel)
         }
     }
@@ -81,7 +81,7 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// - Returns: `.success(true)` on success, or `.failure(.typeMismatch)` if encoding fails.
     func writeString(key: String, value: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch value.toData {
-        case .failure: .failure(.typeMismatch)
+        case .failure: .failure(.typeMismatch(LocalStorageImplementationErrorType.valueTypeIsNotData))
         case let .success(data): await writeData(key: key, data: data, secureLevel: secureLevel)
         }
     }
@@ -104,7 +104,7 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// - Important: The runtime `Codable` check should be replaced with compile-time safety in future versions.
     func writeJSON(key: String, value: some Codable, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch value.toData {
-        case .failure: .failure(.typeMismatch)
+        case .failure: .failure(.typeMismatch(LocalStorageImplementationErrorType.valueTypeIsNotData))
         case let .success(data): await writeData(key: key, data: data, secureLevel: secureLevel)
         }
     }
@@ -164,7 +164,7 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
         do {
             return try .success(JSONDecoder().decode(T.self, from: data))
         } catch {
-            return .failure(.typeMismatch)
+            return .failure(.typeMismatch(LocalStorageImplementationErrorType.valueTypeIsNotData))
         }
     }
 
