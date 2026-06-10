@@ -267,91 +267,25 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     }
 
     /// Permanently removes all data from the specified security level storage backend.
-    /// This is a destructive operation that clears all key-value pairs from the chosen storage domain.
     ///
     /// ## Routing Logic
     /// - `.low` → Clears all UserDefaults data in the app's suite
-    /// - `.medium` → Attempts to clear all Keychain data (implementation-dependent)
-    /// - `.high` → Attempts to clear all Keychain data (implementation-dependent)
+    /// - `.medium` / `.high` → Clears all Keychain data for this service (same effect)
     ///
-    /// ## Security Implications
+    /// ## Important Notes
+    /// - **Irreversible**: All data is permanently lost
+    /// - **No Authentication**: Keychain deletion does not require device authentication
+    /// - **Complete Deletion**: Cannot differentiate between medium/high security items—all Keychain data removed
+    /// - **Service Isolation**: Only affects this app's storage, not system-wide data
     ///
-    /// ### Low Security (.low)
-    /// - **Scope**: Removes all data from the app's UserDefaults suite
-    /// - **Isolation**: Only affects the specific `userStoreID` domain, not system-wide UserDefaults
-    /// - **Performance**: Fast operation, immediate effect
-    /// - **Reversibility**: **Irreversible** - all application preferences and cached data will be lost
+    /// - Parameter secureLevel: Determines which storage backend to clear
+    /// - Returns: `.success(true)` if successful, or `.failure(LocalStorageErrorType)` if system error occurs
     ///
-    /// ### Medium/High Security (.medium/.high)
-    /// - **Scope**: Attempts to remove all Keychain items for the app's service
-    /// - **Authentication**: May require device passcode or biometric authentication
-    /// - **System Integration**: Respects device lock state and security policies
-    /// - **Current Limitation**: Keychain implementation currently returns success without actual deletion
-    ///
-    /// ## Use Cases
-    ///
-    /// ### Application Reset
-    /// ```swift
-    /// // Clear all non-sensitive data during app reset
-    /// await repository.deleteAll(secureLevel: .low)
-    /// ```
-    ///
-    /// ### User Logout
-    /// ```swift
-    /// // Clear all sensitive authentication data
-    /// await repository.deleteAll(secureLevel: .medium)
-    /// await repository.deleteAll(secureLevel: .high)
-    /// ```
-    ///
-    /// ### Privacy Compliance
-    /// ```swift
-    /// // Complete data erasure for GDPR compliance
-    /// await repository.deleteAll(secureLevel: .low)
-    /// await repository.deleteAll(secureLevel: .medium)
-    /// await repository.deleteAll(secureLevel: .high)
-    /// ```
-    ///
-    /// ## Error Scenarios
-    ///
-    /// ### Low Security
-    /// - Rarely fails; UserDefaults operations are generally reliable
-    /// - May fail if file system is read-only or disk is full
-    ///
-    /// ### Medium/High Security
-    /// - **Device Locked**: Operation may fail if device security prevents Keychain access
-    /// - **Authentication Required**: User may need to authenticate with passcode/biometric
-    /// - **System Restrictions**: Corporate policies or parental controls may block access
-    /// - **Hardware Issues**: Secure Enclave problems may cause failures
-    ///
-    /// ## Implementation Status
-    /// - **UserDefaults (.low)**: ✅ Fully implemented, removes all data in suite
-    /// - **Keychain (.medium/.high)**: ⚠️ Currently returns success without actual deletion
-    ///
-    /// ## Thread Safety
-    /// This method uses async/await and is safe for concurrent access. However, calling
-    /// `deleteAll` while other storage operations are in progress may lead to race conditions
-    /// where some data is written after deletion begins.
-    ///
-    /// ## Performance Considerations
-    /// - **Low Security**: Very fast (milliseconds)
-    /// - **Medium/High Security**: May be slower due to Keychain access and potential authentication prompts
-    /// - **Network**: No network access required; all operations are local
-    ///
-    /// - Parameter secureLevel: Determines which storage backend to clear.
-    ///   Choose the same level used when storing the data you want to remove.
-    /// - Returns: `.success(true)` if the deletion operation completes successfully,
-    ///   or `.failure(LocalStorageErrorType)` if system-level errors prevent the operation.
-    ///
-    /// - Warning: This operation is **irreversible**. Ensure you have appropriate user confirmation
-    ///   and backup mechanisms in place before calling this method.
-    ///
-    /// - Important: For medium and high security levels, the current Keychain implementation
-    ///   does not actually delete data but always returns success. This will be addressed in future updates.
+    /// - Warning: This operation is **irreversible**. Ensure proper confirmation before use.
     func deleteAll(secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch secureLevel {
         case .low: await storage.deleteAll()
-        case .medium: await secureStorage.deleteAll(requireAuthentication: false)
-        case .high: await secureStorage.deleteAll(requireAuthentication: true)
+        case .medium, .high: await secureStorage.deleteAll()
         }
     }
 }
