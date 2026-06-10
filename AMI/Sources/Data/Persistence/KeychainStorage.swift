@@ -222,9 +222,9 @@ struct KeychainStorage {
                 }
                 return .success(true)
             } catch let error as LAError {
-                return .failure(mapLAError(error))
+                return .failure(Self.mapLAError(error))
             } catch let error as Status {
-                return .failure(mapKeychainAccessStatus(error))
+                return .failure(Self.mapKeychainAccessStatus(error))
             } catch {
                 return .failure(.unknownError(error))
             }
@@ -250,103 +250,18 @@ struct KeychainStorage {
                     return .failure(.keyNotFound)
                 }
             } catch let error as LAError {
-                return .failure(mapLAError(error))
+                return .failure(Self.mapLAError(error))
             } catch let error as Status {
                 switch error {
                 case .unexpectedError:
                     return .failure(.typeMismatch(LocalStorageImplementationErrorType.valueTypeIsNotData))
                 default:
-                    return .failure(mapKeychainAccessStatus(error))
+                    return .failure(Self.mapKeychainAccessStatus(error))
                 }
             } catch {
                 return .failure(.unknownError(error))
             }
         }.value
-    }
-
-    /// Maps LocalAuthentication framework errors to our local storage error types.
-    /// This method reduces complexity by centralizing LAError handling logic.
-    ///
-    /// - Parameter error: The LAError to map to a LocalStorageErrorType.
-    /// - Returns: The corresponding LocalStorageErrorType for the given LAError.
-    private func mapLAError(_ error: LAError) -> LocalStorageErrorType {
-        switch error.code {
-        case .userCancel, .systemCancel, .appCancel:
-            .authenticationCancelled
-
-        case .authenticationFailed:
-            .authenticationFailed
-
-        case .biometryLockout:
-            .tooManyAttemps
-
-        case .biometryNotAvailable:
-            .biometryNotAvailable
-
-        case .biometryNotEnrolled:
-            .biometryNotEnrolled
-
-        case .passcodeNotSet:
-            .passcodeNotSet
-
-        case .userFallback,
-             .notInteractive:
-            .authenticationCancelled
-
-        case .invalidContext:
-            .secureHardwareUnavailable
-
-        case .biometryDisconnected:
-            .biometryNotAvailable
-
-        default:
-            .unknownError(error)
-        }
-    }
-
-    func mapKeychainAccessStatus(_ status: Status) -> LocalStorageErrorType {
-        switch status {
-        case .itemNotFound:
-            .keyNotFound
-
-        case .authFailed,
-             .invalidAccessCredentials,
-             .insufficientCredentials:
-            .authenticationFailed
-
-        case .userCanceled:
-            .authenticationCancelled
-
-        case .interactionNotAllowed,
-             .inDarkWake,
-             .dataNotAvailable,
-             .notLoggedIn:
-            .deviceIsLocked
-
-        case .interactionRequired:
-            .authenticationCancelled
-
-        case .dataTooLarge,
-             .fileTooBig:
-            .dataIsTooLarge
-
-        case .notAvailable,
-             .deviceFailed,
-             .deviceReset,
-             .deviceError,
-             .deviceVerifyFailed,
-             .serviceNotAvailable:
-            .secureHardwareUnavailable
-
-        case .missingEntitlement,
-             .noAccessForItem,
-             .privilegeNotGranted,
-             .privilegeNotSupported:
-            .authenticationFailed
-
-        default:
-            .unknownError(status)
-        }
     }
 
     /// Permanently removes stored data from the Keychain for the specified key.
