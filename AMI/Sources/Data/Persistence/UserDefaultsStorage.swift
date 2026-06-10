@@ -174,7 +174,7 @@ struct UserDefaultsStorage {
             case .none: .failure(.keyNotFound)
             case let .some(storedValue as Data): .success(storedValue)
             default: // The read value is not of type Data.
-                .failure(.typeMismatch)
+                .failure(.typeMismatch(LocalStorageImplementationErrorType.valueTypeIsNotData))
             }
         }.value
     }

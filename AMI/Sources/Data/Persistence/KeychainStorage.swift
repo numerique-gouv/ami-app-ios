@@ -252,7 +252,12 @@ struct KeychainStorage {
             } catch let error as LAError {
                 return .failure(mapLAError(error))
             } catch let error as Status {
-                return .failure(mapKeychainAccessStatus(error))
+                switch error {
+                case .unexpectedError:
+                    return .failure(.typeMismatch(LocalStorageImplementationErrorType.valueTypeIsNotData))
+                default:
+                    return .failure(mapKeychainAccessStatus(error))
+                }
             } catch {
                 return .failure(.unknownError(error))
             }
