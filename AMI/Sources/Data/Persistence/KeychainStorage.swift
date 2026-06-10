@@ -287,93 +287,21 @@ struct KeychainStorage {
     }
 
     /// Permanently removes all stored data from this Keychain service.
-    /// This operation completely clears all key-value pairs associated with this storage instance's service.
+    /// Deletes ALL items regardless of their original security level (medium or high).
     ///
-    /// ## Security Implications
-    /// - **Scope**: Only affects items in this specific Keychain service (isolated by `userStoreID`)
-    /// - **Isolation**: Does not affect other apps or other Keychain services within the same app
-    /// - **Authentication**: Configures accessibility policy based on `requireAuthentication` parameter
-    /// - **Hardware Integration**: Leverages Secure Enclave for secure deletion when available
+    /// ## Important Notes
+    /// - **Complete Deletion**: KeychainAccess cannot differentiate between security levels—all items are removed
+    /// - **No Authentication**: This operation does not require authentication to execute
+    /// - **Service Isolation**: Only affects items in this specific Keychain service
+    /// - **Irreversible**: All data is permanently lost and cannot be recovered
     ///
-    /// ## Authentication Modes
-    /// - **`requireAuthentication: false`**: Uses standard accessibility policy for deletion
-    /// - **`requireAuthentication: true`**: Applies biometric authentication policy before deletion
-    /// - **Fallback Behavior**: Automatically falls back to passcode when biometrics unavailable
-    /// - **Policy Consistency**: Matches the authentication requirements used during data storage
+    /// - Returns: `.success(true)` if successful, or `.failure(LocalStorageErrorType)` if system error occurs.
     ///
-    /// ## Operation Details
-    /// - **Irreversibility**: All data is permanently deleted and cannot be recovered
-    /// - **Atomic**: Either all items are deleted successfully, or none are deleted
-    /// - **Performance**: Moderate speed due to secure deletion requirements
-    /// - **Device State**: Respects device lock state and security policies
-    /// - **Authentication Flow**: May prompt for Face ID/Touch ID/passcode based on parameter
-    ///
-    /// ## Error Scenarios
-    ///
-    /// ### Authentication-Related (when `requireAuthentication: true`)
-    /// - **User Cancellation**: User dismisses biometric prompt or passcode screen
-    /// - **Authentication Failure**: Biometric recognition fails or incorrect passcode
-    /// - **Biometry Unavailable**: Face ID/Touch ID disabled, not enrolled, or hardware issue
-    /// - **Device Locked**: Operation attempted while device is in locked state
-    /// - **Too Many Attempts**: Biometric lockout after repeated failures
-    ///
-    /// ### System-Level
-    /// - **Hardware Issues**: Secure Enclave problems or sensor malfunctions
-    /// - **System Restrictions**: Corporate policies or parental controls blocking deletion
-    /// - **Service Access**: Permission errors if app lacks proper Keychain entitlements
-    /// - **Storage State**: Keychain in inconsistent state or corruption detected
-    ///
-    /// ## Use Cases
-    ///
-    /// ### Standard Deletion (`requireAuthentication: false`)
-    /// ```swift
-    /// // Clear non-sensitive cached data
-    /// await keychain.deleteAll(requireAuthentication: false)
-    /// ```
-    ///
-    /// ### Authenticated Deletion (`requireAuthentication: true`)
-    /// ```swift
-    /// // Clear highly sensitive data with user confirmation
-    /// await keychain.deleteAll(requireAuthentication: true)
-    /// ```
-    ///
-    /// ### Common Scenarios
-    /// - **User Logout**: Clear authentication tokens and session data
-    /// - **App Reset**: Remove all securely stored configuration and cache
-    /// - **Privacy Compliance**: Complete data erasure for GDPR/privacy regulations
-    /// - **Security Incident**: Emergency data clearing after suspected compromise
-    /// - **Testing**: Clean slate for isolated test environments
-    ///
-    /// ## Implementation Details
-    /// - **Keychain Filter**: Configures accessibility and authentication policies before deletion
-    /// - **Service Isolation**: Uses `Keychain.removeAll()` targeting only this service's items
-    /// - **Cross-App Safety**: Preserves Keychain items from other apps and services
-    /// - **Error Mapping**: Handles both LAError (authentication) and Status (Keychain) error types
-    /// - **Background Execution**: Runs on detached task to avoid blocking UI thread
-    ///
-    /// - Parameter requireAuthentication: Whether this operation should require user authentication
-    ///   (Face ID/Touch ID/passcode) before proceeding with deletion. When `true`, the system
-    ///   will prompt for authentication and apply the same biometric policies used for high-security storage.
-    /// - Returns: `.success(true)` if all items are successfully deleted, or `.failure(LocalStorageErrorType)`
-    ///   if authentication fails, user cancels, or system-level errors prevent the operation.
-    ///
-    /// - Warning: This operation is **irreversible**. All securely stored data will be permanently lost.
-    ///   Ensure proper user confirmation and backup procedures are in place before calling this method.
-    ///
-    /// - Note: The accessibility policies applied during deletion match those used during storage
-    ///   to ensure consistent behavior across the storage lifecycle.
-    func deleteAll(requireAuthentication: Bool = false) async -> Result<Bool, LocalStorageErrorType> {
+    /// - Warning: This operation deletes **ALL** items in the service. Ensure proper confirmation before use.
+    func deleteAll() async -> Result<Bool, LocalStorageErrorType> {
         await Task.detached(priority: .userInitiated) {
             do {
-                // Configure Keychain with appropriate accessibility policy based on authentication requirement
-                let keychainInstance = if requireAuthentication {
-                    store.accessibility(accessibilityPolicy, authenticationPolicy: authenticationPolicy)
-                } else {
-                    store.accessibility(accessibilityPolicy)
-                }
-
-                // Remove all items using the configured Keychain instance
-                try keychainInstance.removeAll()
+                try store.removeAll()
                 return .success(true)
             } catch let error as LAError {
                 return .failure(Self.mapLAError(error))
