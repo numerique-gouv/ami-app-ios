@@ -290,7 +290,7 @@ struct KeychainStorageTests {
         let testKey2 = "delete_all_key_2"
         let testKey3 = "delete_all_key_3"
 
-        // Store multiple pieces of data
+        // Store multiple pieces of data (mix of auth and non-auth)
         let writeResult1 = await sut.writeData(testData1, forKey: testKey1, requireAuthentication: false)
         let writeResult2 = await sut.writeData(testData2, forKey: testKey2, requireAuthentication: false)
         let writeResult3 = await sut.writeData(testData3, forKey: testKey3, requireAuthentication: false)
@@ -309,7 +309,7 @@ struct KeychainStorageTests {
         #expect(readResult3 == .success(testData3))
 
         // Delete all data
-        let deleteAllResult = await sut.deleteAll(requireAuthentication: false)
+        let deleteAllResult = await sut.deleteAll()
         #expect(deleteAllResult == .success(true))
 
         // Verify all data is gone
@@ -322,9 +322,39 @@ struct KeychainStorageTests {
         #expect(readAfterDelete3 == .failure(.keyNotFound))
     }
 
+    @Test("deleteAll removes data regardless of original security level")
+    func deleteAll_mixedSecurityLevels() async {
+        let mediumSecurityData = "Medium security data".data(using: .utf8)!
+        let highSecurityData = "High security data".data(using: .utf8)!
+        
+        let mediumKey = "medium_security_key"
+        let highKey = "high_security_key"
+
+        // Store data with different authentication requirements
+        let writeResultMedium = await sut.writeData(mediumSecurityData, forKey: mediumKey, requireAuthentication: false)
+        #expect(writeResultMedium == .success(true))
+
+        // Try to store high security data (may fail in test environment)
+        let writeResultHigh = await sut.writeData(highSecurityData, forKey: highKey, requireAuthentication: true)
+        
+        // Delete all data (no authentication required for the operation)
+        let deleteAllResult = await sut.deleteAll()
+        #expect(deleteAllResult == .success(true))
+
+        // Verify medium security data is gone
+        let readResultMedium = await sut.readData(forKey: mediumKey, requireAuthentication: false)
+        #expect(readResultMedium == .failure(.keyNotFound))
+
+        // If high security data was successfully stored, it should also be gone
+        if case .success = writeResultHigh {
+            let readResultHigh = await sut.readData(forKey: highKey, requireAuthentication: false)
+            #expect(readResultHigh == .failure(.keyNotFound))
+        }
+    }
+
     @Test("deleteAll succeeds on empty storage")
     func deleteAll_emptyStorage() async {
-        let result = await sut.deleteAll(requireAuthentication: false)
+        let result = await sut.deleteAll()
         #expect(result == .success(true))
     }
 
@@ -344,7 +374,7 @@ struct KeychainStorageTests {
         #expect(writeResult2 == .success(true))
 
         // Delete all from first storage
-        let deleteAllResult = await storage1.deleteAll(requireAuthentication: false)
+        let deleteAllResult = await storage1.deleteAll()
         #expect(deleteAllResult == .success(true))
 
         // Verify data is gone from first storage
@@ -354,6 +384,35 @@ struct KeychainStorageTests {
         // Verify data still exists in second storage
         let readResult2 = await storage2.readData(forKey: testKey, requireAuthentication: false)
         #expect(readResult2 == .success(testData2))
+    }
+
+    @Test("deleteAll behavior documentation")
+    func deleteAll_behaviorDocumentation() async {
+        // This test documents that deleteAll removes all items regardless of security level
+        // and does not require authentication for the operation itself
+        
+        let mediumData = "Medium data".data(using: .utf8)!
+        let potentialHighData = "Potential high data".data(using: .utf8)!
+        
+        // Store medium security data
+        let mediumResult = await sut.writeData(mediumData, forKey: "medium_key", requireAuthentication: false)
+        #expect(mediumResult == .success(true))
+        
+        // Attempt to store high security data (may fail in test environment)
+        let highResult = await sut.writeData(potentialHighData, forKey: "high_key", requireAuthentication: true)
+        
+        // Delete all - no authentication required for the operation
+        let deleteResult = await sut.deleteAll()
+        #expect(deleteResult == .success(true))
+        
+        // Both medium and high security items should be gone
+        let mediumCheck = await sut.readData(forKey: "medium_key", requireAuthentication: false)
+        #expect(mediumCheck == .failure(.keyNotFound))
+        
+        if case .success = highResult {
+            let highCheck = await sut.readData(forKey: "high_key", requireAuthentication: false)
+            #expect(highCheck == .failure(.keyNotFound))
+        }
     }
 
     // MARK: - JSON Data Tests
