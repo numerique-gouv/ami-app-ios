@@ -73,7 +73,8 @@ function main() {
     check_and_install_swiftformat
     check_and_install_swiftlint
     check_and_install_swiftgen
-    check_and_install_sourcery
+# sourcery is needed to generate mocks.
+#    check_and_install_sourcery
 }
 
 main
