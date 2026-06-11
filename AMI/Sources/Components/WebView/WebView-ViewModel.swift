@@ -10,7 +10,7 @@ import Foundation
 import WebKit
 
 extension SwiftUIWebView {
-    // Configguration that can be shared by all SwiftUIWebView to access the same cookie store.
+    // Configuration that can be shared by all SwiftUIWebView to access the same cookie store.
     static let sharedConfiguration = WKWebViewConfiguration()
 
     @Observable
@@ -157,6 +157,7 @@ extension SwiftUIWebView {
             webView?.goBack()
         }
 
+        @MainActor
         func goBackToRootUrl() {
             guard let webView,
                   let firstItem = webView.backForwardList.backList.first,
@@ -164,6 +165,15 @@ extension SwiftUIWebView {
                 return
             }
             webView.go(to: firstItem)
+        }
+
+        // Delete all local data and cookies associated with the current web session.
+        @MainActor
+        func deleteSessionLocalData() async {
+            let records = await configuration.websiteDataStore.dataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes())
+            for record in records {
+                await configuration.websiteDataStore.removeData(ofTypes: record.dataTypes, for: [record])
+            }
         }
     }
 }
