@@ -15,7 +15,16 @@ extension Notification.Name {
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     // The notificationManager is set by AMIApp.
-    var notificationManager: NotificationManager?
+    var notificationManager: NotificationManager? {
+        didSet {
+            Task {
+                // If Firebase get an existing Apns token, and NotificationManager doesn't have one, set it into NotificationManager.
+                if let currentApnsToken = try? await Messaging.messaging().token() {
+                    notificationManager?.setApnsToken(currentApnsToken)
+                }
+            }
+        }
+    }
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         // Setup application
@@ -53,7 +62,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // So, don't rely on `messaging:didReceiveRegistrationToken` to register device to our backend.
         Task {
             if let token = try? await Messaging.messaging().token() {
-                notificationManager?.registerDeviceForRemoteNotificationsToBackend(apnsToken: token)
+                // Setting Apns token will trigger a backend registration if all needed data is available.
+                notificationManager?.setApnsToken(token)
             }
         }
     }
