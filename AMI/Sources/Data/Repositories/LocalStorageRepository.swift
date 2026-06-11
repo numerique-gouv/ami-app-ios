@@ -270,15 +270,21 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     ///
     /// ## Routing Logic
     /// - `.low` → Clears all UserDefaults data in the app's suite
-    /// - `.medium` / `.high` → Clears all Keychain data for this service (same effect)
+    /// - `.medium` → Clears all Keychain data for this service without authentication
+    /// - `.high` → Clears all Keychain data for this service with biometric/passcode authentication
     ///
     /// ## Important Notes
     /// - **Irreversible**: All data is permanently lost
-    /// - **No Authentication**: Keychain deletion does not require device authentication
-    /// - **Complete Deletion**: Cannot differentiate between medium/high security items—all Keychain data removed
+    /// - **Authentication**: High security level requires device authentication; medium does not
+    /// - **Complete Deletion**: Each security level clears its own storage backend independently
     /// - **Service Isolation**: Only affects this app's storage, not system-wide data
     ///
-    /// - Parameter secureLevel: Determines which storage backend to clear
+    /// ## Error Scenarios
+    /// - **Low Security**: Rarely fails; UserDefaults clearing is generally reliable
+    /// - **Medium Security**: May fail if Keychain access is restricted or system error occurs
+    /// - **High Security**: May fail if device is locked, Keychain access is restricted, or authentication requirements cannot be met
+    ///
+    /// - Parameter secureLevel: Determines which storage backend to clear and authentication requirements
     /// - Returns: `.success(true)` if successful, or `.failure(LocalStorageErrorType)` if system error occurs
     ///
     /// - Warning: This operation is **irreversible**. Ensure proper confirmation before use.
