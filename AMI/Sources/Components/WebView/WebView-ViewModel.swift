@@ -170,15 +170,6 @@ extension SwiftUIWebView {
             }
             webView.go(to: firstItem)
         }
-
-        // Delete all local data and cookies associated with the current web session.
-        @MainActor
-        func deleteSessionLocalData() async {
-            let records = await configuration.websiteDataStore.dataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes())
-            for record in records {
-                await configuration.websiteDataStore.removeData(ofTypes: record.dataTypes, for: [record])
-            }
-        }
     }
 }
 
