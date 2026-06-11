@@ -285,7 +285,8 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     func deleteAll(secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch secureLevel {
         case .low: await storage.deleteAll()
-        case .medium, .high: await secureStorage.deleteAll()
+        case .medium: await secureStorage.deleteAll(requireAuthentication: false)
+        case .high: await secureStorage.deleteAll(requireAuthentication: true)
         }
     }
 }
