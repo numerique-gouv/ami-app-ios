@@ -109,13 +109,28 @@ struct KeychainStorage {
     ///
     /// Configured with app-specific service name and security policies to ensure data
     /// isolation and appropriate access controls for different authentication levels.
-    private let store: Keychain
+    private let mediumSecurityStore: Keychain
+    private let highSecurityStore: Keychain
 
-    /// The complete service identifier used for this Keychain instance.
+    /// The complete service identifier used for medium security Keychain storage.
     ///
-    /// Combines the app bundle identifier with the user-provided store ID to create
-    /// a unique service namespace for Keychain storage isolation.
-    private let currentUserStoreID: String
+    /// Combines the app bundle identifier with the user-provided store ID and a security level suffix
+    /// to create a unique service namespace for medium security Keychain storage isolation.
+    ///
+    /// **Format**: `{AppBundleID}.{userStoreID}.security-medium`
+    ///
+    /// **Example**: `com.example.app.user_123.security-medium`
+    private let currentUserMediumSecurityStoreID: String
+
+    /// The complete service identifier used for high security Keychain storage.
+    ///
+    /// Combines the app bundle identifier with the user-provided store ID and a security level suffix
+    /// to create a unique service namespace for high security Keychain storage isolation.
+    ///
+    /// **Format**: `{AppBundleID}.{userStoreID}.security-high`
+    ///
+    /// **Example**: `com.example.app.user_123.security-high`
+    private let currentUserHighSecurityStoreID: String
 
     /// The iCloud synchronization policy for Keychain items.
     ///
@@ -192,8 +207,59 @@ struct KeychainStorage {
     ///   to create the Keychain service name. Must be descriptive and consistent across
     ///   app launches for the same logical storage context.
     init(for userStoreID: String) {
-        currentUserStoreID = "\(AppBundle.identifier()).\(userStoreID)"
-        store = Keychain(service: currentUserStoreID)
+        // Add suffix to both store IDs to avoid any conflicts with any other userStoreID.
+        currentUserMediumSecurityStoreID = "\(AppBundle.identifier()).\(userStoreID).security-medium"
+        currentUserHighSecurityStoreID = "\(AppBundle.identifier()).\(userStoreID).security-high"
+
+        // Configure medium secured store with accessibility policy only.
+        mediumSecurityStore = Keychain(service: currentUserMediumSecurityStoreID)
+            .synchronizable(synchronizationPolicy)
+            .accessibility(accessibilityPolicy)
+
+        // Configure high security store with accessibility policy and authentication policy.
+        highSecurityStore = Keychain(service: currentUserHighSecurityStoreID)
+            .synchronizable(synchronizationPolicy)
+            .accessibility(accessibilityPolicy, authenticationPolicy: authenticationPolicy)
+    }
+
+    /// Returns the appropriate Keychain store based on the required security level.
+    ///
+    /// This method acts as a security policy dispatcher, selecting between two pre-configured
+    /// Keychain stores based on whether biometric authentication is required for data access.
+    /// Each store is configured with different security policies and access controls.
+    ///
+    /// ## Security Level Selection
+    ///
+    /// ### Medium Security (`authenticationRequired: false`)
+    /// - **Store**: `mediumSecurityStore`
+    /// - **Encryption**: Hardware-accelerated AES encryption via Keychain Services
+    /// - **Access Control**: Device passcode + unlock state required
+    /// - **Authentication**: No additional authentication prompt
+    /// - **Use Cases**: API tokens, service credentials, encrypted session data
+    ///
+    /// ### High Security (`authenticationRequired: true`)
+    /// - **Store**: `highSecurityStore`
+    /// - **Encryption**: Hardware-accelerated AES encryption via Keychain Services
+    /// - **Access Control**: Device passcode + unlock state + biometric authentication
+    /// - **Authentication**: Face ID, Touch ID, or passcode prompt on every access
+    /// - **Use Cases**: Highly sensitive personal data, financial information, medical records
+    ///
+    /// ## Implementation Details
+    /// Both stores use the same underlying Keychain Services but with different service names
+    /// and authentication policies. This separation ensures that changing security requirements
+    /// for one data type doesn't affect access patterns for another.
+    ///
+    /// - Parameter authenticationRequired: Whether the returned store should require
+    ///   biometric authentication for data access operations.
+    /// - Returns: The appropriate `Keychain` instance configured for the requested security level.
+    ///
+    /// - Note: The returned Keychain instance is fully configured and ready for use with
+    ///   `set()`, `getData()`, and `remove()` operations.
+    private func store(_ authenticationRequired: Bool) -> Keychain {
+        switch authenticationRequired {
+        case true: highSecurityStore
+        case false: mediumSecurityStore
+        }
     }
 
     /// Securely stores binary data in the Keychain for the specified key with optional authentication requirement.
@@ -209,17 +275,7 @@ struct KeychainStorage {
     func writeData(_ data: Data, forKey key: KeyType, requireAuthentication: Bool) async -> Result<Bool, LocalStorageErrorType> {
         await Task.detached(priority: .userInitiated) {
             do {
-                if requireAuthentication {
-                    try store
-                        .synchronizable(synchronizationPolicy)
-                        .accessibility(accessibilityPolicy, authenticationPolicy: authenticationPolicy)
-                        .set(data, key: key, ignoringAttributeSynchronizable: false)
-                } else {
-                    try store
-                        .synchronizable(synchronizationPolicy)
-                        .accessibility(accessibilityPolicy)
-                        .set(data, key: key, ignoringAttributeSynchronizable: false)
-                }
+                try store(requireAuthentication).set(data, key: key, ignoringAttributeSynchronizable: false)
                 return .success(true)
             } catch let error as LAError {
                 return .failure(Self.mapLAError(error))
@@ -244,7 +300,9 @@ struct KeychainStorage {
     func readData(forKey key: KeyType, requireAuthentication: Bool) async -> Result<Data, LocalStorageErrorType> {
         await Task.detached(priority: .userInitiated) {
             do {
-                if let storedValue = try store.getData(key, ignoringAttributeSynchronizable: false) {
+                if let storedValue = try store(requireAuthentication)
+                    .authenticationPrompt(AMIL10n.localStorageAuthenticationPrompt)
+                    .getData(key, ignoringAttributeSynchronizable: false) {
                     return .success(storedValue)
                 } else {
                     return .failure(.keyNotFound)
@@ -278,7 +336,7 @@ struct KeychainStorage {
     func deleteData(forKey key: KeyType, requireAuthentication: Bool) async -> Result<Bool, LocalStorageErrorType> {
         await Task.detached(priority: .userInitiated) {
             do {
-                try store.remove(key, ignoringAttributeSynchronizable: false)
+                try store(requireAuthentication).remove(key, ignoringAttributeSynchronizable: false)
                 return .success(true)
             } catch {
                 return .failure(.keyNotFound)
@@ -298,10 +356,10 @@ struct KeychainStorage {
     /// - Returns: `.success(true)` if successful, or `.failure(LocalStorageErrorType)` if system error occurs.
     ///
     /// - Warning: This operation deletes **ALL** items in the service. Ensure proper confirmation before use.
-    func deleteAll() async -> Result<Bool, LocalStorageErrorType> {
+    func deleteAll(requireAuthentication: Bool) async -> Result<Bool, LocalStorageErrorType> {
         await Task.detached(priority: .userInitiated) {
             do {
-                try store.removeAll()
+                try store(requireAuthentication).removeAll()
                 return .success(true)
             } catch let error as LAError {
                 return .failure(Self.mapLAError(error))
