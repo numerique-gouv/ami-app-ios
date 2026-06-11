@@ -42,12 +42,12 @@ class NotificationManager: NSObject {
 
     func registerDeviceForRemoteNotificationsToBackend(apnsToken: String) {
         guard let baseUrl else {
-            AppLog.service.warning("\(AppLog.logHeader(self)) RegisterDeviceForRemoteNotificationsToBackend : Base url is not defined")
+            AppLog.service.warning("\(AppLog.logHeader(self)) Base url is not defined")
             return
         }
 
         guard let userAuthenticationToken else {
-            AppLog.service.warning("\(AppLog.logHeader(self)) userAuthenticationToken is not defined")
+            AppLog.service.warning("\(AppLog.logHeader(self)) UserAuthenticationToken is not defined")
             return
         }
 
