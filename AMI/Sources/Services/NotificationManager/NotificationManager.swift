@@ -51,6 +51,11 @@ class NotificationManager: NSObject {
             return
         }
 
+        guard let userAuthenticationToken else {
+            AppLog.service.warning("\(AppLog.logHeader(self)) userAuthenticationToken is not defined")
+            return
+        }
+
         // Execute `registerDevice` task in background job.
         Task(priority: .background) {
             await RegisterDevice().registerDevice(baseUrl: baseUrl,
