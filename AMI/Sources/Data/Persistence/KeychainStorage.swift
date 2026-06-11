@@ -379,6 +379,12 @@ extension KeychainStorage: CustomDebugStringConvertible {
     /// - Important: This may contain sensitive debugging information and should only
     ///   be used during development. Ensure debug logs are disabled in production.
     var debugDescription: String {
-        "KeychainStorage '\(currentUserStoreID)'\n\(store.debugDescription)"
+        """
+KeychainStorage
+  Medium security '\(currentUserMediumSecurityStoreID)'
+    \(store(false).debugDescription)"
+  High security '\(currentUserHighSecurityStoreID)'
+    \(store(true).debugDescription)"
+"""
     }
 }
