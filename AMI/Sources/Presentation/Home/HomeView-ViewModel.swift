@@ -81,10 +81,11 @@ extension HomeView {
             // swiftformat:enable redundantSelf
 
             Task { @MainActor in
-                if shoudlShowNotificationsSettings,
-                   self.webViewViewModel.webView?.canGoBack ?? false {
-                    // As new page should not be handled by webview, reset webView last step navigation (to clean history).
-                    self.webViewViewModel.webView?.goBack()
+                if shoudlShowNotificationsSettings {
+                    if self.webViewViewModel.webView?.canGoBack ?? false {
+                        // As new page should not be handled by webview, reset webView last step navigation (to clean history).
+                        self.webViewViewModel.webView?.goBack()
+                    }
                     // Force `showSettings` to true because it is reset to false by the `goBack` command.
                     self.showSettings = true
                 }
