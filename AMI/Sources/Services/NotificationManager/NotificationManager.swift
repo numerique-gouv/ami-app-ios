@@ -47,11 +47,6 @@ class NotificationManager: NSObject {
         }
 
         guard let userAuthenticationToken else {
-            AppLog.service.warning("\(AppLog.logHeader(self)) RegisterDeviceForRemoteNotificationsToBackend : userAuthenticationToken is not defined")
-            return
-        }
-
-        guard let userAuthenticationToken else {
             AppLog.service.warning("\(AppLog.logHeader(self)) userAuthenticationToken is not defined")
             return
         }

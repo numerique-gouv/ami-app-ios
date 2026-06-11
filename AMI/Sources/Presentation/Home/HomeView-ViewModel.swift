@@ -224,18 +224,6 @@ extension HomeView {
             }
         }
 
-        // Get the auth token from cookie store.
-        // Return nil if no token is found.
-        private var getUserAuthenticationToken: String? {
-            get async {
-                await webViewViewModel.configuration
-                    .websiteDataStore
-                    .httpCookieStore
-                    .allCookies()
-                    .first(where: { $0.name == Self.AUTHENTICATION_COOKIE_NAME })?.value.replacingOccurrences(of: "\"", with: "")
-            }
-        }
-
         func partnerViewModel(for url: URL) -> PartnerView.ViewModel {
             // Init Partner's view with the HomeView web configuration (to share cookies and tokens).
             PartnerView.ViewModel(configuration: webViewViewModel.configuration, rootUrl: url)
