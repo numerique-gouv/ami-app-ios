@@ -157,12 +157,6 @@ struct KeychainStorage {
     /// - Respects user's biometric preferences and system configuration
     private let authenticationPolicy: AuthenticationPolicy = .biometryAny
 
-    /// User-facing prompt message displayed during biometric authentication.
-    ///
-    /// Shown to users when the system prompts for Face ID, Touch ID, or passcode entry.
-    /// Should be localized and descriptive of why authentication is required.
-    private let authenticationPrompt = "Access to protected data"
-
     /// Creates a new KeychainStorage instance with user-specific service isolation.
     ///
     /// This initializer creates a dedicated Keychain service for the specified user or context,
