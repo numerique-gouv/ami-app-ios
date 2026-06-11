@@ -165,8 +165,10 @@ struct KeychainStorage {
     ///
     /// ## Service Naming Convention
     /// ```
-    /// Service Name: {App Bundle ID}.{userStoreID}
-    /// Example: "com.example.myapp.secure_user_123"
+    /// Medium Security Service: {App Bundle ID}.{userStoreID}.security-medium
+    /// High Security Service:   {App Bundle ID}.{userStoreID}.security-high
+    /// Example: "com.example.myapp.user_123.security-medium"
+    ///          "com.example.myapp.user_123.security-high"
     /// ```
     ///
     /// ## Security Isolation Benefits
@@ -176,11 +178,12 @@ struct KeychainStorage {
     /// - **Testing**: Test suites can use isolated Keychain services
     ///
     /// ## Automatic Configuration
-    /// The initializer automatically configures the Keychain with secure defaults:
-    /// - Service scoped to the app's bundle identifier + user store ID
+    /// The initializer automatically configures two separate Keychain stores with secure defaults:
+    /// - **Medium Security Store**: Service scoped to app bundle ID + user store ID + ".security-medium"
+    /// - **High Security Store**: Service scoped to app bundle ID + user store ID + ".security-high"
     /// - iCloud synchronization disabled for maximum security
     /// - Access restricted to when device is unlocked and passcode is set
-    /// - Ready for both standard and biometric-protected storage
+    /// - High security store configured with biometric authentication requirements
     ///
     /// ## Usage Examples
     /// ```swift
@@ -198,8 +201,9 @@ struct KeychainStorage {
     /// ```
     ///
     /// - Parameter userStoreID: A unique identifier that will be combined with the bundle ID
-    ///   to create the Keychain service name. Must be descriptive and consistent across
-    ///   app launches for the same logical storage context.
+    ///   and security level suffixes to create separate Keychain service names for medium and high
+    ///   security stores. Must be descriptive and consistent across app launches for the same
+    ///   logical storage context.
     init(for userStoreID: String) {
         // Add suffix to both store IDs to avoid any conflicts with any other userStoreID.
         currentUserMediumSecurityStoreID = "\(AppBundle.identifier()).\(userStoreID).security-medium"
