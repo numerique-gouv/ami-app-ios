@@ -10,7 +10,7 @@ import Foundation
 import WebKit
 
 extension SwiftUIWebView {
-    // Configguration that can be shared by all SwiftUIWebView to access the same cookie store.
+    // Configuration that can be shared by all SwiftUIWebView to access the same cookie store.
     static let sharedConfiguration = {
         let configuration = WKWebViewConfiguration()
         // Here, we can customize webView configuration. especially on `webSiteDataStore`.
