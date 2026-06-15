@@ -29,6 +29,11 @@ class RegisterDevice {
     // The name of the cookie containing the authentication token.
     private static let AUTHENTICATION_COOKIE_NAME = "token"
 
+    // The name of the LocalStorage to store device id.
+    private static let DEVICE_ID_LOCAL_STORAGE_NAME = "applicationData"
+    // The key used to store `device id`.` in the LocalStorage.
+    private static let DEVICE_ID_KEY = "deviceID"
+
     // Get the auth token from cookie store.
     // Return nil if no token is found.
     private func getAuthToken(webviewConfiguration: WKWebViewConfiguration) async -> String? {
