@@ -102,6 +102,9 @@ class RegisterDevice {
     ///
     /// - Note: Ephemeral device IDs will change between app launches and should be avoided
     ///   for production scenarios where device tracking is required.
+    /// - Note: Device ID stored in secure local storage (Keychain) with `.whenPasscodeSetThisDeviceOnly`
+    ///   accessibility **does persist** when the application is uninstalled and then reinstalled.
+    ///   This is the case on real devices, but not with simulators where keychain data is cleared.
     private func getOrCreateDeviceID() async -> String {
         let storage = LocalStorageRepository(for: Self.DEVICE_ID_LOCAL_STORAGE_NAME)
 
