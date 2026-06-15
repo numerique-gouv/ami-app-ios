@@ -26,6 +26,14 @@ private struct RegisterDeviceRequestInput: Encodable {
 }
 
 class RegisterDevice {
+    // The name of the cookie containing the authentication token.
+    private static let AUTHENTICATION_COOKIE_NAME = "token"
+
+    // The name of the LocalStorage to store device id.
+    private static let DEVICE_ID_LOCAL_STORAGE_NAME = "applicationData"
+    // The key used to store `device id`.` in the LocalStorage.
+    private static let DEVICE_ID_KEY = "deviceID"
+
     func registerDevice(baseUrl: URL, apnsToken: String, userAuthenticationToken: String) async {
         let deviceId = await UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
         let deviceModel = await UIDevice.current.model
