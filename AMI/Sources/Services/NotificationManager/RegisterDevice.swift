@@ -50,7 +50,7 @@ class RegisterDevice {
             return
         }
 
-        let deviceId = await UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        let deviceId = await getOrCreateDeviceID()
         let deviceModel = await UIDevice.current.model
         let appVersion = AppBundle.version()
 
