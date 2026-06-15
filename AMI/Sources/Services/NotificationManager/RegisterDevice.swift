@@ -35,7 +35,7 @@ class RegisterDevice {
     private static let DEVICE_ID_KEY = "deviceID"
 
     func registerDevice(baseUrl: URL, apnsToken: String, userAuthenticationToken: String) async {
-        let deviceId = await UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        let deviceId = await getOrCreateDeviceID()
         let deviceModel = await UIDevice.current.model
         let appVersion = AppBundle.version
 
