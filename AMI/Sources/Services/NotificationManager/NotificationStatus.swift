@@ -34,7 +34,7 @@ enum NotificationStatus {
                 AppLog.service.notice("\(AppLog.logHeader(self)) Notification authorization granted: \(true)")
                 await MainActor.run {
                     UIApplication.shared.registerForRemoteNotifications()
-                    InformationBannerManager.shared.showBanner(.validation, title: "Les notifications ont été activées")
+                    InformationBannerManager.shared.showBanner(.validation, title: "Les notifications ont été activées", onClose: {}) // Specify `onClose` to force Close button to be present.
                 }
             }
         } catch {
