@@ -15,6 +15,7 @@ class HomeUserScripts {
     enum Script: String {
         case nativeBridge = "NativeBridge"
         case consoleLog
+        case nativeValue = "NativeValue"
     }
 
     // Enumerate existing events
@@ -40,6 +41,10 @@ class HomeUserScripts {
                                             forMainFrameOnly: false)),
             UserScript(name: Script.consoleLog.rawValue,
                        script: WKUserScript(source: Self.consoleLogScript,
+                                            injectionTime: .atDocumentStart,
+                                            forMainFrameOnly: false)),
+            UserScript(name: Script.nativeValue.rawValue,
+                       script: WKUserScript(source: Self.nativeBridgeValueScript,
                                             injectionTime: .atDocumentStart,
                                             forMainFrameOnly: false)),
         ]
@@ -111,6 +116,38 @@ class HomeUserScripts {
         };
     })();
     """
+
+    // This creates window.NativeBridge.nativeValue() that wraps the iOS messaging
+    private static let nativeBridgeValueScript = """
+    window.NativeValue = window.NativeValue || {};
+
+    // - methodName : one of the listed method names
+    // - params: {
+    //     valueID: String,
+    //     requestID: uuid
+    //   }
+    window.NativeValue.nativeValueRequest = function(methodName, params) {
+        console.log('NativeBridge.nativeValueRequest called');
+        window.webkit.messageHandlers.NativeValue.postMessage({
+            method: methodName,
+            params: params
+        });
+    };
+
+    window.NativeValue.nativeValueResponse = function(requestID, valueAsString) {
+        console.log(`nativeValueResponse(${requestID}, ${valueAsString})`);
+    };
+
+    console.log('NativeValue initialized');
+
+    setTimeout(function() {
+        console.log('timeout fired');
+        window.NativeValue.nativeValueRequest('readPrivateInt', {
+            valueID: 'ma_valeur',
+            requestID: crypto.randomUUID()
+        });
+    }, 30);
+    """
 }
 
 extension HomeUserScripts: WebViewUserScriptsProtocol {
@@ -120,6 +157,8 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
             printLog(message)
         case .nativeBridge:
             processMessage(message, for: viewModel)
+        case .nativeValue:
+            processNativeValueMessage(message, for: viewModel)
         case .none:
             // Ignore unknown script message names
             break
@@ -165,6 +204,54 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
             default:
                 break
             }
+        }
+    }
+
+    func processNativeValueMessage(_ message: WKScriptMessage, for viewModel: SwiftUIWebView.ViewModel) {
+        // Parse the message from JavaScript (format: {event: string, data: any})
+        if let messageBody = message.body as? [String: Any],
+           let methodName = messageBody["method"] as? String,
+           let method = NativeValue.NativeValueMethodType(rawValue: methodName),
+           let params = messageBody["params"] as? [String: String],
+           let requestIDString = params["requestID"],
+           let requestID = UUID(uuidString: requestIDString),
+           let valueID = params["valueID"],
+           let webView = viewModel.webView {
+            AppLog.view.notice("\(AppLog.logHeader(self)) NativeValue request received: \(methodName) - \(String(describing: params))")
+
+            Task {
+                await callNativeValueAction(NativeValue.NativeValueRequestInput(ID: requestID, method: method, valueID: valueID),
+                                            for: viewModel,
+                                            webView: webView)
+            }
+        }
+    }
+
+    private func callNativeValueAction(_ params: NativeValue.NativeValueRequestInput,
+                                       for viewModel: SwiftUIWebView.ViewModel,
+                                       webView: WKWebView) async {
+        switch params.method {
+        case .readPrivateInt:
+            Task {
+                await callNativeActionResponse(value: "42", requestID: params.ID, webView: webView)
+            }
+
+        default:
+            break
+        }
+    }
+
+    @MainActor // `evaluateJavaScript` must be used from main thread only.
+    private func callNativeActionResponse(value: String, requestID: UUID, webView: WKWebView) async {
+        // Prepare javaScript script.
+        let script = "window.NativeValue.nativeValueResponse('\(requestID)', '\(value)');"
+
+        do {
+            // Execute javaScript script
+            _ = try await webView.evaluateJavaScript(script)
+            AppLog.viewModel.notice("\(AppLog.logHeader(self)) success")
+        } catch {
+            AppLog.viewModel.notice("\(AppLog.logHeader(self)) failed")
         }
     }
 }
