@@ -64,8 +64,7 @@ class AMIAppState: NSObject {
             offlineBannerId = bannerManager.showBanner(
                 .warning,
                 title: "Vous êtes hors ligne",
-                content: "L'accès à certaines fonctionnalités est limité.",
-                hasCloseIcon: false
+                content: "L'accès à certaines fonctionnalités est limité."
             )
         }
     }

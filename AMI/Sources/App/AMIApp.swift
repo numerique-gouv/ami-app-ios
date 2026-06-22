@@ -5,6 +5,7 @@
 //  Created by Aline Bonnet on 19/10/2025.
 //
 
+import AmiDesignSystem
 import SwiftUI
 @_spi(Advanced) import SwiftUIIntrospect
 
@@ -48,8 +49,8 @@ struct AMIApp: App {
 
             // Banners container
             VStack(spacing: 0) {
-                ForEach(appState.bannerManager.banners) { banner in
-                    InformationBanner(data: banner)
+                ForEach(appState.bannerManager.banners) { bannerModel in
+                    InformationBannerView(model: bannerModel)
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
