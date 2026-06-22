@@ -6,6 +6,7 @@ excluded:
 
 identifier_name:
   allowed_symbols: ["_"]
+  max_length: 64
     
 line_length:
   warning: 200
