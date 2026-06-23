@@ -224,8 +224,6 @@ extension HomeView {
             }
         }
 
-        private var partnerViewModel: PartnerView.ViewModel?
-
         func partnerModel(for url: URL) -> PartnerView.ViewModel {
             guard let viewModel = partnerModels[url] else {
                 // Init Partner's view with the HomeView web configuration (to share cookies and tokens).
