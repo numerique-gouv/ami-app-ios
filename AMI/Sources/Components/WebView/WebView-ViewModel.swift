@@ -176,6 +176,8 @@ extension SwiftUIWebView {
             webView?.goBack()
         }
 
+        // The `goBackToRootUrl()` method doesn't seem to work reliabily wit hSinge Page Application in WKWebView.
+        // The web page seems to be blocked on a blank page during loading.
         @MainActor
         func goBackToRootUrl() {
             guard let webView,

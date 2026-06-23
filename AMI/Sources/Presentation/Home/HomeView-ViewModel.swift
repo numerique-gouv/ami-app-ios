@@ -281,6 +281,10 @@ extension HomeView.ViewModel: WebViewDelegate {
         // Special process for partner Url
         if !targetUrl.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) {
             selectedPartner = .generic(targetUrl)
+            // Go back to previous page in originating webview.
+            Task { @MainActor in
+                webViewViewModel.goBack()
+            }
             return false
         }
 
