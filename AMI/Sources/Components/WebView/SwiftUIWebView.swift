@@ -22,6 +22,12 @@ struct SwiftUIWebView: UIViewRepresentable {
         // Give the ViewModel a weak handle on the WKWebView.
         viewModel.webView = webView
 
+        #if DEBUG
+            webView.isInspectable = true
+        #else
+            webView.isInspectable = false
+        #endif
+
         webView.load(URLRequest(url: viewModel.rootUrl))
 
         return webView
