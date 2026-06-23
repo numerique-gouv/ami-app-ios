@@ -237,6 +237,10 @@ extension HomeView {
             }
             return viewModel
         }
+
+        private func partnerViewDismissed(partnerUrl: URL) {
+            AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
+            partnerModels.removeValue(forKey: partnerUrl)
         }
     }
 }
