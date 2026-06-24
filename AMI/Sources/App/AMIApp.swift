@@ -40,7 +40,7 @@ struct AMIApp: App {
                 #endif
             }
             // On SwiftUI, removing the defaut Navigation Back button disable the Swipe Back gesture.
-            // We reactivate it via trhe underlying UIKit UINavigationController.
+            // We reactivate it via the underlying UIKit UINavigationController.
             .introspect(.navigationStack, on: .iOS(.v16...)) { view in
                 view.interactivePopGestureRecognizer?.isEnabled = true
                 view.interactivePopGestureRecognizer?.delegate = nil
