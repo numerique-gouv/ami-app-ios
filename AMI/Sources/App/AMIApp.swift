@@ -30,10 +30,10 @@ struct AMIApp: App {
                         HomeView(viewModel: appState.notificationTriggeredHomeViewModel)
                             .id(notificationActivatedHomeViewModelId)
                     } else {
-                        ReviewAppView(viewModel: ReviewAppView.ViewModel(notificationManager: AMIAppState.notificationManager))
+                        ReviewAppView(viewModel: appState.reviewAppViewModel)
                     }
                 #elseif IS_AMI_PRODUCTION
-                    HomeView(viewModel: AMIAppState.defaultHomeViewModel)
+                    HomeView(viewModel: appState.defaultHomeViewModel)
                         .id(appState.notificationActivatedHomeViewModelId ?? UUID())
                 #else
                     EmptyView()
