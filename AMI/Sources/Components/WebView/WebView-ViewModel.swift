@@ -33,7 +33,7 @@ extension SwiftUIWebView {
             }
         }
 
-        let configuration: WKWebViewConfiguration
+        let configuration = WKWebViewConfiguration()
         let rootUrl: URL
         weak var delegate: WebViewDelegate?
         let userScripts: WebViewUserScriptsProtocol?
@@ -51,12 +51,12 @@ extension SwiftUIWebView {
         private var canGoBackObserver: NSKeyValueObservation?
         private var urlChangeObserver: NSKeyValueObservation?
 
-        init(configuration: WKWebViewConfiguration,
+        init(websiteDataStore: WKWebsiteDataStore,
              rootUrl: URL,
              userScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
              urlChangeAction: UrlChangeAction? = nil) {
-            self.configuration = configuration
+            configuration.websiteDataStore = websiteDataStore
             self.rootUrl = rootUrl
             self.userScripts = userScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
@@ -276,7 +276,7 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
 extension SwiftUIWebView.ViewModel {
     static let simulatorDelegate = WebViewDelegateSimulatorImplementation()
     static let `default` = {
-        let model = SwiftUIWebView.ViewModel(configuration: WKWebViewConfiguration(),
+        let model = SwiftUIWebView.ViewModel(websiteDataStore: .nonPersistent(),
                                              rootUrl: URL(string: "https://numerique.gouv.fr")!,
                                              userScripts: HomeUserScripts())
         model.delegate = simulatorDelegate
