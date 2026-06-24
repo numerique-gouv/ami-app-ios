@@ -18,8 +18,9 @@ class AMIAppState: NSObject {
     private static let commonWebsiteDataStore: WKWebsiteDataStore = .default()
 
     var bannerManager = InformationBannerManager.shared
-    var networkMonitor = NetworkMonitor()
-    var offlineBannerId: UUID?
+    private var offlineBannerId: UUID?
+
+    private let networkMonitor = NetworkMonitor()
 
     var notificationTriggeredHomeViewModel: HomeView.ViewModel!
     // State to force refresh view when a notification is tapped by the user.
