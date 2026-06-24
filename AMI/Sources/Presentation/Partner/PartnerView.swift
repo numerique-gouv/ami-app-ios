@@ -49,6 +49,6 @@ struct PartnerView: View {
 }
 
 #Preview {
-    let viewModel = PartnerView.ViewModel(configuration: SwiftUIWebView.sharedConfiguration, rootUrl: URL(string: "https://numerique.gouv.fr")!)
+    let viewModel = PartnerView.ViewModel(websiteDataStore: .nonPersistent(), rootUrl: URL(string: "https://numerique.gouv.fr")!)
     PartnerView(viewModel: viewModel)
 }

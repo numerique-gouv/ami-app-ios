@@ -107,9 +107,9 @@ extension HomeView {
             }
         }
 
-        init(rootUrl: URL, notificationManager: NotificationManager) {
+        init(rootUrl: URL, websiteDataStore: WKWebsiteDataStore, notificationManager: NotificationManager) {
             let userScripts = HomeUserScripts()
-            let webViewViewModel = SwiftUIWebView.ViewModel(configuration: SwiftUIWebView.sharedConfiguration,
+            let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
                                                             rootUrl: rootUrl,
                                                             userScripts: userScripts)
             self.webViewViewModel = webViewViewModel
@@ -223,8 +223,8 @@ extension HomeView {
         }
 
         func partnerViewModel(for url: URL) -> PartnerView.ViewModel {
-            // Init Partner's view with the HomeView web configuration (to share cookies and tokens).
-            PartnerView.ViewModel(configuration: webViewViewModel.configuration, rootUrl: url)
+            // Init Partner's view with the HomeView website DataStore (to share cookies and tokens).
+            PartnerView.ViewModel(websiteDataStore: webViewViewModel.configuration.websiteDataStore, rootUrl: url)
         }
     }
 }

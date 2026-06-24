@@ -26,10 +26,10 @@ extension PartnerView {
             }
         }
 
-        init(configuration: WKWebViewConfiguration, rootUrl: URL) {
+        init(websiteDataStore: WKWebsiteDataStore, rootUrl: URL) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let userScripts = PartnerUserScripts()
-            let webViewViewModel = SwiftUIWebView.ViewModel(configuration: configuration,
+            let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
                                                             rootUrl: rootUrl,
                                                             userScripts: userScripts)
             self.webViewViewModel = webViewViewModel
