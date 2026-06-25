@@ -206,6 +206,8 @@ extension HomeView {
             resetLastOnboardingPresentationTime()
 
             Task { @MainActor in
+                // Remove all session data to avoid reusing automatically them on next connection.
+                await webViewViewModel.deleteSessionLocalData()
                 webViewViewModel.goBackToRootUrl()
             }
         }
