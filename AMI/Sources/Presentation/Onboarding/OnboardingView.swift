@@ -6,6 +6,7 @@
 //  Copyright © 2026 DINUM. All rights reserved.
 //
 
+import AmiDesignSystem
 import SwiftUI
 
 struct OnboardingView: View {
@@ -35,7 +36,7 @@ struct OnboardingView: View {
             Text("Activer")
                 .frame(maxWidth: .infinity)
         }
-        .buttonStyle(DsfrButtonStyle(type: .primary))
+        .buttonStyle(ButtonStyleDsfr(type: .primary))
     }
 
     @ViewBuilder
@@ -46,7 +47,7 @@ struct OnboardingView: View {
             Text("Peut-être plus tard")
                 .frame(maxWidth: .infinity)
         }
-        .buttonStyle(DsfrButtonStyle(type: .secondary))
+        .buttonStyle(ButtonStyleDsfr(type: .secondary))
     }
 
     @ToolbarContentBuilder
