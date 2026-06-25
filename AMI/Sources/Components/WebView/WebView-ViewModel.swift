@@ -10,13 +10,6 @@ import Foundation
 import WebKit
 
 extension SwiftUIWebView {
-    // Configuration that can be shared by all SwiftUIWebView to access the same cookie store.
-    static let sharedConfiguration = {
-        let configuration = WKWebViewConfiguration()
-        // Here, we can customize webView configuration. especially on `webSiteDataStore`.
-        return configuration
-    }()
-
     @Observable
     class ViewModel: NSObject {
         typealias UrlChangeAction = @Sendable (SwiftUIWebView.ViewModel, URL?) -> Void
