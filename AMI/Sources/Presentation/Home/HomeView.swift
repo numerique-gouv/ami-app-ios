@@ -5,6 +5,7 @@
 //  Created by Aline Bonnet on 19/10/2025.
 //
 
+import AmiDesignSystem
 import SwiftUI
 @_spi(Advanced) import SwiftUIIntrospect
 import WebKit
@@ -49,6 +50,18 @@ struct HomeView: View {
     }
 
     @ViewBuilder
+    private var contactButton: some View {
+        Button {
+            Task {
+                await viewModel.shareLogs()
+            }
+        } label: {
+            Text("Télécharger les logs")
+        }
+        .buttonStyle(ButtonStyleDsfr(type: .secondary))
+    }
+
+    @ViewBuilder
     var body: some View {
         // Temporarily display back button when on OIDC page.
         if viewModel.showBackButton {
@@ -80,15 +93,8 @@ struct HomeView: View {
                 }
             }
         if viewModel.isOnContactPage {
-            Button {
-                Task {
-                    await viewModel.shareLogs()
-                }
-            } label: {
-                Text("Télécharger les logs")
-            }
-            .buttonStyle(DsfrButtonStyle(type: .secondary))
-            .padding(.vertical)
+            contactButton
+                .padding(.vertical)
         }
     }
 
