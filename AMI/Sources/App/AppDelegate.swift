@@ -53,7 +53,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // So, don't rely on `messaging:didReceiveRegistrationToken` to register device to our backend.
         Task {
             if let token = try? await Messaging.messaging().token() {
-                notificationManager?.registerDeviceForRemoteNotificationsToBackend(apnsToken: token)
+                notificationManager?.registerDeviceForRemoteNotificationsToBackend(token: token)
             }
         }
     }
