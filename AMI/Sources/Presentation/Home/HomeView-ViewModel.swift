@@ -14,10 +14,6 @@ import WebKit
 extension HomeView {
     @Observable
     class ViewModel: NSObject {
-        // The name of the cookie containing the authentication token.
-        private static let AUTHENTICATION_COOKIE_NAME = "token"
-        private static let MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION = Double(24 * 60 * 60)
-
         enum Partner: Hashable {
             case generic(URL)
         }
@@ -60,7 +56,7 @@ extension HomeView {
         // Temporarily display back button when on OIDC page.
         var showBackButton = false
 
-        private var lastCheckNotificationTime = Date.distantPast
+        private var checkNotificationStatusDone = false
 
         var selectedPartner: Partner?
         enum Event {
@@ -109,8 +105,7 @@ extension HomeView {
 
         init(rootUrl: URL, notificationManager: NotificationManager) {
             let userScripts = HomeUserScripts()
-            let webViewViewModel = SwiftUIWebView.ViewModel(configuration: SwiftUIWebView.sharedConfiguration,
-                                                            rootUrl: rootUrl,
+            let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                                             userScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.notificationManager = notificationManager
@@ -128,97 +123,30 @@ extension HomeView {
 
         private func userLoginActions() {
             // Check if user made a choice about allowing Push notifications reception.
-            Task {
-                guard let userAuthenticationToken = await getUserAuthenticationToken else {
-                    // Unable to get user authentication token. Exit.
-                    AppLog.viewModel.notice("\(AppLog.logHeader(self)) Unable to get User Authentication token")
-                    return
-                }
-
-                // Set NotificationManager `userAuthenticationToken` now we have it
-                // because a token renew can happen anytime if user already allowed notifications.
-                setNotificationManagerUserAuthentificationToken(userAuthenticationToken)
-
-                // Now that user is logged and we have its authentication token, we can proceed to
-                // check its notification status and register to backebd if needed.
-                await checkNotificationStatus()
-            }
+            checkNotificationStatus()
         }
 
-        private func lastOnboardingPresentationTimeIsExpired() -> Bool {
-            Date.now.timeIntervalSince(lastCheckNotificationTime) > Self.MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION
-        }
-
-        private func setLastOnboardingPresentationTimeToNow() {
-            lastCheckNotificationTime = .now
-        }
-
-        private func resetLastOnboardingPresentationTime() {
-            lastCheckNotificationTime = .distantPast
-        }
-
-        private func checkNotificationStatus() async {
-            var shouldPresentOnboardingView = false
-
-            switch await NotificationStatus.notificationsAuthorizationStatus() {
-            case .notDetermined:
-                // User logged event is called too often.
-                // Only check Notifications Status once par session.
-                shouldPresentOnboardingView = lastOnboardingPresentationTimeIsExpired()
-            case .denied:
-                // No need to present Onboarding view: user already made its choice.
-                break
-            case .authorized, .provisional, .ephemeral:
-                // Always call `registerForRemoteNotifications` to refresh Apns token if necessary.
-                // Apple recommends it ("Each time your app launches, it must register with APNs")
-                //   https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/HandlingRemoteNotifications.html
-                await MainActor.run {
-                    UIApplication.shared.registerForRemoteNotifications()
-                }
-            @unknown default:
-                AppLog.viewModel.warning("\(AppLog.logHeader(self)) Unknown Notification Authorization Status")
-            }
-
+        private func checkNotificationStatus() {
+            // User logged event is called too often.
             // Only check Notifications Status once par session.
-            guard shouldPresentOnboardingView else {
+            // TODO: reset `checkNotificationStatusDone` on user disconnection.
+            guard !checkNotificationStatusDone else {
                 return
             }
-            setLastOnboardingPresentationTimeToNow()
-
-            Task { @MainActor in
-                isPresentingOnboardingView = true
+            checkNotificationStatusDone = true
+            Task {
+                isPresentingOnboardingView = await NotificationStatus.notificationsAuthorizationStatus() == .notDetermined
             }
-        }
-
-        private func setNotificationManagerUserAuthentificationToken(_ token: String) {
-            notificationManager.setUserAuthenticationToken(token)
-        }
-
-        private func resetNotificationManagerUserAuthentificationToken() {
-            notificationManager.setUserAuthenticationToken(nil)
         }
 
         private func userLogoutActions() {
-            // Reset NotificationManager `userAuthenticationToken`.
-            resetNotificationManagerUserAuthentificationToken()
-
             // Reset Notification status check when on logout to recheck it on next login.
-            resetLastOnboardingPresentationTime()
+            checkNotificationStatusDone = false
 
             Task { @MainActor in
+                // Remove all session data to avoid reusing automatically them on next connection.
+                await webViewViewModel.deleteSessionLocalData()
                 webViewViewModel.goBackToRootUrl()
-            }
-        }
-
-        // Get the auth token from cookie store.
-        // Return nil if no token is found.
-        private var getUserAuthenticationToken: String? {
-            get async {
-                await webViewViewModel.configuration
-                    .websiteDataStore
-                    .httpCookieStore
-                    .allCookies()
-                    .first(where: { $0.name == Self.AUTHENTICATION_COOKIE_NAME })?.value.replacingOccurrences(of: "\"", with: "")
             }
         }
 

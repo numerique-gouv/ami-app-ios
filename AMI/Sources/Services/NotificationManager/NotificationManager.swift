@@ -16,8 +16,6 @@ class NotificationManager: NSObject {
     // The base URL (used in AppReview). Filled by calling `registerForRemoteNotifications(baseUrl: URL)`.
     // It is used to call the correct endpoint for device registration.
     private var baseUrl: URL?
-    // userAuthenticationToken will be set after user logged in successfully.
-    private var userAuthenticationToken: String?
 
     override init() {
         super.init()
@@ -40,27 +38,18 @@ class NotificationManager: NSObject {
         }
     }
 
-    func registerDeviceForRemoteNotificationsToBackend(apnsToken: String) {
+    func registerDeviceForRemoteNotificationsToBackend(token: String) {
         guard let baseUrl else {
             AppLog.service.warning("\(AppLog.logHeader(self)) Base url is not defined")
-            return
-        }
-
-        guard let userAuthenticationToken else {
-            AppLog.service.warning("\(AppLog.logHeader(self)) UserAuthenticationToken is not defined")
             return
         }
 
         // Execute `registerDevice` task in background job.
         Task(priority: .background) {
             await RegisterDevice().registerDevice(baseUrl: baseUrl,
-                                                  apnsToken: apnsToken,
-                                                  userAuthenticationToken: userAuthenticationToken)
+                                                  token: token,
+                                                  webviewConfiguration: SwiftUIWebView.sharedConfiguration)
         }
-    }
-
-    func setUserAuthenticationToken(_ token: String?) {
-        userAuthenticationToken = token
     }
 }
 
