@@ -71,14 +71,15 @@ struct NativeValue {
         case existAuthenticatedDecimal
     }
 
-    struct NativeValueErrorCode: Int {
+    enum NativeValueErrorCode: Int {
         case keyNotFound = -1
         case typeMismatch = -2
         case authenticationFailure = -3
+        case unexpectedError = 999
     }
 
     struct NativeValueRequestInput {
-        let ID: UUID
+        let id: UUID
         let method: NativeValueMethodName
         let valueID: String
     }

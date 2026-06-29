@@ -126,7 +126,7 @@ class HomeUserScripts {
     //     valueID: String,
     //     requestID: uuid
     //   }
-    window.NativeValue.nativeValueRequest = function(method, valueID, requestID) {
+    window.NativeValue.request = function(method, valueID, requestID) {
         console.log('NativeBridge.nativeValueRequest called');
         window.webkit.messageHandlers.NativeValue.postMessage({
             method: methodName,
@@ -134,7 +134,7 @@ class HomeUserScripts {
         });
     };
 
-    window.NativeValue.nativeValueResponse = function(requestID, valueAsString) {
+    window.NativeValue.response = function(requestID, valueAsString, errorCode) {
         console.log(`nativeValueResponse(${requestID}, ${valueAsString})`);
     };
 
@@ -142,11 +142,20 @@ class HomeUserScripts {
 
     setTimeout(function() {
         console.log('timeout fired');
-        window.NativeValue.nativeValueRequest('readPrivateInt', {
+        window.NativeValue.request('readPrivateInt', {
             valueID: 'ma_valeur',
             requestID: crypto.randomUUID()
         });
-    }, 30);
+    }, 1000);
+    
+    
+    setTimeout(function() {
+        console.log('timeout fired');
+        window.NativeValue.request('readPrivateInt', {
+            valueID: 'ma_valeur_non_trouvee',
+            requestID: crypto.randomUUID()
+        });
+    }, 1000);
     """
 }
 
@@ -211,7 +220,7 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
         // Parse the message from JavaScript (format: {event: string, data: any})
         if let messageBody = message.body as? [String: Any],
            let methodName = messageBody["method"] as? String,
-           let method = NativeValue.NativeValueMethodType(rawValue: methodName),
+           let method = NativeValue.NativeValueMethodName(rawValue: methodName),
            let params = messageBody["params"] as? [String: String],
            let requestIDString = params["requestID"],
            let requestID = UUID(uuidString: requestIDString),
@@ -220,7 +229,7 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
             AppLog.view.notice("\(AppLog.logHeader(self)) NativeValue request received: \(methodName) - \(String(describing: params))")
 
             Task {
-                await callNativeValueAction(NativeValue.NativeValueRequestInput(ID: requestID, method: method, valueID: valueID),
+                await callNativeValueAction(NativeValue.NativeValueRequestInput(id: requestID, method: method, valueID: valueID),
                                             for: viewModel,
                                             webView: webView)
             }
@@ -232,8 +241,26 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
                                        webView: WKWebView) async {
         switch params.method {
         case .readPrivateInt:
+            let output: NativeValue.NativeValueRequestOutput = switch params.valueID {
+            case "ma_valeur":
+                NativeValue.NativeValueRequestOutput(requestID: params.id,
+                                                     success: true,
+                                                     value: "42",
+                                                     errorCode: nil)
+            case "ma_valeur_non_trouvee":
+                NativeValue.NativeValueRequestOutput(requestID: params.id,
+                                                     success: false,
+                                                     value: nil,
+                                                     errorCode: NativeValue.NativeValueErrorCode.keyNotFound.rawValue)
+            default:
+                NativeValue.NativeValueRequestOutput(requestID: params.id,
+                                                     success: false,
+                                                     value: nil,
+                                                     errorCode: NativeValue.NativeValueErrorCode.unexpectedError.rawValue)
+            }
+
             Task {
-                await callNativeActionResponse(value: "42", requestID: params.ID, webView: webView)
+                await callNativeActionResponse(response: output, webView: webView)
             }
 
         default:
@@ -242,9 +269,9 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
     }
 
     @MainActor // `evaluateJavaScript` must be used from main thread only.
-    private func callNativeActionResponse(value: String, requestID: UUID, webView: WKWebView) async {
+    private func callNativeActionResponse(response: NativeValue.NativeValueRequestOutput, webView: WKWebView) async {
         // Prepare javaScript script.
-        let script = "window.NativeValue.nativeValueResponse('\(requestID)', '\(value)');"
+        let script = "window.NativeValue.nativeValueResponse('\(response.requestID)', '\(value)');"
 
         do {
             // Execute javaScript script
