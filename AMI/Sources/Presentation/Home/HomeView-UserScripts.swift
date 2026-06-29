@@ -121,11 +121,10 @@ class HomeUserScripts {
     private static let nativeBridgeValueScript = """
     window.NativeValue = window.NativeValue || {};
 
-    // - methodName : one of the listed method names
-    // - params: {
-    //     valueID: String,
-    //     requestID: uuid
-    //   }
+    // - method : String (one of the listed method names)
+    // - valueID: String,
+    // - requestID: uuid
+    //
     window.NativeValue.request = function(method, valueID, requestID) {
         console.log('NativeBridge.nativeValueRequest called');
         window.webkit.messageHandlers.NativeValue.postMessage({
