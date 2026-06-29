@@ -9,7 +9,7 @@
 import Foundation
 
 struct NativeValue {
-    enum NativeValueMethodType: String {
+    enum NativeValueMethodName: String {
         case readPrivateBool
         case readPrivateInt
         case readPrivateString
@@ -71,15 +71,22 @@ struct NativeValue {
         case existAuthenticatedDecimal
     }
 
+    struct NativeValueErrorCode: Int {
+        case keyNotFound = -1
+        case mismatchType = -2
+    }
+
     struct NativeValueRequestInput {
         let ID: UUID
-        let method: NativeValueMethodType
+        let method: NativeValueMethodName
         let valueID: String
     }
 
     struct NativeValueRequestOutput {
         let requestID: UUID
+        let success: Bool
         let value: String?
+        let errorCode: Int?
     }
 
     private let localStorage: LocalStorageRepositoryProtocol
