@@ -73,7 +73,8 @@ struct NativeValue {
 
     struct NativeValueErrorCode: Int {
         case keyNotFound = -1
-        case mismatchType = -2
+        case typeMismatch = -2
+        case authenticationFailure = -3
     }
 
     struct NativeValueRequestInput {
