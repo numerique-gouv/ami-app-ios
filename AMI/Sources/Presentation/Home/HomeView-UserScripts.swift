@@ -146,30 +146,6 @@ class HomeUserScripts {
                         mode: "\(mode)"
                        };
             };
-
-            window.NativeInfos.displayBanner = function() {
-
-            const banner = document.createElement('native-info-banner');
-            banner.innerText = JSON.stringify(window.NativeInfos.getInfos());
-
-            banner.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                padding: 12px 16px;
-                background-color: #007AFF;
-                color: white;
-                font-size: 16px;
-                font-family: -apple-system, sans-serif;
-                font-weight: 600;
-                z-index: 999999;
-                box-sizing: border-box;
-                text-align: center;
-            `;
-
-            document.body.insertBefore(banner, document.body.firstChild);
-            };
         })();
         console.log('NativeInfos initialized');
     """
