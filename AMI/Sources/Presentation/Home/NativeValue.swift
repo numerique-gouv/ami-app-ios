@@ -86,9 +86,12 @@ struct NativeValue {
 
     struct NativeValueRequestOutput {
         let requestID: UUID
-        let success: Bool
         let value: String?
         let errorCode: Int?
+
+        var success: Bool {
+            errorCode == nil
+        }
     }
 
     private let localStorage: LocalStorageRepositoryProtocol
