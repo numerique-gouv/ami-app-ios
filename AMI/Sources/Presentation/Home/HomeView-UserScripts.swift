@@ -126,7 +126,7 @@ class HomeUserScripts {
     //     valueID: String,
     //     requestID: uuid
     //   }
-    window.NativeValue.nativeValueRequest = function(methodName, params) {
+    window.NativeValue.nativeValueRequest = function(method, valueID, requestID) {
         console.log('NativeBridge.nativeValueRequest called');
         window.webkit.messageHandlers.NativeValue.postMessage({
             method: methodName,
