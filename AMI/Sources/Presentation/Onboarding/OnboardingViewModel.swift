@@ -57,7 +57,7 @@ extension OnboardingView {
 
         private func registerForRemoteNotifications() {
             Task {
-                await notificationManager.registerForRemoteNotifications(baseUrl: applicationRootUrl)
+                await notificationManager.registerForRemoteNotifications()
             }
         }
 

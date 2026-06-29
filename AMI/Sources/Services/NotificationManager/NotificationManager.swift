@@ -18,14 +18,29 @@ class NotificationManager: NSObject {
     private var baseUrl: URL?
     // userAuthenticationToken will be set after user logged in successfully.
     private var userAuthenticationToken: String?
+    // apnsToken will be set after allowing Push Notifications or Push Notification token renewal.
+    private var apnsToken: String?
 
     override init() {
         super.init()
     }
 
-    func registerForRemoteNotifications(baseUrl: URL) async {
-        self.baseUrl = baseUrl
+    func setBaseUrl(_ url: URL) {
+        baseUrl = url
+        tryToRegisterDeviceForRemoteNotificationsToBackend()
+    }
 
+    func setUserAuthenticationToken(_ token: String?) {
+        userAuthenticationToken = token
+        tryToRegisterDeviceForRemoteNotificationsToBackend()
+    }
+
+    func setApnsToken(_ token: String?) {
+        apnsToken = token
+        tryToRegisterDeviceForRemoteNotificationsToBackend()
+    }
+
+    func registerForRemoteNotifications() async {
         switch await NotificationStatus.notificationsAuthorizationStatus() {
         case .notDetermined:
             await NotificationStatus.requestNotificationsActivation()
@@ -40,9 +55,14 @@ class NotificationManager: NSObject {
         }
     }
 
-    func registerDeviceForRemoteNotificationsToBackend(apnsToken: String) {
+    private func tryToRegisterDeviceForRemoteNotificationsToBackend() {
         guard let baseUrl else {
             AppLog.service.warning("\(AppLog.logHeader(self)) Base url is not defined")
+            return
+        }
+
+        guard let apnsToken else {
+            AppLog.service.warning("\(AppLog.logHeader(self)) ApnsToken is not defined")
             return
         }
 
@@ -57,10 +77,6 @@ class NotificationManager: NSObject {
                                                   apnsToken: apnsToken,
                                                   userAuthenticationToken: userAuthenticationToken)
         }
-    }
-
-    func setUserAuthenticationToken(_ token: String?) {
-        userAuthenticationToken = token
     }
 }
 

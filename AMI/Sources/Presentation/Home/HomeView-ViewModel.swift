@@ -124,6 +124,9 @@ extension HomeView {
             webViewViewModel.urlChangeAction = handleUrlChange
             userScripts.userLoggedInAction = userLoginActions
             userScripts.userLoggedOutAction = userLogoutActions
+
+            // Set NotificationManager base URL to register the device to AMI backend to allow Push Notifications.
+            setNotificationManagerBaseUrl(rootUrl)
         }
 
         private func userLoginActions() {
@@ -188,6 +191,10 @@ extension HomeView {
             Task { @MainActor in
                 isPresentingOnboardingView = true
             }
+        }
+
+        private func setNotificationManagerBaseUrl(_ url: URL) {
+            notificationManager.setBaseUrl(url)
         }
 
         private func setNotificationManagerUserAuthentificationToken(_ token: String) {
