@@ -15,60 +15,60 @@ struct NativeValue {
         case readPrivateString
         case readPrivateDecimal
 
-        case readPEncryptedBool
-        case readPEncryptedInt
-        case readPEncryptedString
-        case readPEncryptedDecimal
+        case readEncryptedBool
+        case readEncryptedInt
+        case readEncryptedString
+        case readEncryptedDecimal
 
         case readAuthenticatedBool
-        case readAthenticatedInt
-        case readAthenticatedString
-        case readAthenticatedDecimal
+        case readAuthenticatedInt
+        case readAuthenticatedString
+        case readAuthenticatedDecimal
 
         case writePrivateBool
         case writePrivateInt
         case writePrivateString
         case writePrivateDecimal
 
-        case writePEncryptedBool
-        case writePEncryptedInt
-        case writePEncryptedString
-        case writePEncryptedDecimal
+        case writeEncryptedBool
+        case writeEncryptedInt
+        case writeEncryptedString
+        case writeEncryptedDecimal
 
         case writeAuthenticatedBool
-        case writeAthenticatedInt
-        case writeAthenticatedString
-        case writeAthenticatedDecimal
+        case writeAuthenticatedInt
+        case writeAuthenticatedString
+        case writeAuthenticatedDecimal
 
         case deletePrivateBool
         case deletePrivateInt
         case deletePrivateString
         case deletePrivateDecimal
 
-        case deletePEncryptedBool
-        case deletePEncryptedInt
-        case deletePEncryptedString
-        case deletePEncryptedDecimal
+        case deleteEncryptedBool
+        case deleteEncryptedInt
+        case deleteEncryptedString
+        case deleteEncryptedDecimal
 
         case deleteAuthenticatedBool
-        case deleteAthenticatedInt
-        case deleteAthenticatedString
-        case deleteAthenticatedDecimal
+        case deleteAuthenticatedInt
+        case deleteAuthenticatedString
+        case deleteAuthenticatedDecimal
 
         case existPrivateBool
         case existPrivateInt
         case existPrivateString
         case existPrivateDecimal
 
-        case existPEncryptedBool
-        case existPEncryptedInt
-        case existPEncryptedString
-        case existPEncryptedDecimal
+        case existEncryptedBool
+        case existEncryptedInt
+        case existEncryptedString
+        case existEncryptedDecimal
 
         case existAuthenticatedBool
-        case existAthenticatedInt
-        case existAthenticatedString
-        case existAthenticatedDecimal
+        case existAuthenticatedInt
+        case existAuthenticatedString
+        case existAuthenticatedDecimal
     }
 
     struct NativeValueRequestInput {
