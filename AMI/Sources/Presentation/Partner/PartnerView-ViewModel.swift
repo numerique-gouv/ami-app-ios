@@ -13,11 +13,15 @@ import WebKit
 extension PartnerView {
     @Observable
     class ViewModel: NSObject {
+        typealias BackToHomeAction = () -> Void
+
         let webViewViewModel: SwiftUIWebView.ViewModel
 
         var showNoEmailClientAlert = false
 
         private var checkNotificationStatusDone = false
+
+        var backToHomeAction: BackToHomeAction?
 
         @MainActor
         func contactByEmail(targetUrl: URL) {
@@ -26,13 +30,14 @@ extension PartnerView {
             }
         }
 
-        init(configuration: WKWebViewConfiguration, rootUrl: URL) {
+        init(configuration: WKWebViewConfiguration, rootUrl: URL, backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let userScripts = PartnerUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(configuration: configuration,
                                                             rootUrl: rootUrl,
                                                             userScripts: userScripts)
             self.webViewViewModel = webViewViewModel
+            self.backToHomeAction = backToHomeAction
             super.init()
 
             self.webViewViewModel.delegate = self
