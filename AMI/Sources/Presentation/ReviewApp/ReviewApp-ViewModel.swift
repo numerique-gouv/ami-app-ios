@@ -13,12 +13,14 @@ extension ReviewAppView {
     @Observable
     class ViewModel: NSObject {
         let rootUrl = Config.shared.BASE_URL // This root URL is always the same. No need to make it a parameter.
+        let websiteDataStore: WKWebsiteDataStore
         let notificationManager: NotificationManager
         var reviewApps: [ReviewApp] = []
 
         private var viewModels = [URL: AnyObject]()
 
-        init(notificationManager: NotificationManager) {
+        init(websiteDataStore: WKWebsiteDataStore, notificationManager: NotificationManager) {
+            self.websiteDataStore = websiteDataStore
             self.notificationManager = notificationManager
             super.init()
 
@@ -29,7 +31,7 @@ extension ReviewAppView {
 
         func reviewModel(for url: URL) -> AnyObject {
             guard let viewModel = viewModels[url] else {
-                let viewModel = HomeView.ViewModel(rootUrl: url, notificationManager: notificationManager)
+                let viewModel = HomeView.ViewModel(rootUrl: url, websiteDataStore: websiteDataStore, notificationManager: notificationManager)
                 viewModels[url] = viewModel
                 return viewModel
             }

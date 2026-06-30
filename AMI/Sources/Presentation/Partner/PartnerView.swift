@@ -50,7 +50,7 @@ struct PartnerView: View {
 }
 
 #Preview {
-    let viewModel = PartnerView.ViewModel(configuration: SwiftUIWebView.sharedConfiguration, rootUrl: URL(string: "https://numerique.gouv.fr")!) {
+    let viewModel = PartnerView.ViewModel(websiteDataStore: .nonPersistent(), rootUrl: URL(string: "https://numerique.gouv.fr")!) {
         AppLog.viewModel.log("\(AppLog.logHeader()) Back to home called")
     }
     PartnerView(viewModel: viewModel)
