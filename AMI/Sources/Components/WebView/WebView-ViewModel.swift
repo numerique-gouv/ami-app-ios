@@ -35,7 +35,7 @@ extension SwiftUIWebView {
 
         let configuration: WKWebViewConfiguration
         let rootUrl: URL
-        var delegate: WebViewDelegate?
+        weak var delegate: WebViewDelegate?
         let userScripts: WebViewUserScriptsProtocol?
         let allowsBackForwardNavigationGestures: Bool
         #if DEBUG
@@ -77,11 +77,20 @@ extension SwiftUIWebView {
                 return
             }
 
-            configuration.userContentController.removeAllScriptMessageHandlers()
+            removeAllUserScripts()
             for userScript in scripts {
                 configuration.userContentController.addUserScript(userScript.script)
-                configuration.userContentController.add(self, name: userScript.name)
+                // Use WeakScriptMessageHandler to avoid retain cycle:
+                //   WebView.ViewModel -> WKWebViewConfiguration -> WKUserContentController -> WebView.ViewModel (self)
+                configuration.userContentController.add(WeakScriptMessageHandler(self), name: userScript.name)
             }
+        }
+
+        private func removeAllUserScripts() {
+            // WKUserContentController holds a strong reference to every registered
+            // WKScriptMessageHandler, which would create a retain cycle because
+            // `configuration` is also strongly held by this view model.
+            configuration.userContentController.removeAllScriptMessageHandlers()
         }
 
         // Called by the webView:
@@ -155,6 +164,12 @@ extension SwiftUIWebView {
             } catch {
                 AppLog.viewModel.notice("\(AppLog.logHeader(self)) WriteInLocalStorage failed to set key `\(key)` to value `\(value, privacy: .private)`: \(error)")
             }
+        }
+
+        deinit {
+            // Remove all user scripts to be sure to not keep a reference
+            // to a message handler that could cause a retain cycle.
+            removeAllUserScripts()
         }
 
         func goBack() {
@@ -266,11 +281,12 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
 }
 
 extension SwiftUIWebView.ViewModel {
+    static let simulatorDelegate = WebViewDelegateSimulatorImplementation()
     static let `default` = {
         let model = SwiftUIWebView.ViewModel(configuration: WKWebViewConfiguration(),
                                              rootUrl: URL(string: "https://numerique.gouv.fr")!,
                                              userScripts: HomeUserScripts())
-        model.delegate = WebViewDelegateSimulatorImplementation()
+        model.delegate = simulatorDelegate
         #if DEBUG
             model.acceptSelfSignedCertificate = true
         #endif

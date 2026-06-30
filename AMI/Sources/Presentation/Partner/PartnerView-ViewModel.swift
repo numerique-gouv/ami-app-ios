@@ -36,6 +36,12 @@ extension PartnerView {
             super.init()
 
             self.webViewViewModel.delegate = self
+
+            AppLog.viewModel.debug("\(AppLog.logHeader(self)) PartnerView.ViewModel init")
+        }
+
+        deinit {
+            AppLog.viewModel.debug("\(AppLog.logHeader(self)) PartnerView.ViewModel deinit")
         }
     }
 }
