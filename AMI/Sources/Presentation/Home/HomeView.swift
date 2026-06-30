@@ -76,7 +76,7 @@ struct HomeView: View {
             .navigationDestination(item: $viewModel.selectedPartner) { partner in
                 switch partner {
                 case let .generic(partnerUrl):
-                    PartnerView(viewModel: viewModel.partnerViewModel(for: partnerUrl))
+                    PartnerView(viewModel: viewModel.partnerModel(for: partnerUrl))
                 }
             }
         if viewModel.isOnContactPage {
@@ -103,6 +103,7 @@ struct HomeView: View {
 
 #Preview {
     let viewModel = HomeView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
+                                       websiteDataStore: .nonPersistent(),
                                        notificationManager: NotificationManager())
     HomeView(viewModel: viewModel)
 }
