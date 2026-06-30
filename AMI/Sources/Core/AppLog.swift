@@ -14,10 +14,10 @@ import os
 //       So, we just instantiate multiple versions to be called directly in the application.
 
 enum AppLog {
-    static let app = Logger(subsystem: AppBundle.identifier(), category: "application")
-    static let view = Logger(subsystem: AppBundle.identifier(), category: "view")
-    static let viewModel = Logger(subsystem: AppBundle.identifier(), category: "viewModel")
-    static let service = Logger(subsystem: AppBundle.identifier(), category: "service")
+    static let app = Logger(subsystem: AppBundle.identifier, category: "application")
+    static let view = Logger(subsystem: AppBundle.identifier, category: "view")
+    static let viewModel = Logger(subsystem: AppBundle.identifier, category: "viewModel")
+    static let service = Logger(subsystem: AppBundle.identifier, category: "service")
 
     static func logHeader(_ caller: Any? = nil, function: String = #function) -> String {
         switch caller {

@@ -29,7 +29,7 @@ class RegisterDevice {
     func registerDevice(baseUrl: URL, apnsToken: String, userAuthenticationToken: String) async {
         let deviceId = await UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
         let deviceModel = await UIDevice.current.model
-        let appVersion = AppBundle.version()
+        let appVersion = AppBundle.version
 
         AppLog.service.notice(
             """
