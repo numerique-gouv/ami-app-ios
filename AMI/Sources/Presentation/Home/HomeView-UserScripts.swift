@@ -127,7 +127,7 @@ class HomeUserScripts {
 
     #if DEBUG
         private static let mode = "debug"
-    #elseif IS_AMI_STAGING
+    #else
         private static let mode = "release"
     #endif
 
