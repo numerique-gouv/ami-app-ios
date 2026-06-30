@@ -10,9 +10,6 @@ import Foundation
 import WebKit
 
 extension SwiftUIWebView {
-    // Configguration that can be shared by all SwiftUIWebView to access the same cookie store.
-    static let sharedConfiguration = WKWebViewConfiguration()
-
     @Observable
     class ViewModel: NSObject {
         typealias UrlChangeAction = @Sendable (SwiftUIWebView.ViewModel, URL?) -> Void
@@ -29,9 +26,9 @@ extension SwiftUIWebView {
             }
         }
 
-        let configuration: WKWebViewConfiguration
+        let configuration = WKWebViewConfiguration()
         let rootUrl: URL
-        var delegate: WebViewDelegate?
+        weak var delegate: WebViewDelegate?
         let userScripts: WebViewUserScriptsProtocol?
         let allowsBackForwardNavigationGestures: Bool
         #if DEBUG
@@ -47,12 +44,12 @@ extension SwiftUIWebView {
         private var canGoBackObserver: NSKeyValueObservation?
         private var urlChangeObserver: NSKeyValueObservation?
 
-        init(configuration: WKWebViewConfiguration = SwiftUIWebView.sharedConfiguration,
+        init(websiteDataStore: WKWebsiteDataStore,
              rootUrl: URL,
              userScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
              urlChangeAction: UrlChangeAction? = nil) {
-            self.configuration = configuration
+            configuration.websiteDataStore = websiteDataStore
             self.rootUrl = rootUrl
             self.userScripts = userScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
@@ -73,11 +70,20 @@ extension SwiftUIWebView {
                 return
             }
 
-            configuration.userContentController.removeAllScriptMessageHandlers()
+            removeAllUserScripts()
             for userScript in scripts {
                 configuration.userContentController.addUserScript(userScript.script)
-                configuration.userContentController.add(self, name: userScript.name)
+                // Use WeakScriptMessageHandler to avoid retain cycle:
+                //   WebView.ViewModel -> WKWebViewConfiguration -> WKUserContentController -> WebView.ViewModel (self)
+                configuration.userContentController.add(WeakScriptMessageHandler(self), name: userScript.name)
             }
+        }
+
+        private func removeAllUserScripts() {
+            // WKUserContentController holds a strong reference to every registered
+            // WKScriptMessageHandler, which would create a retain cycle because
+            // `configuration` is also strongly held by this view model.
+            configuration.userContentController.removeAllScriptMessageHandlers()
         }
 
         // Called by the webView:
@@ -116,7 +122,7 @@ extension SwiftUIWebView {
         @MainActor // `evaluateJavaScript` must be used from main thread only.
         func readInLocalStorage(key: String) async -> Any? {
             guard let webView else {
-                print("[WebView-ViewModel]: readInLocalStorage not called because no webView initialzed")
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) ReadInLocalStorage not called because no webView initialzed")
                 return nil
             }
 
@@ -126,10 +132,10 @@ extension SwiftUIWebView {
             do {
                 // Execute javaScript script
                 let value = try await webView.evaluateJavaScript(script)
-                print("[WebView-ViewModel]: readInLocalStorage success - `\(key)` -> `\(value.debugDescription)`")
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) ReadInLocalStorage success - `\(key)` -> `\(value.debugDescription, privacy: .private)`")
                 return value
             } catch {
-                print("[WebView-ViewModel]: readInLocalStorage failed to read key `\(key)`: \(error)")
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) ReadInLocalStorage failed to read key `\(key)`: \(error)")
                 return nil
             }
         }
@@ -137,7 +143,7 @@ extension SwiftUIWebView {
         @MainActor // `evaluateJavaScript` must be used from main thread only.
         func writeInLocalStorage(key: String, value: String) async {
             guard let webView else {
-                print("[WebView-ViewModel]: writeInLocalStorage not called because no webView initialzed")
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) WriteInLocalStorage not called because no webView initialzed")
                 return
             }
 
@@ -147,16 +153,25 @@ extension SwiftUIWebView {
             do {
                 // Execute javaScript script
                 _ = try await webView.evaluateJavaScript(script)
-                print("[WebView-ViewModel]: writeInLocalStorage success - `\(key)` = `\(value)`")
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) WriteInLocalStorage success - `\(key)` = `\(value, privacy: .private)`")
             } catch {
-                print("[WebView-ViewModel]: writeInLocalStorage failed to set key `\(key)` to value `\(value)`: \(error)")
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) WriteInLocalStorage failed to set key `\(key)` to value `\(value, privacy: .private)`: \(error)")
             }
+        }
+
+        deinit {
+            // Remove all user scripts to be sure to not keep a reference
+            // to a message handler that could cause a retain cycle.
+            removeAllUserScripts()
         }
 
         func goBack() {
             webView?.goBack()
         }
 
+        // The `goBackToRootUrl()` method doesn't seem to work reliably with Single Page Application in WKWebView.
+        // The web page seems to be blocked on a blank page during loading.
+        @MainActor
         func goBackToRootUrl() {
             guard let webView,
                   let firstItem = webView.backForwardList.backList.first,
@@ -165,37 +180,46 @@ extension SwiftUIWebView {
             }
             webView.go(to: firstItem)
         }
+
+        // Delete all local data and cookies associated with the current web session.
+        @MainActor
+        func deleteSessionLocalData() async {
+            let records = await configuration.websiteDataStore.dataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes())
+            for record in records {
+                await configuration.websiteDataStore.removeData(ofTypes: record.dataTypes, for: [record])
+            }
+        }
     }
 }
 
 extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         // Dispatch message to message handler, passing the view model to be able to act on it.
-        print("userContentController didReceive message: \(message.name)")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) didReceive message: \(message.name)")
         userScripts?.userScriptEmittedMessage(message, for: self)
     }
 }
 
 extension SwiftUIWebView.ViewModel: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
-        print("[WebViewDelegate] Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) heck if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
         return true
     }
 
     func navigationWillStart() {
-        print("[WebViewDelegate] Navigation will start")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation will start")
     }
 
     func navigationDidStart() {
-        print("[WebViewDelegate] Navigation did start")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation did start")
     }
 
     func navigationDidFinish() {
-        print("[WebViewDelegate] Navigation did finish")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation did finish")
     }
 
     func navigationDidFailed(withError error: Error) {
-        print("[WebViewDelegate] Navigation did failed with error: \(error)")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation did failed with error: \(error)")
     }
 }
 
@@ -252,15 +276,17 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
 }
 
 extension SwiftUIWebView.ViewModel {
+    static let simulatorDelegate = WebViewDelegateSimulatorImplementation()
     static let `default` = {
-        let model = SwiftUIWebView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
+        let model = SwiftUIWebView.ViewModel(websiteDataStore: .nonPersistent(),
+                                             rootUrl: URL(string: "https://numerique.gouv.fr")!,
                                              userScripts: HomeUserScripts())
-        model.delegate = WebViewDelegateSimulatorImplementation()
+        model.delegate = simulatorDelegate
         #if DEBUG
             model.acceptSelfSignedCertificate = true
         #endif
         model.urlChangeAction = { _, url in
-            print("[SwiftUIWebView.ViewModel] url did change to \(url.debugDescription)")
+            AppLog.viewModel.notice("\(AppLog.logHeader(SwiftUIWebView.ViewModel.self)) Url did change to \(url.debugDescription)")
         }
         return model
     }()

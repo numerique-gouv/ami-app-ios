@@ -5,10 +5,10 @@
 //  Created by Aline Bonnet on 05/12/2025.
 //
 
+import AmiDesignSystem
 import SwiftUI
 
 struct ReviewAppView: View {
-    @EnvironmentObject var webService: WebService
     @State private var reviewApps: [ReviewApp] = []
     @Bindable var viewModel: ReviewAppView.ViewModel
 
@@ -20,11 +20,11 @@ struct ReviewAppView: View {
         Text("Choix de la review")
             .font(.title)
         ScrollView {
-            ForEach(reviewApps) { reviewApp in
+            ForEach(viewModel.reviewApps) { reviewApp in
                 if let reviewAppUrl = URL(string: reviewApp.url) {
                     NavigationLink(value: reviewAppUrl) {
-                        Tile(title: reviewApp.title,
-                             content: reviewApp.description ?? "")
+                        TileView(title: reviewApp.title,
+                                 content: reviewApp.description ?? "")
                     }
                 }
             }
@@ -34,18 +34,10 @@ struct ReviewAppView: View {
                 }
             }
         }
-        .task {
-            Task {
-                try await webService.getReviewApps()
-                reviewApps.removeAll()
-                reviewApps.append(contentsOf: webService.reviewApps)
-            }
-        }
     }
 }
 
 #Preview {
-    let viewModel = ReviewAppView.ViewModel(notificationManager: NotificationManager())
+    let viewModel = ReviewAppView.ViewModel(websiteDataStore: .nonPersistent(), notificationManager: NotificationManager())
     ReviewAppView(viewModel: viewModel)
-        .environmentObject(WebService())
 }

@@ -26,6 +26,7 @@ struct PartnerView: View {
     private var backButton: some View {
         Button {
             dismiss()
+            viewModel.backToHomeAction?()
         } label: {
             Label(AMIL10n.amiTitle, systemImage: "arrowtriangle.left.fill")
                 .bold()
@@ -49,6 +50,8 @@ struct PartnerView: View {
 }
 
 #Preview {
-    let viewModel = PartnerView.ViewModel(configuration: SwiftUIWebView.sharedConfiguration, rootUrl: URL(string: "https://numerique.gouv.fr")!)
+    let viewModel = PartnerView.ViewModel(websiteDataStore: .nonPersistent(), rootUrl: URL(string: "https://numerique.gouv.fr")!) {
+        AppLog.viewModel.log("\(AppLog.logHeader()) Back to home called")
+    }
     PartnerView(viewModel: viewModel)
 }

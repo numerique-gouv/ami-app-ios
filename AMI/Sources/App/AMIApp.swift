@@ -10,10 +10,6 @@ import SwiftUI
 
 @main
 struct AMIApp: App {
-    // Static properties
-    private static let notificationManager = NotificationManager()
-    private static var defaultHomeViewModel = HomeView.ViewModel(rootUrl: Config.shared.BASE_URL, notificationManager: Self.notificationManager)
-
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @Bindable var appState = AMIAppState()
 
@@ -34,18 +30,17 @@ struct AMIApp: App {
                         HomeView(viewModel: appState.notificationTriggeredHomeViewModel)
                             .id(notificationActivatedHomeViewModelId)
                     } else {
-                        ReviewAppView(viewModel: ReviewAppView.ViewModel(notificationManager: Self.notificationManager))
-                            .environmentObject(WebService())
+                        ReviewAppView(viewModel: appState.reviewAppViewModel)
                     }
                 #elseif IS_AMI_PRODUCTION
-                    HomeView(viewModel: Self.defaultHomeViewModel)
+                    HomeView(viewModel: appState.defaultHomeViewModel)
                         .id(appState.notificationActivatedHomeViewModelId ?? UUID())
                 #else
                     EmptyView()
                 #endif
             }
             // On SwiftUI, removing the defaut Navigation Back button disable the Swipe Back gesture.
-            // We reactivate it via trhe underlying UIKit UINavigationController.
+            // We reactivate it via the underlying UIKit UINavigationController.
             .introspect(.navigationStack, on: .iOS(.v16...)) { view in
                 view.interactivePopGestureRecognizer?.isEnabled = true
                 view.interactivePopGestureRecognizer?.delegate = nil

@@ -28,7 +28,7 @@ settings:
   DEVELOPMENT_TEAM: NVMQD635C6
 #  CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED: true
 #  ENABLE_BITCODE: false
-  MARKETING_VERSION: 0.3
+  MARKETING_VERSION: 0.4
   CURRENT_PROJECT_VERSION: 1
   SUPPORTS_MACCATALYST: false
   TARGETED_DEVICE_FAMILY: iPhone, iPad
@@ -43,3 +43,7 @@ packages:
   SwiftUI-Introspect:
     url: https://github.com/siteline/swiftui-introspect.git
     version: 26.0.0
+  AMI-Design-System:
+    url: https://github.com/numerique-gouv/ami-design-system-ios
+#    version: 0.1.0
+    revision: 64de0ea2c8721ca40bea9fd9aa24f6b6dfb9e0ae

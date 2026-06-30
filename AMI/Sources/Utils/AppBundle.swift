@@ -13,15 +13,11 @@ enum AppBundle {
         Bundle.main.path(forResource: embeddedFileNamed, ofType: ofType)
     }
 
-    static func name() -> String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "Unknown name"
-    }
+    static let name = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "Unknown name"
 
-    static func version() -> String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown version"
-    }
+    static var version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown version"
 
-    static func id() -> String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleIdentifier") as? String ?? "Unknown Id"
-    }
+    static var build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "Unknown build number"
+
+    static var identifier = Bundle.main.object(forInfoDictionaryKey: "CFBundleIdentifier") as? String ?? "Unknown Id"
 }

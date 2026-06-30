@@ -13,11 +13,15 @@ import WebKit
 extension PartnerView {
     @Observable
     class ViewModel: NSObject {
+        typealias BackToHomeAction = () -> Void
+
         let webViewViewModel: SwiftUIWebView.ViewModel
 
         var showNoEmailClientAlert = false
 
         private var checkNotificationStatusDone = false
+
+        var backToHomeAction: BackToHomeAction?
 
         @MainActor
         func contactByEmail(targetUrl: URL) {
@@ -26,16 +30,23 @@ extension PartnerView {
             }
         }
 
-        init(configuration: WKWebViewConfiguration, rootUrl: URL) {
+        init(websiteDataStore: WKWebsiteDataStore, rootUrl: URL, backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let userScripts = PartnerUserScripts()
-            let webViewViewModel = SwiftUIWebView.ViewModel(configuration: configuration,
+            let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
                                                             rootUrl: rootUrl,
                                                             userScripts: userScripts)
             self.webViewViewModel = webViewViewModel
+            self.backToHomeAction = backToHomeAction
             super.init()
 
             self.webViewViewModel.delegate = self
+
+            AppLog.viewModel.debug("\(AppLog.logHeader(self)) PartnerView.ViewModel init")
+        }
+
+        deinit {
+            AppLog.viewModel.debug("\(AppLog.logHeader(self)) PartnerView.ViewModel deinit")
         }
     }
 }
@@ -59,18 +70,18 @@ extension PartnerView.ViewModel: WebViewDelegate {
     }
 
     func navigationWillStart(navigationAction: WKNavigationAction) {
-        print("[WebViewDelegate navigationWillStart]")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationWillStart")
     }
 
     func navigationDidStart() {
-        print("[WebViewDelegate navigationDidStart]")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidStart")
     }
 
     func navigationDidFinish() {
-        print("[WebViewDelegate navigationDidFinish]")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFinish")
     }
 
     func navigationDidFailed(withError error: Error) {
-        print("[WebViewDelegate navigationDidFailed] failed with error \(error)")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFailed] failed with error \(error)")
     }
 }

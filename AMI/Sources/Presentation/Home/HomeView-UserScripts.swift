@@ -15,6 +15,7 @@ class HomeUserScripts {
     enum Script: String {
         case nativeBridge = "NativeBridge"
         case consoleLog
+        case getNativeInfos
     }
 
     // Enumerate existing events
@@ -42,6 +43,10 @@ class HomeUserScripts {
                        script: WKUserScript(source: Self.consoleLogScript,
                                             injectionTime: .atDocumentStart,
                                             forMainFrameOnly: false)),
+            UserScript(name: Script.getNativeInfos.rawValue,
+                       script: WKUserScript(source: Self.getNativeInfosScript,
+                                            injectionTime: .atDocumentStart,
+                                            forMainFrameOnly: true)),
         ]
     }
 
@@ -111,6 +116,39 @@ class HomeUserScripts {
         };
     })();
     """
+
+    #if IS_AMI_PRODUCTION
+        private static let environement = "production"
+    #elseif IS_AMI_STAGING
+        private static let environement = "staging"
+    #else
+        private static let environement = "unknown"
+    #endif
+
+    #if DEBUG
+        private static let mode = "debug"
+    #elseif IS_AMI_STAGING
+        private static let mode = "release"
+    #endif
+
+    // This creates window.NativeBridge.getNativeVersion() HS function.
+    private static let getNativeInfosScript = """
+        (function() {
+            window.NativeInfos = window.NativeInfos || {};
+
+            window.NativeInfos.getInfos = function() {
+                return {
+                        plateform: "ios",
+                        app_name: "\(AppBundle.name)",
+                        version: "\(AppBundle.version)",
+                        build: \(AppBundle.build),
+                        environment: "\(environement)",
+                        mode: "\(mode)"
+                       };
+            };
+        })();
+        console.log('NativeInfos initialized');
+    """
 }
 
 extension HomeUserScripts: WebViewUserScriptsProtocol {
@@ -120,7 +158,7 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
             printLog(message)
         case .nativeBridge:
             processMessage(message, for: viewModel)
-        case .none:
+        case .getNativeInfos, .none:
             // Ignore unknown script message names
             break
         }
@@ -132,18 +170,17 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
               let level = body["level"] as? String,
               let logMessage = body["message"] as? String else { return }
 
-        let prefix = "[HomeUserScripts Console]"
         switch level {
         case "error":
-            print("\(prefix) ❌ ERROR: \(logMessage)")
+            AppLog.view.error("\(AppLog.logHeader(self)) ❌ ERROR: \(logMessage)")
         case "warn":
-            print("\(prefix) ⚠️ WARN: \(logMessage)")
+            AppLog.view.warning("\(AppLog.logHeader(self)) ⚠️ WARN: \(logMessage)")
         case "info":
-            print("\(prefix) ℹ️ INFO: \(logMessage)")
+            AppLog.view.info("\(AppLog.logHeader(self)) ℹ️ INFO: \(logMessage)")
         case "debug":
-            print("\(prefix) 🔍 DEBUG: \(logMessage)")
+            AppLog.view.debug("\(AppLog.logHeader(self)) 🔍 DEBUG: \(logMessage)")
         default:
-            print("\(prefix) 📝 LOG: \(logMessage)")
+            AppLog.view.notice("\(AppLog.logHeader(self)) 📝 LOG: \(logMessage)")
         }
     }
 
@@ -152,7 +189,7 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
         if let messageBody = message.body as? [String: Any],
            let eventName = messageBody["event"] as? String {
             let data = messageBody["data"]
-            print("[HomeUserScripts]: Event received: \(eventName) - \(String(describing: data))")
+            AppLog.view.notice("\(AppLog.logHeader(self)) Event received: \(eventName) - \(String(describing: data))")
 
             switch Event(rawValue: eventName) {
             case .userLoggedIn:
