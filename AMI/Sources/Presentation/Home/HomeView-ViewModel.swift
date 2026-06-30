@@ -109,9 +109,9 @@ extension HomeView {
             }
         }
 
-        init(rootUrl: URL, notificationManager: NotificationManager) {
+        init(rootUrl: URL, websiteDataStore: WKWebsiteDataStore, notificationManager: NotificationManager) {
             let userScripts = HomeUserScripts()
-            let webViewViewModel = SwiftUIWebView.ViewModel(configuration: SwiftUIWebView.sharedConfiguration,
+            let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
                                                             rootUrl: rootUrl,
                                                             userScripts: userScripts)
             self.webViewViewModel = webViewViewModel
@@ -226,8 +226,8 @@ extension HomeView {
 
         func partnerModel(for url: URL) -> PartnerView.ViewModel {
             guard let viewModel = partnerModels[url] else {
-                // Init Partner's view with the HomeView web configuration (to share cookies and tokens).
-                let viewModel = PartnerView.ViewModel(configuration: webViewViewModel.configuration, rootUrl: url) {
+                // Init Partner's view with the HomeView website DataStore (to share cookies and tokens).
+                let viewModel = PartnerView.ViewModel(websiteDataStore: webViewViewModel.configuration.websiteDataStore, rootUrl: url) {
                     self.partnerViewDismissed(partnerUrl: url)
                 }
                 partnerModels[url] = viewModel
@@ -281,6 +281,10 @@ extension HomeView.ViewModel: WebViewDelegate {
         // Special process for partner Url
         if !targetUrl.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) {
             selectedPartner = .generic(targetUrl)
+            // Go back to previous page in originating webview.
+            Task { @MainActor in
+                webViewViewModel.goBack()
+            }
             return false
         }
 

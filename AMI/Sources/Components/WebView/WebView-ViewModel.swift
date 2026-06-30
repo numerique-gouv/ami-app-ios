@@ -10,13 +10,6 @@ import Foundation
 import WebKit
 
 extension SwiftUIWebView {
-    // Configuration that can be shared by all SwiftUIWebView to access the same cookie store.
-    static let sharedConfiguration = {
-        let configuration = WKWebViewConfiguration()
-        // Here, we can customize webView configuration. especially on `webSiteDataStore`.
-        return configuration
-    }()
-
     @Observable
     class ViewModel: NSObject {
         typealias UrlChangeAction = @Sendable (SwiftUIWebView.ViewModel, URL?) -> Void
@@ -33,7 +26,7 @@ extension SwiftUIWebView {
             }
         }
 
-        let configuration: WKWebViewConfiguration
+        let configuration = WKWebViewConfiguration()
         let rootUrl: URL
         weak var delegate: WebViewDelegate?
         let userScripts: WebViewUserScriptsProtocol?
@@ -51,12 +44,12 @@ extension SwiftUIWebView {
         private var canGoBackObserver: NSKeyValueObservation?
         private var urlChangeObserver: NSKeyValueObservation?
 
-        init(configuration: WKWebViewConfiguration,
+        init(websiteDataStore: WKWebsiteDataStore,
              rootUrl: URL,
              userScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
              urlChangeAction: UrlChangeAction? = nil) {
-            self.configuration = configuration
+            configuration.websiteDataStore = websiteDataStore
             self.rootUrl = rootUrl
             self.userScripts = userScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
@@ -176,6 +169,8 @@ extension SwiftUIWebView {
             webView?.goBack()
         }
 
+        // The `goBackToRootUrl()` method doesn't seem to work reliably with Single Page Application in WKWebView.
+        // The web page seems to be blocked on a blank page during loading.
         @MainActor
         func goBackToRootUrl() {
             guard let webView,
@@ -274,7 +269,7 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
 extension SwiftUIWebView.ViewModel {
     static let simulatorDelegate = WebViewDelegateSimulatorImplementation()
     static let `default` = {
-        let model = SwiftUIWebView.ViewModel(configuration: WKWebViewConfiguration(),
+        let model = SwiftUIWebView.ViewModel(websiteDataStore: .nonPersistent(),
                                              rootUrl: URL(string: "https://numerique.gouv.fr")!,
                                              userScripts: HomeUserScripts())
         model.delegate = simulatorDelegate
