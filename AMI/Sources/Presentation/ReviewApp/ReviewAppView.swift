@@ -38,6 +38,6 @@ struct ReviewAppView: View {
 }
 
 #Preview {
-    let viewModel = ReviewAppView.ViewModel(notificationManager: NotificationManager())
+    let viewModel = ReviewAppView.ViewModel(websiteDataStore: .nonPersistent(), notificationManager: NotificationManager())
     ReviewAppView(viewModel: viewModel)
 }
