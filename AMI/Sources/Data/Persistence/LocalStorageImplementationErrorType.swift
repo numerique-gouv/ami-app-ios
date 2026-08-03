@@ -41,7 +41,7 @@ enum LocalStorageImplementationErrorType {
     /// - **Description**: "The stored value is not of type Data"
     /// - **Failure Reason**: "Storage backend returned a value that cannot be cast to Data type"
     static let valueTypeIsNotData = NSError(
-        domain: "\(AppBundle.identifier()).LocalStorage.ValueTypeError",
+        domain: "\(AppBundle.identifier).LocalStorage.ValueTypeError",
         code: ErrorCode.valueTypeIsNotData.rawValue,
         userInfo: [
             NSLocalizedDescriptionKey: "The stored value is not of type Data",

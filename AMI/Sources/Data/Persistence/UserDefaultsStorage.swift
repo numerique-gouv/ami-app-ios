@@ -137,7 +137,7 @@ struct UserDefaultsStorage {
     ///   to create the UserDefaults suite name. Must not be empty and should be descriptive
     ///   of the storage purpose.
     init(for userStoreID: String) {
-        let currentUserStoreID = "\(AppBundle.identifier()).\(userStoreID)"
+        let currentUserStoreID = "\(AppBundle.identifier).\(userStoreID)"
         guard let userStore = UserDefaults(suiteName: currentUserStoreID) else {
             fatalError("\(AppLog.logHeader(UserDefaultsStorage.self)) Unable to create UserDefaults suite for user store ID: \(currentUserStoreID)")
         }

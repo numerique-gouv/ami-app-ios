@@ -206,8 +206,8 @@ struct KeychainStorage {
     ///   logical storage context.
     init(for userStoreID: String) {
         // Add suffix to both store IDs to avoid any conflicts with any other userStoreID.
-        currentUserMediumSecurityStoreID = "\(AppBundle.identifier()).\(userStoreID).security-medium"
-        currentUserHighSecurityStoreID = "\(AppBundle.identifier()).\(userStoreID).security-high"
+        currentUserMediumSecurityStoreID = "\(AppBundle.identifier).\(userStoreID).security-medium"
+        currentUserHighSecurityStoreID = "\(AppBundle.identifier).\(userStoreID).security-high"
 
         // Configure medium secured store with accessibility policy only.
         mediumSecurityStore = Keychain(service: currentUserMediumSecurityStoreID)
