@@ -67,7 +67,8 @@ extension SwiftUIWebView {
             AppLog.viewModel.info("\(AppLog.logHeader(self)) Don't foget to call `loadInitialPage()` in your subclass to load your webView content when your ViewModel is fully ready.")
         }
 
-        private func addUserScripts(userScripts: WebViewUserScriptsProtocol?) {
+        // Set `addUserScripts` method public because it can be used later than at `init` call if a script needs async values.
+        func addUserScripts(userScripts: WebViewUserScriptsProtocol?) {
             guard let scripts = userScripts?.scripts else {
                 return
             }
