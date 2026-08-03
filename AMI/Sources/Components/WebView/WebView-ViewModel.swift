@@ -65,7 +65,8 @@ extension SwiftUIWebView {
             configure()
         }
 
-        private func addUserScripts(userScripts: WebViewUserScriptsProtocol?) {
+        // Set `addUserScripts` method public because it can be used later than at `init` call if a script needs async values.
+        func addUserScripts(userScripts: WebViewUserScriptsProtocol?) {
             guard let scripts = userScripts?.scripts else {
                 return
             }
