@@ -71,12 +71,13 @@ extension SwiftUIWebView {
                 return
             }
 
-            removeAllUserScripts()
-            for userScript in scripts {
-                configuration.userContentController.addUserScript(userScript.script)
-                // Use WeakScriptMessageHandler to avoid retain cycle:
-                //   WebView.ViewModel -> WKWebViewConfiguration -> WKUserContentController -> WebView.ViewModel (self)
-                configuration.userContentController.add(WeakScriptMessageHandler(self), name: userScript.name)
+            Task { @MainActor in
+                for userScript in scripts {
+                    configuration.userContentController.addUserScript(userScript.script)
+                    // Use WeakScriptMessageHandler to avoid retain cycle:
+                    //   WebView.ViewModel -> WKWebViewConfiguration -> WKUserContentController -> WebView.ViewModel (self)
+                    configuration.userContentController.add(WeakScriptMessageHandler(self), name: userScript.name)
+                }
             }
         }
 
