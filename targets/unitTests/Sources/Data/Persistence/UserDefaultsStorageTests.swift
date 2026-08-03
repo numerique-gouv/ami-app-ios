@@ -532,5 +532,5 @@ struct UserDefaultsStorageDebugTests {
     }
 }
 
-// swiftlint:enable all
 // swiftformat:enable all
+// swiftlint:enable all
