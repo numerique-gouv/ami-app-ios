@@ -113,7 +113,7 @@ extension HomeView {
             let userScripts = HomeUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
                                                             rootUrl: rootUrl,
-                                                            userScripts: userScripts)
+                                                            initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.notificationManager = notificationManager
 

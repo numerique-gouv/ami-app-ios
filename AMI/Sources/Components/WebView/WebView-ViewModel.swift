@@ -46,12 +46,12 @@ extension SwiftUIWebView {
 
         init(websiteDataStore: WKWebsiteDataStore,
              rootUrl: URL,
-             userScripts: WebViewUserScriptsProtocol? = nil,
+             initialUserScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
              urlChangeAction: UrlChangeAction? = nil) {
             configuration.websiteDataStore = websiteDataStore
             self.rootUrl = rootUrl
-            self.userScripts = userScripts
+            userScripts = initialUserScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
             self.urlChangeAction = urlChangeAction
 
@@ -60,7 +60,7 @@ extension SwiftUIWebView {
             // Default delegate to self.
             delegate = self
 
-            addUserScripts(userScripts: userScripts)
+            addUserScripts(userScripts: initialUserScripts)
 
             configure()
         }
@@ -280,7 +280,7 @@ extension SwiftUIWebView.ViewModel {
     static let `default` = {
         let model = SwiftUIWebView.ViewModel(websiteDataStore: .nonPersistent(),
                                              rootUrl: URL(string: "https://numerique.gouv.fr")!,
-                                             userScripts: HomeUserScripts())
+                                             initialUserScripts: HomeUserScripts())
         model.delegate = simulatorDelegate
         #if DEBUG
             model.acceptSelfSignedCertificate = true
