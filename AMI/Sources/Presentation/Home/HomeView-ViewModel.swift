@@ -129,6 +129,11 @@ extension HomeView {
 
             // Set NotificationManager base URL to register the device to AMI backend to allow Push Notifications.
             setNotificationManagerBaseUrl(rootUrl)
+
+            // Load initial page now that viewModel is fully ready.
+            Task { @MainActor in
+                webViewViewModel.loadInitialPage()
+            }
         }
 
         private func userLoginActions() {
