@@ -16,25 +16,25 @@ import Foundation
 /// backend (UserDefaults vs Keychain) based on security requirements defined by the Domain layer.
 ///
 /// ## Storage Backend Mapping
-/// - `.low` → UserDefaults (unencrypted, fast access)
-/// - `.medium` → Keychain (encrypted, secure)
-/// - `.high` → Keychain with biometric/passcode protection (encrypted, highly secure)
+/// - `.private` → UserDefaults (unencrypted, fast access)
+/// - `.encrypted` → Keychain (encrypted, secure)
+/// - `.authenticated` → Keychain with biometric/passcode protection (encrypted, highly secure)
 ///
 /// ## Performance Characteristics
-/// - **Low**: Fastest access, immediate availability, no authentication overhead
-/// - **Medium**: Moderate performance, encrypted storage, Keychain lookup overhead
-/// - **High**: Slowest access due to authentication prompts, maximum security
+/// - **private**: Fastest access, immediate availability, no authentication overhead
+/// - **secured**: Moderate performance, encrypted storage, Keychain lookup overhead
+/// - **authenticated**: Slowest access due to authentication prompts, maximum security
 ///
 /// ## Use Case Examples
 /// ```swift
 /// // Non-sensitive preferences
-/// await repository.writeString(key: "theme", value: "dark", secureLevel: .low)
+/// await repository.writeString(key: "theme", value: "dark", secureLevel: .private)
 ///
 /// // API tokens and sensitive data
-/// await repository.writeString(key: "authToken", value: token, secureLevel: .medium)
+/// await repository.writeString(key: "authToken", value: token, secureLevel: .encrypted)
 ///
 /// // Highly sensitive user data requiring biometric protection
-/// await repository.writeJSON(key: "biometricData", value: userData, secureLevel: .high)
+/// await repository.writeJSON(key: "biometricData", value: userData, secureLevel: .authenticated)
 /// ```
 enum LocalStorageSecureLevelType {
     /// Data is stored without encryption using UserDefaults.
@@ -54,7 +54,7 @@ enum LocalStorageSecureLevelType {
     /// ## Security Warning:
     /// Data stored at this level is accessible to anyone with access to the device's
     /// file system, app backups, or debugging tools. Never use for sensitive information.
-    case low
+    case `private`
 
     /// Data is stored with strong encryption using the system Keychain.
     ///
@@ -75,7 +75,7 @@ enum LocalStorageSecureLevelType {
     /// - Automatically protected by device lock screen
     /// - Isolated from other applications
     /// - Not included in standard device backups
-    case medium
+    case encrypted
 
     /// Data is stored using Keychain with biometric (Face ID/Touch ID) or passcode protection.
     ///
@@ -101,5 +101,5 @@ enum LocalStorageSecureLevelType {
     /// Users will see authentication prompts (Face ID, Touch ID, or passcode entry)
     /// each time the app needs to access this data. Plan UX accordingly to minimize
     /// authentication frequency while maintaining security.
-    case high
+    case authenticated
 }

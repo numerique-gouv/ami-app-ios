@@ -13,15 +13,15 @@ import Foundation
 /// (`UserDefaults` or Keychain) based on the requested security level.
 struct LocalStorageRepository {
     /// Storage backend for non-sensitive data, backed by `UserDefaults`.
-    private let storage: UserDefaultsStorage
+    private let privateStorage: UserDefaultsStorage
 
     /// Storage backend for sensitive data, backed by the system Keychain.
-    private let secureStorage: KeychainStorage
+    private let securedStorage: KeychainStorage
 
     /// Creates a new `LocalStorageRepository`.
     init(for userStoreID: String) {
-        storage = UserDefaultsStorage(for: userStoreID)
-        secureStorage = KeychainStorage(for: userStoreID)
+        privateStorage = UserDefaultsStorage(for: userStoreID)
+        securedStorage = KeychainStorage(for: userStoreID)
     }
 }
 
@@ -30,9 +30,9 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// This is the core routing method that determines whether data goes to UserDefaults or Keychain.
     ///
     /// ## Routing Logic
-    /// - `.low` → UserDefaults (unencrypted, fast access)
-    /// - `.medium` → Keychain (encrypted, secure)
-    /// - `.high` → Keychain with biometric protection (encrypted, highly secure)
+    /// - `.private` → UserDefaults (unencrypted, fast access)
+    /// - `.encrypted` → Keychain (encrypted, secure)
+    /// - `.authenticated` → Keychain with biometric protection (encrypted, highly secure)
     ///
     /// - Parameters:
     ///   - key: The unique identifier under which the data will be stored.
@@ -41,9 +41,9 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// - Returns: `.success(true)` on successful storage. Never fails at this abstraction layer.
     private func writeData(key: String, data: Data, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch secureLevel {
-        case .low: await storage.writeData(data, forKey: key)
-        case .medium: await secureStorage.writeData(data, forKey: key, requireAuthentication: false)
-        case .high: await secureStorage.writeData(data, forKey: key, requireAuthentication: true)
+        case .private: await privateStorage.writeData(data, forKey: key)
+        case .encrypted: await securedStorage.writeData(data, forKey: key, requireAuthentication: false)
+        case .authenticated: await securedStorage.writeData(data, forKey: key, requireAuthentication: true)
         }
     }
 
@@ -113,9 +113,9 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// This is the core retrieval method that handles routing, data fetching, and JSON decoding.
     ///
     /// ## Backend Routing
-    /// - `.low` → Reads from UserDefaults (unencrypted)
-    /// - `.medium` → Reads from Keychain (encrypted)
-    /// - `.high` → Reads from Keychain with biometric protection (not yet implemented)
+    /// - `.private` → Reads from UserDefaults (unencrypted)
+    /// - `.encrypted` → Reads from Keychain (encrypted)
+    /// - `.authenticated` → Reads from Keychain with biometric protection (not yet implemented)
     ///
     /// - Parameters:
     ///   - type: The `Decodable` type to decode the stored JSON data into.
@@ -129,18 +129,18 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     private func readDataAsType<T>(_ type: T.Type = T.self, key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<T, LocalStorageErrorType>
         where T: Decodable {
         switch secureLevel {
-        case .low:
-            switch await storage.readData(forKey: key) {
+        case .private:
+            switch await privateStorage.readData(forKey: key) {
             case let .success(data): decodeData(type, data: data)
             case let .failure(error): .failure(error)
             }
-        case .medium:
-            switch await secureStorage.readData(forKey: key, requireAuthentication: false) {
+        case .encrypted:
+            switch await securedStorage.readData(forKey: key, requireAuthentication: false) {
             case let .success(data): decodeData(type, data: data)
             case let .failure(error): .failure(error)
             }
-        case .high:
-            switch await secureStorage.readData(forKey: key, requireAuthentication: true) {
+        case .authenticated:
+            switch await securedStorage.readData(forKey: key, requireAuthentication: true) {
             case let .success(data): decodeData(type, data: data)
             case let .failure(error): .failure(error)
             }
@@ -209,9 +209,9 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// used when the data was originally stored.
     ///
     /// ## Backend Routing
-    /// - `.low` → Deletes from UserDefaults (unencrypted storage)
-    /// - `.medium` → Deletes from Keychain without authentication requirement
-    /// - `.high` → Deletes from Keychain with biometric/passcode authentication
+    /// - `.private` → Deletes from UserDefaults (unencrypted storage)
+    /// - `.encrypted` → Deletes from Keychain without authentication requirement
+    /// - `.authenticated` → Deletes from Keychain with biometric/passcode authentication
     ///
     /// ## Behavior
     /// - **Idempotent**: Safe to call multiple times with the same key
@@ -248,18 +248,18 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     ///   leaving the actual data intact in the original storage location.
     func delete(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch secureLevel {
-        case .low:
-            switch await storage.deleteData(forKey: key) {
+        case .private:
+            switch await privateStorage.deleteData(forKey: key) {
             case let .success(success): .success(success)
             case let .failure(error): .failure(error)
             }
-        case .medium:
-            switch await secureStorage.deleteData(forKey: key, requireAuthentication: false) {
+        case .encrypted:
+            switch await securedStorage.deleteData(forKey: key, requireAuthentication: false) {
             case let .success(success): .success(success)
             case let .failure(error): .failure(error)
             }
-        case .high:
-            switch await secureStorage.deleteData(forKey: key, requireAuthentication: true) {
+        case .authenticated:
+            switch await securedStorage.deleteData(forKey: key, requireAuthentication: true) {
             case let .success(success): .success(success)
             case let .failure(error): .failure(error)
             }
@@ -269,9 +269,9 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// Permanently removes all data from the specified security level storage backend.
     ///
     /// ## Routing Logic
-    /// - `.low` → Clears all UserDefaults data in the app's suite
-    /// - `.medium` → Clears all Keychain data for this service without authentication
-    /// - `.high` → Clears all Keychain data for this service with biometric/passcode authentication
+    /// - `.private` → Clears all UserDefaults data in the app's suite
+    /// - `.encrypted` → Clears all Keychain data for this service without authentication
+    /// - `.authenticated` → Clears all Keychain data for this service with biometric/passcode authentication
     ///
     /// ## Important Notes
     /// - **Irreversible**: All data is permanently lost
@@ -290,9 +290,9 @@ extension LocalStorageRepository: LocalStorageRepositoryProtocol {
     /// - Warning: This operation is **irreversible**. Ensure proper confirmation before use.
     func deleteAll(secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         switch secureLevel {
-        case .low: await storage.deleteAll()
-        case .medium: await secureStorage.deleteAll(requireAuthentication: false)
-        case .high: await secureStorage.deleteAll(requireAuthentication: true)
+        case .private: await privateStorage.deleteAll()
+        case .encrypted: await securedStorage.deleteAll(requireAuthentication: false)
+        case .authenticated: await securedStorage.deleteAll(requireAuthentication: true)
         }
     }
 }
