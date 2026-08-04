@@ -18,18 +18,8 @@ schemeTemplates:
       config: Release
     run:
       config: Debug
-    test:
-      config: Debug
-      gatherCoverageData: true
-      coverageTargets:
-        - ${scheme_name}:
-      testPlans:
-#         - path: UnitTests/SupportingFiles/UnitTests.xctestplan
-#           defaultPlan: true
-#         - path: UITests/SupportingFiles/UITests.xctestplan
-#           defaultPlan: false
-#         - path: PreviewTests/SupportingFiles/PreviewTests.xctestplan
-#           defaultPlan: false
+    archive:
+      config: Release
 #--------------------------------------------------------------------------------
 schemes:
   AMI-Production:
@@ -38,11 +28,21 @@ schemes:
   AMI-Staging:
     templates:
       - BaseScheme
+  AMI-UnitTests:
+    build:
+      targets:
+        AMI-UnitTests:
+          - testing
+    test:
+      targets:
+        - AMI-UnitTests
+    run:
+      config: Debug
 #--------------------------------------------------------------------------------
 targetTemplates:
   BaseTarget:
-    type: application
     platform: iOS
+    type: application
 
     info:
       properties:
@@ -62,7 +62,7 @@ targetTemplates:
 #        NSMicrophoneUsageDescription: To record and send messages with audio, $(APP_DISPLAY_NAME) needs to access the microphone.
 #        NSPhotoLibraryAddUsageDescription: This lets you save images and videos to your photo library.
 #        NSLocationWhenInUseUsageDescription: Grant location access so that $(APP_DISPLAY_NAME) can share your location.
-#        NSFaceIDUsageDescription: Face ID is used to access your app.
+        NSFaceIDUsageDescription: Face ID is used to access sensitive data.
         UIBackgroundModes: [
           remote-notification
         ]
@@ -109,23 +109,50 @@ targetTemplates:
         scripts/ami-xcode-pass-swiftformat.sh
 
     dependencies:
+    - package: AMI-Design-System
+      product: AmiDesignSystem
     - package: Firebase
       product: FirebaseCore
       embed: false
     - package: Firebase
       product: FirebaseMessaging
       embed: false
+    - package: KeychainAccess
     - package: SwiftUI-Introspect
       product: SwiftUIIntrospect
       embed: false
-    - package: AMI-Design-System
-      product: AmiDesignSystem
     
     sources:
     - path: AMI
       excludes:
         - "**/*.md" # excludes all files with the .md extension
 
+  BaseTestTarget:
+    platform: iOS
+    type: bundle.unit-test
+
+    settings:
+      PRODUCT_NAME: $(APP_NAME)
+      PRODUCT_BUNDLE_IDENTIFIER: $(BASE_BUNDLE_IDENTIFIER)
+    
+    dependencies:
+    - package: AMI-Design-System
+      product: AmiDesignSystem
+    - package: Firebase
+      product: FirebaseCore
+      embed: false
+    - package: Firebase
+      product: FirebaseMessaging
+      embed: false
+    - package: KeychainAccess
+    - package: SwiftUI-Introspect
+      product: SwiftUIIntrospect
+      embed: false
+    
+    sources:
+    - path: AMI
+      excludes:
+        - "**/*.md" # excludes all files with the .md extension
 #--------------------------------------------------------------------------------
 targets:
 #--------------------------------------------------------------------------------
@@ -157,11 +184,36 @@ targets:
     settings:
       BASE_BUNDLE_IDENTIFIER: fr.gouv.ami.staging
       PRODUCTION_APP_NAME: AMI STAGING
-      APP_NAME: AMI-Production
+      APP_NAME: AMI-Staging
       APP_DISPLAY_NAME: AMI staging # The name used in the application.
-      CODE_SIGN_ENTITLEMENTS: targets/production/SupportingFiles/ami.entitlements
+      CODE_SIGN_ENTITLEMENTS: targets/staging/SupportingFiles/ami.entitlements
       OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_STAGING
 
     sources:
+    - path: targets/staging/Sources
     - path: targets/staging/SupportingFiles
+#--------------------------------------------------------------------------------
+  AMI-UnitTests:
+    templates: 
+      - BaseTestTarget
+
+    info:
+      path: targets/unitTests/SupportingFiles/Info.plist
+
+    settings:
+      BASE_BUNDLE_IDENTIFIER: fr.gouv.ami.unitTests
+      APP_NAME: AMI-UnitTests
+      APP_DISPLAY_NAME: AMI Unit Tests # The name used in the application.
+      CODE_SIGN_ENTITLEMENTS: targets/unitTests/SupportingFiles/ami.entitlements
+      OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_UNIT_TESTS
+      
+      TEST_HOST: $(BUILT_PRODUCTS_DIR)/AMI-Staging.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AMI-Staging
+      BUNDLE_LOADER: $(TEST_HOST)
+    
+    dependencies:
+      - target: AMI-Staging
+      
+    sources:
+    - path: targets/unitTests/Sources
+    - path: targets/unitTests/SupportingFiles
 #--------------------------------------------------------------------------------

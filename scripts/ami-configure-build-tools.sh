@@ -54,6 +54,16 @@ function check_and_install_swiftgen() {
     fi
 }
 
+function check_and_install_sourcery() {
+    echo "Checking if Sourcey is installed..."
+    if ! command -v sourcery >/dev/null 2>&1; then
+        echo "\Sourcey is not installed. Installing Sourcey using Homebrew..."
+        brew install sourcery
+    else
+        echo "\tSourcey is already installed: $(sourcery --version)"
+    fi
+}
+
 function main() {
     if ! check_and_install_brew; then
         echo "Stopping configuration due to missing Homebrew."
@@ -63,6 +73,8 @@ function main() {
     check_and_install_swiftformat
     check_and_install_swiftlint
     check_and_install_swiftgen
+# sourcery is needed to generate mocks.
+#    check_and_install_sourcery
 }
 
 main

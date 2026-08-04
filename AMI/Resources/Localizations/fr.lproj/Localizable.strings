@@ -23,3 +23,6 @@ logs_error_unable_to_write_log = "Impossible d'enregistrer le fichier de logs";
 
 // AMI Application
 ami_title = "AMI";
+
+// Local storage
+local_storage_authentication_prompt = "Lecture de données sensibles";

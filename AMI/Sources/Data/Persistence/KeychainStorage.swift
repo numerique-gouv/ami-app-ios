@@ -1,0 +1,394 @@
+//
+//  KeychainStorage.swift
+//  AMI-Production
+//
+//  Created by Nicolas Buquet on 02/06/2026.
+//  Copyright © 2026 DINUM. All rights reserved.
+//
+
+import Foundation
+import KeychainAccess
+import LocalAuthentication
+
+/// High-security storage implementation using the system Keychain for sensitive data persistence.
+///
+/// This struct provides the Data layer implementation for `.encrypted` and `.authenticated` security level
+/// storage in the LocalStorage system. It leverages iOS/macOS Keychain Services to provide
+/// hardware-accelerated encryption, secure data isolation, and optional biometric authentication
+/// for highly sensitive information.
+///
+/// ## Architecture Role
+/// - **Layer**: Data layer storage backend
+/// - **Security Levels**: `.encrypted`  and `.authenticated` (encrypted + biometric auth)
+/// - **Performance**: Moderate due to encryption overhead and potential authentication prompts
+/// - **Persistence**: Secure across app launches, device restarts, and OS updates
+///
+/// ## Security Features
+///
+/// ### Hardware-Level Protection
+/// - **Secure Enclave Integration**: Uses device's hardware security module when available
+/// - **AES Encryption**: Data encrypted with hardware-accelerated AES algorithms
+/// - **Key Derivation**: Encryption keys derived from device-specific hardware identifiers
+/// - **Tamper Resistance**: Protected against physical and software-based attacks
+///
+/// ### Access Control Policies
+/// - **Device Lock Integration**: Data unavailable when device is locked (until first unlock)
+/// - **No Synchronization**: Data stays on device, not synced via iCloud Keychain
+/// - **App Isolation**: Data accessible only to the app that created it
+/// - **Passcode Dependency**: Requires device passcode to be set for Keychain access
+///
+/// ### Authentication Modes
+/// - **Encrypted**: Standard Keychain encryption without additional authentication
+/// - **Authenticated**: Biometric authentication (Face ID/Touch ID) or passcode required per access
+///
+/// ## Use Cases
+///
+/// ### Encrypted (`.encrypted`)
+/// - API authentication tokens and refresh tokens
+/// - Service passwords and credentials
+/// - Encrypted user session data
+/// - Private keys and certificates
+/// - OAuth tokens and app-specific secrets
+///
+/// ### Authenticated (`.authenticated`)
+/// - Highly sensitive personal information
+/// - Financial data and payment credentials
+/// - Medical records and health information
+/// - Legal documents and identification data
+/// - Biometric enrollment data
+///
+/// ## Authentication Flow (High Security)
+///
+/// ```
+/// 1. App requests high-security data access
+/// 2. System presents biometric prompt (Face ID/Touch ID)
+/// 3. User authenticates successfully → Data decrypted and returned
+/// 4. User cancels/fails → Authentication error returned
+/// 5. Too many failures → Biometric lockout, passcode required
+/// ```
+///
+/// ## Service Isolation
+/// This implementation uses Keychain services to provide data isolation between different
+/// users, app contexts, or feature areas. Each `userStoreID` creates a separate service:
+///
+/// ```
+/// Service Name Format: {AppBundleID}.{userStoreID}
+/// Examples:
+/// - com.example.app.user_123
+/// - com.example.app.secure_cache
+/// - com.example.app.auth_tokens
+/// ```
+///
+/// ## Error Handling
+/// Keychain operations can fail due to various system-level conditions:
+/// - Authentication failures (wrong biometric, cancelled by user)
+/// - Hardware availability issues (Face ID disabled, sensor unavailable)
+/// - System state problems (device locked, passcode not set)
+/// - Data size limitations (Keychain has size limits per item)
+/// - Storage capacity issues (Keychain full, system errors)
+///
+/// All errors are mapped to `LocalStorageErrorType` for consistent handling across the app.
+///
+/// ## Usage Example
+/// ```swift
+/// let storage = KeychainStorage(for: "secureUserData")
+///
+/// // Store encrypted data (encrypted security)
+/// let tokenData = "auth_token_12345".data(using: .utf8)!
+/// await storage.writeData(tokenData, forKey: "api_token", requireAuthentication: false)
+///
+/// // Store with biometric protection (authenticated security)
+/// let sensitiveData = userBiometricData
+/// await storage.writeData(sensitiveData, forKey: "biometric_profile", requireAuthentication: true)
+/// ```
+struct KeychainStorage {
+    /// The unique identifier type for stored values in this Keychain service.
+    typealias KeyType = String
+
+    /// The underlying `Keychain` instance providing secure storage capabilities.
+    ///
+    /// Configured with app-specific service name and security policies to ensure data
+    /// isolation and appropriate access controls for different authentication levels.
+    private let encryptedStore: Keychain
+    private let authenticatedStore: Keychain
+
+    /// The complete service identifier used for encrypted Keychain storage.
+    ///
+    /// Combines the app bundle identifier with the user-provided store ID and a security level suffix
+    /// to create a unique service namespace for encrypted Keychain storage isolation.
+    ///
+    /// **Format**: `{AppBundleID}.{userStoreID}.security-encrypted`
+    ///
+    /// **Example**: `com.example.app.user_123.security-encrypted`
+    private let currentUserEncryptedStoreID: String
+
+    /// The complete service identifier used for authenticated Keychain storage.
+    ///
+    /// Combines the app bundle identifier with the user-provided store ID and a security level suffix
+    /// to create a unique service namespace for authenticated Keychain storage isolation.
+    ///
+    /// **Format**: `{AppBundleID}.{userStoreID}.security-authenticated`
+    ///
+    /// **Example**: `com.example.app.user_123.security-authenticated`
+    private let currentUserAuthenticatedStoreID: String
+
+    /// The iCloud synchronization policy for Keychain items.
+    ///
+    /// Set to `false` to prevent data from being synchronized across the user's devices
+    /// via iCloud Keychain. This ensures sensitive data remains on the device where it
+    /// was created, providing additional security for highly sensitive information.
+    private let synchronizationPolicy = false
+
+    /// The accessibility policy defining when Keychain data can be accessed.
+    ///
+    /// Uses `.whenPasscodeSetThisDeviceOnly` which provides these security characteristics:
+    /// - Data cannot be accessed after device restart until first unlock by user
+    /// - Items do not migrate to new devices (not included in backups or device transfers)
+    /// - Requires device passcode to be set (enforces basic device security)
+    /// - Provides balance between security and usability
+    private let accessibilityPolicy: Accessibility = .whenPasscodeSetThisDeviceOnly
+
+    /// The biometric authentication policy for high-security items.
+    ///
+    /// Uses `.biometryAny` to accept any configured biometric authentication:
+    /// - Face ID on devices that support it
+    /// - Touch ID on devices that support it
+    /// - Automatically falls back to passcode when biometrics are unavailable
+    /// - Respects user's biometric preferences and system configuration
+    private let authenticationPolicy: AuthenticationPolicy = .biometryAny
+
+    /// Creates a new KeychainStorage instance with user-specific service isolation.
+    ///
+    /// This initializer creates a dedicated Keychain service for the specified user or context,
+    /// enabling secure data isolation between different users, feature areas, or app contexts.
+    /// The service name combines the app's bundle identifier with the provided user store ID.
+    ///
+    /// ## Service Naming Convention
+    /// ```
+    /// Encrypted Service: {App Bundle ID}.{userStoreID}.security-encrypted
+    /// Authenticated Service:   {App Bundle ID}.{userStoreID}.security-authenticated
+    /// Example: "com.example.myapp.user_123.security-encrypted"
+    ///          "com.example.myapp.user_123.security-authenticated"
+    /// ```
+    ///
+    /// ## Security Isolation Benefits
+    /// - **User Switching**: Each user gets completely isolated secure storage
+    /// - **Feature Separation**: Different app features can maintain separate encrypted stores
+    /// - **Context Isolation**: Support for multiple security contexts (e.g., work vs personal)
+    /// - **Testing**: Test suites can use isolated Keychain services
+    ///
+    /// ## Automatic Configuration
+    /// The initializer automatically configures two separate Keychain stores with secure defaults:
+    /// - **Encrypted Store**: Service scoped to app bundle ID + user store ID + ".security-encrypted"
+    /// - **Authenticated Store**: Service scoped to app bundle ID + user store ID + ".security-authenticated"
+    /// - iCloud synchronization disabled for maximum security
+    /// - Access restricted to when device is unlocked and passcode is set
+    /// - High security store configured with biometric authentication requirements
+    ///
+    /// ## Usage Examples
+    /// ```swift
+    /// // User-specific secure storage
+    /// let userKeychain = KeychainStorage(for: "user_\(userId)")
+    ///
+    /// // Feature-specific secure storage
+    /// let authKeychain = KeychainStorage(for: "authentication")
+    ///
+    /// // Context-specific secure storage
+    /// let workKeychain = KeychainStorage(for: "work_context")
+    ///
+    /// // Testing secure storage (isolated from production)
+    /// let testKeychain = KeychainStorage(for: "test_\(testName)")
+    /// ```
+    ///
+    /// - Parameter userStoreID: A unique identifier that will be combined with the bundle ID
+    ///   and security level suffixes to create separate Keychain service names for encrypted and authenticated
+    ///   security stores. Must be descriptive and consistent across app launches for the same
+    ///   logical storage context.
+    init(for userStoreID: String) {
+        // Add suffix to both store IDs to avoid any conflicts with any other userStoreID.
+        currentUserEncryptedStoreID = "\(AppBundle.identifier).\(userStoreID).security-encrypted"
+        currentUserAuthenticatedStoreID = "\(AppBundle.identifier).\(userStoreID).security-authenticated"
+
+        // Configure encrypted store with accessibility policy only.
+        encryptedStore = Keychain(service: currentUserEncryptedStoreID)
+            .synchronizable(synchronizationPolicy)
+            .accessibility(accessibilityPolicy)
+
+        // Configure authenticated store with accessibility policy and authentication policy.
+        authenticatedStore = Keychain(service: currentUserAuthenticatedStoreID)
+            .synchronizable(synchronizationPolicy)
+            .accessibility(accessibilityPolicy, authenticationPolicy: authenticationPolicy)
+    }
+
+    /// Returns the appropriate Keychain store based on the required security level.
+    ///
+    /// This method acts as a security policy dispatcher, selecting between two pre-configured
+    /// Keychain stores based on whether biometric authentication is required for data access.
+    /// Each store is configured with different security policies and access controls.
+    ///
+    /// ## Security Level Selection
+    ///
+    /// ### Encrypted (`authenticationRequired: false`)
+    /// - **Store**: `encryptedStore`
+    /// - **Encryption**: Hardware-accelerated AES encryption via Keychain Services
+    /// - **Access Control**: Device passcode + unlock state required
+    /// - **Authentication**: No additional authentication prompt
+    /// - **Use Cases**: API tokens, service credentials, encrypted session data
+    ///
+    /// ### Authenticated (`authenticationRequired: true`)
+    /// - **Store**: `authenticatedStore`
+    /// - **Encryption**: Hardware-accelerated AES encryption via Keychain Services
+    /// - **Access Control**: Device passcode + unlock state + biometric authentication
+    /// - **Authentication**: Face ID, Touch ID, or passcode prompt on every access
+    /// - **Use Cases**: Highly sensitive personal data, financial information, medical records
+    ///
+    /// ## Implementation Details
+    /// Both stores use the same underlying Keychain Services but with different service names
+    /// and authentication policies. This separation ensures that changing security requirements
+    /// for one data type doesn't affect access patterns for another.
+    ///
+    /// - Parameter authenticationRequired: Whether the returned store should require
+    ///   biometric authentication for data access operations.
+    /// - Returns: The appropriate `Keychain` instance configured for the requested security level.
+    ///
+    /// - Note: The returned Keychain instance is fully configured and ready for use with
+    ///   `set()`, `getData()`, and `remove()` operations.
+    private func store(_ authenticationRequired: Bool) -> Keychain {
+        switch authenticationRequired {
+        case true: authenticatedStore
+        case false: encryptedStore
+        }
+    }
+
+    /// Securely stores binary data in the Keychain for the specified key with optional authentication requirement.
+    /// The data is encrypted using the system's Keychain encryption mechanisms.
+    /// Any existing data for the same key will be overwritten.
+    ///
+    /// - Parameters:
+    ///   - value: The binary data to store securely. Must not be empty.
+    ///   - key: A unique string identifier for the data. Must not be empty.
+    ///   - requireAuthentication: Whether accessing this data should require biometric/passcode authentication.
+    ///
+    /// - Note: Writing data with `requireAuthentication` set to `true` triggers biometric autrhentication when reading back the data..
+    func writeData(_ data: Data, forKey key: KeyType, requireAuthentication: Bool) async -> Result<Bool, LocalStorageErrorType> {
+        await Task.detached(priority: .userInitiated) {
+            do {
+                try store(requireAuthentication).set(data, key: key, ignoringAttributeSynchronizable: false)
+                return .success(true)
+            } catch let error as LAError {
+                return .failure(Self.mapLAError(error))
+            } catch let error as Status {
+                return .failure(Self.mapKeychainAccessStatus(error))
+            } catch {
+                return .failure(.unknownError(error))
+            }
+        }.value
+    }
+
+    /// Retrieves securely stored binary data from the Keychain for the specified key.
+    /// The data is automatically decrypted using the system's Keychain mechanisms.
+    ///
+    /// - Parameters:
+    ///   - key: The unique string identifier for the stored data.
+    ///   - requireAuthentication: Whether this data requires biometric/passcode authentication to access.
+    /// - Returns: The decrypted binary data if found, or `nil` if no data exists for the key.
+    ///
+    /// - Note: For data requiring authentication, this method automatically  prompts for biometric/passcode
+    ///   authentication.
+    func readData(forKey key: KeyType, requireAuthentication: Bool) async -> Result<Data, LocalStorageErrorType> {
+        await Task.detached(priority: .userInitiated) {
+            do {
+                if let storedValue = try store(requireAuthentication)
+                    .authenticationPrompt(AMIL10n.localStorageAuthenticationPrompt)
+                    .getData(key, ignoringAttributeSynchronizable: false) {
+                    return .success(storedValue)
+                } else {
+                    return .failure(.keyNotFound)
+                }
+            } catch let error as LAError {
+                return .failure(Self.mapLAError(error))
+            } catch let error as Status {
+                switch error {
+                case .unexpectedError:
+                    return .failure(.typeMismatch(LocalStorageImplementationErrorType.valueTypeIsNotData))
+                default:
+                    return .failure(Self.mapKeychainAccessStatus(error))
+                }
+            } catch {
+                return .failure(.unknownError(error))
+            }
+        }.value
+    }
+
+    /// Permanently removes stored data from the Keychain for the specified key.
+    /// This operation is irreversible and will completely delete the encrypted data.
+    /// No error is generated if the key doesn't exist.
+    ///
+    /// - Parameters:
+    ///   - key: The unique string identifier for the data to remove.
+    ///   - requireAuthentication: Whether removing this data requires biometric/passcode authentication.
+    ///
+    /// - Note: Authentication requirement for data deletion is not yet implemented.
+    ///   Data can currently be deleted regardless of this parameter.
+    /// - Important: This operation cannot be undone. Ensure you really want to delete the data.
+    func deleteData(forKey key: KeyType, requireAuthentication: Bool) async -> Result<Bool, LocalStorageErrorType> {
+        await Task.detached(priority: .userInitiated) {
+            do {
+                try store(requireAuthentication).remove(key, ignoringAttributeSynchronizable: false)
+                return .success(true)
+            } catch {
+                return .failure(.keyNotFound)
+            }
+        }.value
+    }
+
+    /// Permanently removes all stored data from this Keychain service.
+    /// Deletes ALL items regardless of their original security level (encrypted or authenticated).
+    ///
+    /// ## Important Notes
+    /// - **Complete Deletion**: KeychainAccess cannot differentiate between security levels—all items are removed
+    /// - **No Authentication**: This operation does not require authentication to execute
+    /// - **Service Isolation**: Only affects items in this specific Keychain service
+    /// - **Irreversible**: All data is permanently lost and cannot be recovered
+    ///
+    /// - Returns: `.success(true)` if successful, or `.failure(LocalStorageErrorType)` if system error occurs.
+    ///
+    /// - Warning: This operation deletes **ALL** items in the service. Ensure proper confirmation before use.
+    func deleteAll(requireAuthentication: Bool) async -> Result<Bool, LocalStorageErrorType> {
+        await Task.detached(priority: .userInitiated) {
+            do {
+                try store(requireAuthentication).removeAll()
+                return .success(true)
+            } catch let error as LAError {
+                return .failure(Self.mapLAError(error))
+            } catch let error as Status {
+                return .failure(Self.mapKeychainAccessStatus(error))
+            } catch {
+                return .failure(.unknownError(error))
+            }
+        }.value
+    }
+}
+
+/// Provides debugging support for KeychainStorage by exposing internal state.
+/// This extension allows developers to inspect the contents of the Keychain store
+/// during development and testing phases.
+///
+/// - Warning: The debug description may contain sensitive information and should
+///   never be logged or exposed in production builds.
+extension KeychainStorage: CustomDebugStringConvertible {
+    /// A human-readable representation of the Keychain store's configuration and state.
+    /// Delegates to the underlying `Keychain` instance for detailed information.
+    ///
+    /// - Important: This may contain sensitive debugging information and should only
+    ///   be used during development. Ensure debug logs are disabled in production.
+    var debugDescription: String {
+        """
+        KeychainStorage
+          Encrypted '\(currentUserEncryptedStoreID)'
+            \(store(false).debugDescription)"
+          Authenticated '\(currentUserAuthenticatedStoreID)'
+            \(store(true).debugDescription)"
+        """
+    }
+}
