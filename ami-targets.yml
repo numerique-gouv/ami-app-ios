@@ -76,15 +76,20 @@ targetTemplates:
         FirebaseAppDelegateProxyEnabled: false
         
     settings:
-      PRODUCT_NAME: $(APP_NAME)
-      PRODUCT_BUNDLE_IDENTIFIER: $(BASE_BUNDLE_IDENTIFIER)
-      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-      DEVELOPMENT_ASSET_PATHS: AMI/Resources/Preview
-      ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: false # Done by SwiftGen
-      ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: BlueFranceSun113
-#       SWIFT_OBJC_BRIDGING_HEADER: Project-Bridging-Header.h
-#       SWIFT_OBJC_INTERFACE_HEADER_NAME: GeneratedInterface-Swift.h
+      base:
+        PRODUCT_NAME: $(APP_NAME)
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASE_BUNDLE_IDENTIFIER)
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        DEVELOPMENT_ASSET_PATHS: AMI/Resources/Preview
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: false # Done by SwiftGen
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: BlueFranceSun113
+#         SWIFT_OBJC_BRIDGING_HEADER: Project-Bridging-Header.h
+#         SWIFT_OBJC_INTERFACE_HEADER_NAME: GeneratedInterface-Swift.h
 
+      configs:
+        Debug:
+          ENABLE_TESTABILITY: YES # Enable testability in Debug mode for Tests targets.
+      
     preBuildScripts:
     - name: 🛠 SwiftGen
       runOnlyWhenInstalling: false
@@ -132,8 +137,9 @@ targetTemplates:
     type: bundle.unit-test
 
     settings:
-      PRODUCT_NAME: $(APP_NAME)
-      PRODUCT_BUNDLE_IDENTIFIER: $(BASE_BUNDLE_IDENTIFIER)
+      base:
+        PRODUCT_NAME: $(APP_NAME)
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASE_BUNDLE_IDENTIFIER)
     
     dependencies:
     - package: AMI-Design-System
@@ -149,10 +155,10 @@ targetTemplates:
       product: SwiftUIIntrospect
       embed: false
     
-    sources:
-    - path: AMI
-      excludes:
-        - "**/*.md" # excludes all files with the .md extension
+#    sources:
+# Don't list main app sources files. They will be used through dependency/target to main app.
+#    - path: AMI
+
 #--------------------------------------------------------------------------------
 targets:
 #--------------------------------------------------------------------------------
@@ -164,12 +170,13 @@ targets:
       path: targets/production/SupportingFiles/Info.plist
 
     settings:
-      BASE_BUNDLE_IDENTIFIER: fr.gouv.ami
-      PRODUCTION_APP_NAME: AMI PRODUCTION
-      APP_NAME: AMI-Production
-      APP_DISPLAY_NAME: AMI # The name used in the application.
-      CODE_SIGN_ENTITLEMENTS: targets/production/SupportingFiles/ami.entitlements
-      OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_PRODUCTION
+      base:
+        BASE_BUNDLE_IDENTIFIER: fr.gouv.ami
+        PRODUCTION_APP_NAME: AMI PRODUCTION
+        APP_NAME: AMI-Production
+        APP_DISPLAY_NAME: AMI # The name used in the application.
+        CODE_SIGN_ENTITLEMENTS: targets/production/SupportingFiles/ami.entitlements
+        OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_PRODUCTION
 
     sources:
     - path: targets/production/SupportingFiles
@@ -182,12 +189,13 @@ targets:
       path: targets/staging/SupportingFiles/Info.plist
 
     settings:
-      BASE_BUNDLE_IDENTIFIER: fr.gouv.ami.staging
-      PRODUCTION_APP_NAME: AMI STAGING
-      APP_NAME: AMI-Staging
-      APP_DISPLAY_NAME: AMI staging # The name used in the application.
-      CODE_SIGN_ENTITLEMENTS: targets/staging/SupportingFiles/ami.entitlements
-      OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_STAGING
+      base:
+        BASE_BUNDLE_IDENTIFIER: fr.gouv.ami.staging
+        PRODUCTION_APP_NAME: AMI STAGING
+        APP_NAME: AMI-Staging
+        APP_DISPLAY_NAME: AMI staging # The name used in the application.
+        CODE_SIGN_ENTITLEMENTS: targets/staging/SupportingFiles/ami.entitlements
+        OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_STAGING
 
     sources:
     - path: targets/staging/Sources
@@ -201,14 +209,15 @@ targets:
       path: targets/unitTests/SupportingFiles/Info.plist
 
     settings:
-      BASE_BUNDLE_IDENTIFIER: fr.gouv.ami.unitTests
-      APP_NAME: AMI-UnitTests
-      APP_DISPLAY_NAME: AMI Unit Tests # The name used in the application.
-      CODE_SIGN_ENTITLEMENTS: targets/unitTests/SupportingFiles/ami.entitlements
-      OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_UNIT_TESTS
+      base:
+        BASE_BUNDLE_IDENTIFIER: fr.gouv.ami.unitTests
+        APP_NAME: AMI-UnitTests
+        APP_DISPLAY_NAME: AMI Unit Tests # The name used in the application.
+        CODE_SIGN_ENTITLEMENTS: targets/unitTests/SupportingFiles/ami.entitlements
+        OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_UNIT_TESTS
       
-      TEST_HOST: $(BUILT_PRODUCTS_DIR)/AMI-Staging.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AMI-Staging
-      BUNDLE_LOADER: $(TEST_HOST)
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/AMI-Staging.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AMI-Staging
+        BUNDLE_LOADER: $(TEST_HOST)
     
     dependencies:
       - target: AMI-Staging
