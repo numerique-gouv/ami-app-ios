@@ -171,6 +171,11 @@ extension SwiftUIWebView {
             webView?.goBack()
         }
 
+        @MainActor
+        func loadInitialPage() {
+            webView?.load(URLRequest(url: rootUrl))
+        }
+
         // The `goBackToRootUrl()` method doesn't seem to work reliably with Single Page Application in WKWebView.
         // The web page seems to be blocked on a blank page during loading.
         @MainActor
