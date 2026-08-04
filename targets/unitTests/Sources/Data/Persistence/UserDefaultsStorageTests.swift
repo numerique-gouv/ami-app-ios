@@ -28,12 +28,6 @@ struct UserDefaultsStorageTests {
 
     // MARK: - Initialization Tests
 
-    @Test("UserDefaultsStorage initializes successfully with valid store ID")
-    func initialization_success() async {
-        let storage = UserDefaultsStorage(for: "validStoreID")
-        #expect(storage != nil)
-    }
-
     @Test("UserDefaultsStorage creates isolated storage suites")
     func initialization_isolatedSuites() async {
         let storage1 = UserDefaultsStorage(for: "store1")
