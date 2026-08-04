@@ -143,10 +143,10 @@ struct KeychainStorageTests {
         switch result {
         case .success(true):
             // Success is expected if biometry is available and enrolled
-            #expect(true)
+            #expect(Bool(true))
         case .failure(.biometryNotEnrolled), .failure(.biometryNotAvailable), .failure(.passcodeNotSet):
             // These are expected failures in test environments
-            #expect(true, "Biometric authentication not available in test environment: \(result)")
+            #expect(Bool(true), "Biometric authentication not available in test environment: \(result)")
         case .failure(let error):
             #expect(Bool(false), "Unexpected error when writing secure data: \(error)")
         default:
@@ -208,13 +208,13 @@ struct KeychainStorageTests {
                 #expect(data == testData)
             case .failure(.authenticationCancelled), .failure(.biometryNotEnrolled), .failure(.biometryNotAvailable):
                 // These are expected in test environments
-                #expect(true, "Authentication not available in test environment")
+                #expect(Bool(true), "Authentication not available in test environment")
             case .failure(let error):
                 #expect(Bool(false), "Unexpected read error: \(error)")
             }
         case .failure(.biometryNotEnrolled), .failure(.biometryNotAvailable), .failure(.passcodeNotSet):
             // Expected in test environments - skip the read test
-            #expect(true, "Biometric authentication not available in test environment")
+            #expect(Bool(true), "Biometric authentication not available in test environment")
         case .failure(let error):
             #expect(Bool(false), "Unexpected write error: \(error)")
         default:
@@ -354,7 +354,7 @@ struct KeychainStorageTests {
                 #expect(data == highSecurityData, "High security data should still exist after medium store deleteAll")
             case .failure(.biometryNotEnrolled), .failure(.biometryNotAvailable), .failure(.passcodeNotSet), .failure(.authenticationCancelled):
                 // Expected in test environments - we can't verify the data still exists without authentication
-                #expect(true, "Cannot verify high security data persistence due to test environment limitations")
+                #expect(Bool(true), "Cannot verify high security data persistence due to test environment limitations")
             case .failure(let error):
                 #expect(Bool(false), "Unexpected error reading high security data: \(error)")
             }
@@ -370,9 +370,9 @@ struct KeychainStorageTests {
         let highResult = await sut.deleteAll(requireAuthentication: true)
         switch highResult {
         case .success(true):
-            #expect(true, "High security deleteAll succeeded on empty storage")
+            #expect(Bool(true), "High security deleteAll succeeded on empty storage")
         case .failure(.biometryNotEnrolled), .failure(.biometryNotAvailable), .failure(.passcodeNotSet), .failure(.authenticationCancelled):
-            #expect(true, "Expected authentication failure in test environment")
+            #expect(Bool(true), "Expected authentication failure in test environment")
         case .failure(let error):
             #expect(Bool(false), "Unexpected error during high security deleteAll on empty storage: \(error)")
         default:
@@ -427,17 +427,17 @@ struct KeychainStorageTests {
                 let readResult = await sut.readData(forKey: testKey, requireAuthentication: true)
                 switch readResult {
                 case .failure(.keyNotFound):
-                    #expect(true, "High security data successfully deleted")
+                    #expect(Bool(true), "High security data successfully deleted")
                 case .failure(.biometryNotEnrolled), .failure(.biometryNotAvailable), .failure(.passcodeNotSet), .failure(.authenticationCancelled):
                     // Can't verify deletion due to authentication issues
-                    #expect(true, "Cannot verify deletion due to authentication limitations")
+                    #expect(Bool(true), "Cannot verify deletion due to authentication limitations")
                 case .success(let data):
                     #expect(Bool(false), "Data should have been deleted but was found: \(data)")
                 case .failure(let error):
                     #expect(Bool(false), "Unexpected error when verifying deletion: \(error)")
                 }
             case .failure(.biometryNotEnrolled), .failure(.biometryNotAvailable), .failure(.passcodeNotSet), .failure(.authenticationCancelled):
-                #expect(true, "Authentication not available for high security deleteAll in test environment")
+                #expect(Bool(true), "Authentication not available for high security deleteAll in test environment")
             case .failure(let error):
                 #expect(Bool(false), "Unexpected error during high security deleteAll: \(error)")
             default:
@@ -446,8 +446,8 @@ struct KeychainStorageTests {
             
         case .failure(.biometryNotEnrolled), .failure(.biometryNotAvailable), .failure(.passcodeNotSet):
             // Can't test high security deleteAll if we can't write to high security store
-            #expect(true, "High security operations not available in test environment")
-            
+            #expect(Bool(true), "High security operations not available in test environment")
+
         case .failure(let error):
             #expect(Bool(false), "Unexpected error writing to high security store: \(error)")
             
@@ -490,14 +490,14 @@ struct KeychainStorageTests {
                 let highReadResult = await sut.readData(forKey: highKey, requireAuthentication: true)
                 switch highReadResult {
                 case .failure(.keyNotFound):
-                    #expect(true, "High security data successfully deleted")
+                    #expect(Bool(true), "High security data successfully deleted")
                 case .failure(.biometryNotEnrolled), .failure(.biometryNotAvailable), .failure(.passcodeNotSet), .failure(.authenticationCancelled):
-                    #expect(true, "Cannot verify high security deletion due to authentication limitations")
+                    #expect(Bool(true), "Cannot verify high security deletion due to authentication limitations")
                 default:
                     #expect(Bool(false), "Unexpected result when verifying high security deletion: \(highReadResult)")
                 }
             case .failure(.biometryNotEnrolled), .failure(.biometryNotAvailable), .failure(.passcodeNotSet), .failure(.authenticationCancelled):
-                #expect(true, "Authentication not available for high security deleteAll")
+                #expect(Bool(true), "Authentication not available for high security deleteAll")
             default:
                 #expect(Bool(false), "Unexpected result from high security deleteAll: \(highDeleteResult)")
             }
@@ -523,11 +523,11 @@ struct KeychainStorageTests {
         
         switch mediumDeleteResult {
         case .success(true):
-            #expect(true, "Medium security deleteAll succeeded as expected")
+            #expect(Bool(true), "Medium security deleteAll succeeded as expected")
         case .failure(.secureHardwareUnavailable):
-            #expect(true, "Keychain hardware unavailable - acceptable in test environments")
+            #expect(Bool(true), "Keychain hardware unavailable - acceptable in test environments")
         case .failure(.deviceIsLocked):
-            #expect(true, "Device locked - acceptable error condition")
+            #expect(Bool(true), "Device locked - acceptable error condition")
         case .failure(let error):
             #expect(Bool(false), "Unexpected error from medium security deleteAll: \(error)")
         default:
@@ -539,13 +539,13 @@ struct KeychainStorageTests {
         
         switch highDeleteResult {
         case .success(true):
-            #expect(true, "High security deleteAll succeeded")
+            #expect(Bool(true), "High security deleteAll succeeded")
         case .failure(.biometryNotEnrolled), .failure(.biometryNotAvailable), .failure(.passcodeNotSet):
-            #expect(true, "Expected authentication failure in test environment")
+            #expect(Bool(true), "Expected authentication failure in test environment")
         case .failure(.authenticationCancelled), .failure(.authenticationFailed), .failure(.tooManyAttemps):
-            #expect(true, "Authentication-related failure is acceptable")
+            #expect(Bool(true), "Authentication-related failure is acceptable")
         case .failure(.deviceIsLocked), .failure(.secureHardwareUnavailable):
-            #expect(true, "System state error is acceptable")
+            #expect(Bool(true), "System state error is acceptable")
         case .failure(let error):
             #expect(Bool(false), "Unexpected error from high security deleteAll: \(error)")
         default:
@@ -593,7 +593,7 @@ struct KeychainStorageTests {
         
         await withTaskGroup(of: Void.self) { group in
             // Add concurrent deleteAll operations
-            for i in 0..<3 {
+            for _ in 0..<3 {
                 group.addTask {
                     let _ = await self.sut.deleteAll(requireAuthentication: false)
                 }
@@ -608,7 +608,7 @@ struct KeychainStorageTests {
         }
         
         // If we reach here without crashes or deadlocks, concurrent operations are safe
-        #expect(true, "Concurrent deleteAll operations completed safely")
+        #expect(Bool(true), "Concurrent deleteAll operations completed safely")
     }
 
     // MARK: - JSON Data Tests
@@ -749,7 +749,7 @@ struct KeychainStorageTests {
                 #expect(readResult == .success(testData), "Failed to read \(keyPrefix)")
             case .failure(.dataIsTooLarge):
                 // Expected for very large data in Keychain
-                #expect(true, "Data too large for Keychain: \(keyPrefix)")
+                #expect(Bool(true), "Data too large for Keychain: \(keyPrefix)")
             case .failure(let error):
                 #expect(Bool(false), "Unexpected error for \(keyPrefix): \(error)")
             default:
@@ -802,10 +802,10 @@ struct KeychainStorageTests {
         
         switch largeDataResult {
         case .failure(.dataIsTooLarge):
-            #expect(true, "Correctly detected data too large for Keychain")
+            #expect(Bool(true), "Correctly detected data too large for Keychain")
         case .success(true):
             // Some test environments might accept this
-            #expect(true, "Test environment accepted large data")
+            #expect(Bool(true), "Test environment accepted large data")
         case .failure(let error):
             #expect(Bool(false), "Unexpected error for large data: \(error)")
         default:
@@ -833,9 +833,9 @@ struct KeychainStorageTests {
         
         switch readResult2 {
         case .failure(.keyNotFound):
-            #expect(true, "Data should not exist in high security store - they are separate stores")
+            #expect(Bool(true), "Data should not exist in high security store - they are separate stores")
         case .failure(.biometryNotEnrolled), .failure(.biometryNotAvailable), .failure(.passcodeNotSet), .failure(.authenticationCancelled):
-            #expect(true, "Authentication failure prevented reading from high security store")
+            #expect(Bool(true), "Authentication failure prevented reading from high security store")
         case .success(let data):
             #expect(Bool(false), "Data should not be accessible from high security store when written to medium security store. Got: \(data)")
         case .failure(let error):
@@ -868,13 +868,13 @@ struct KeychainStorageTests {
                 #expect(data == highData, "High security store should contain high data, not medium data")
                 #expect(data != mediumData, "High security store should not contain medium security data")
             case .failure(.biometryNotEnrolled), .failure(.biometryNotAvailable), .failure(.passcodeNotSet), .failure(.authenticationCancelled):
-                #expect(true, "Cannot verify high security data due to authentication limitations")
+                #expect(Bool(true), "Cannot verify high security data due to authentication limitations")
             case .failure(let error):
                 #expect(Bool(false), "Unexpected error reading from high security store: \(error)")
             }
             
         case .failure(.biometryNotEnrolled), .failure(.biometryNotAvailable), .failure(.passcodeNotSet):
-            #expect(true, "High security operations not available in test environment")
+            #expect(Bool(true), "High security operations not available in test environment")
         case .failure(let error):
             #expect(Bool(false), "Unexpected error writing to high security store: \(error)")
         default:
