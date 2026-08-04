@@ -164,7 +164,7 @@ struct UserDefaultsStorageTests {
         let testKey = "type_mismatch_key"
 
         // Manually store a non-Data value directly in UserDefaults
-        let suiteName = "\(AppBundle.identifier()).\(Self.testStoreID)"
+        let suiteName = "\(AppBundle.identifier).\(Self.testStoreID)"
         if let userDefaults = UserDefaults(suiteName: suiteName) {
             userDefaults.set("This is a string, not Data", forKey: testKey)
         }
