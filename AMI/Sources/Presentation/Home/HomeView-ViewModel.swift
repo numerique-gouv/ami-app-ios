@@ -133,6 +133,11 @@ extension HomeView {
             Task.detached(priority: .background) { @MainActor in
                 let nativeInfosScript = await HomeNativeInfosScripts()
                 webViewViewModel.addUserScripts(userScripts: nativeInfosScript)
+
+                // Load initial page now that viewModel is fully ready.
+                Task { @MainActor in
+                    webViewViewModel.loadInitialPage()
+                }
             }
         }
 
