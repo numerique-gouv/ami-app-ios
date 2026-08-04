@@ -63,6 +63,8 @@ extension SwiftUIWebView {
             addUserScripts(userScripts: userScripts)
 
             configure()
+
+            AppLog.viewModel.info("\(AppLog.logHeader(self)) Don't foget to call `loadInitialPage()` in your subclass to load your webView content when your ViewModel is fully ready.")
         }
 
         private func addUserScripts(userScripts: WebViewUserScriptsProtocol?) {
@@ -169,6 +171,11 @@ extension SwiftUIWebView {
             webView?.goBack()
         }
 
+        @MainActor
+        func loadInitialPage() {
+            webView?.load(URLRequest(url: rootUrl))
+        }
+
         // The `goBackToRootUrl()` method doesn't seem to work reliably with Single Page Application in WKWebView.
         // The web page seems to be blocked on a blank page during loading.
         @MainActor
@@ -202,7 +209,7 @@ extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
 
 extension SwiftUIWebView.ViewModel: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) heck if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
+        AppLog.viewModel.notice("\(AppLog.logHeader(self)) Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
         return true
     }
 

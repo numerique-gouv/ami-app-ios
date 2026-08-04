@@ -28,8 +28,6 @@ struct SwiftUIWebView: UIViewRepresentable {
             webView.isInspectable = false
         #endif
 
-        webView.load(URLRequest(url: viewModel.rootUrl))
-
         return webView
     }
 
