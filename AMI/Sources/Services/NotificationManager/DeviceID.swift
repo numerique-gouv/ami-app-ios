@@ -40,7 +40,7 @@ final actor DeviceID {
         let storage = LocalStorageRepository(for: Self.DEVICE_ID_LOCAL_STORAGE_NAME)
 
         // Attempt to read existing device ID
-        switch await storage.readString(key: Self.DEVICE_ID_KEY, secureLevel: .medium) {
+        switch await storage.readString(key: Self.DEVICE_ID_KEY, secureLevel: .encrypted) {
         case let .success(deviceID):
             AppLog.service.notice("\(AppLog.logHeader(self)) ✅ Device ID found in LocalStorage: \(deviceID, privacy: .private)")
             return deviceID
@@ -72,7 +72,7 @@ final actor DeviceID {
     private static func createAndStoreNewDeviceID(using storage: LocalStorageRepository) async -> DeviceIdType {
         var newDeviceID: DeviceIdType = UUID().uuidString
 
-        switch await storage.writeString(key: Self.DEVICE_ID_KEY, value: newDeviceID, secureLevel: .medium) {
+        switch await storage.writeString(key: Self.DEVICE_ID_KEY, value: newDeviceID, secureLevel: .encrypted) {
         case .success:
             AppLog.service.notice("\(AppLog.logHeader(self)) ✅ Device ID successfully stored: \(newDeviceID, privacy: .private)")
             return newDeviceID
