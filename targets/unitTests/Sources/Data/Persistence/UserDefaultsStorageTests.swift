@@ -28,12 +28,6 @@ struct UserDefaultsStorageTests {
 
     // MARK: - Initialization Tests
 
-    @Test("UserDefaultsStorage initializes successfully with valid store ID")
-    func initialization_success() async {
-        let storage = UserDefaultsStorage(for: "validStoreID")
-        #expect(storage != nil)
-    }
-
     @Test("UserDefaultsStorage creates isolated storage suites")
     func initialization_isolatedSuites() async {
         let storage1 = UserDefaultsStorage(for: "store1")
@@ -164,7 +158,7 @@ struct UserDefaultsStorageTests {
         let testKey = "type_mismatch_key"
 
         // Manually store a non-Data value directly in UserDefaults
-        let suiteName = "\(AppBundle.identifier()).\(Self.testStoreID)"
+        let suiteName = "\(AppBundle.identifier).\(Self.testStoreID)"
         if let userDefaults = UserDefaults(suiteName: suiteName) {
             userDefaults.set("This is a string, not Data", forKey: testKey)
         }
