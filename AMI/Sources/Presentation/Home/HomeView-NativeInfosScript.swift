@@ -51,7 +51,7 @@ class HomeNativeInfosScripts {
 
         window.NativeInfos.getInfos = function() {
             return {
-                    plateform: "ios",
+                    platform: "ios",
                     app_name: "\(AppBundle.name)",
                     version: "\(AppBundle.version)",
                     build: \(AppBundle.build),
