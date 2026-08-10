@@ -28,12 +28,18 @@ The project is described using 2 files:
 3. Then, generate the Xcode project using script:
 	> scripts/ami-generate-xcode.sh
 
+
+
 4. Now, you can open the generated `AMI-xcodegen.xcodeproj` in Xcode.
 	> xed AMI-xcodegen.xcodeproj
 
 ## Information
 
 - SwiftGenPlugin (used by AmiDesignSystem) must be authorized to build the project.
+    
+    If compilation fails in Xcode because of SwiftGenPlugin not authorized, see [AmiDesignSystem documentation](https://github.com/numerique-gouv/ami-design-system-ios/blob/main/Readme.md#how-to-authorize-swiftgenplugin).
+
+    In CI, you can use `xcodebuild` flag `-skipPackagePluginValidation` to overcome this problem.
 
 - SwiftGen is used in Xcode pre-build script to automatically generate Swift code (in `AMI/Sources/Generated` folder) for String, Color and Image resources.
   - **Strings**
