@@ -35,7 +35,7 @@ extension PartnerView {
             let userScripts = PartnerUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
                                                             rootUrl: rootUrl,
-                                                            userScripts: userScripts)
+                                                            initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
             super.init()

@@ -46,12 +46,12 @@ extension SwiftUIWebView {
 
         init(websiteDataStore: WKWebsiteDataStore,
              rootUrl: URL,
-             userScripts: WebViewUserScriptsProtocol? = nil,
+             initialUserScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
              urlChangeAction: UrlChangeAction? = nil) {
             configuration.websiteDataStore = websiteDataStore
             self.rootUrl = rootUrl
-            self.userScripts = userScripts
+            userScripts = initialUserScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
             self.urlChangeAction = urlChangeAction
 
@@ -60,24 +60,26 @@ extension SwiftUIWebView {
             // Default delegate to self.
             delegate = self
 
-            addUserScripts(userScripts: userScripts)
+            addUserScripts(userScripts: initialUserScripts)
 
             configure()
 
             AppLog.viewModel.info("\(AppLog.logHeader(self)) Don't foget to call `loadInitialPage()` in your subclass to load your webView content when your ViewModel is fully ready.")
         }
 
-        private func addUserScripts(userScripts: WebViewUserScriptsProtocol?) {
+        // Set `addUserScripts` method public because it can be used later than at `init` call if a script needs async values.
+        func addUserScripts(userScripts: WebViewUserScriptsProtocol?) {
             guard let scripts = userScripts?.scripts else {
                 return
             }
 
-            removeAllUserScripts()
-            for userScript in scripts {
-                configuration.userContentController.addUserScript(userScript.script)
-                // Use WeakScriptMessageHandler to avoid retain cycle:
-                //   WebView.ViewModel -> WKWebViewConfiguration -> WKUserContentController -> WebView.ViewModel (self)
-                configuration.userContentController.add(WeakScriptMessageHandler(self), name: userScript.name)
+            Task { @MainActor in
+                for userScript in scripts {
+                    configuration.userContentController.addUserScript(userScript.script)
+                    // Use WeakScriptMessageHandler to avoid retain cycle:
+                    //   WebView.ViewModel -> WKWebViewConfiguration -> WKUserContentController -> WebView.ViewModel (self)
+                    configuration.userContentController.add(WeakScriptMessageHandler(self), name: userScript.name)
+                }
             }
         }
 
@@ -287,7 +289,7 @@ extension SwiftUIWebView.ViewModel {
     static let `default` = {
         let model = SwiftUIWebView.ViewModel(websiteDataStore: .nonPersistent(),
                                              rootUrl: URL(string: "https://numerique.gouv.fr")!,
-                                             userScripts: HomeUserScripts())
+                                             initialUserScripts: HomeUserScripts())
         model.delegate = simulatorDelegate
         #if DEBUG
             model.acceptSelfSignedCertificate = true
