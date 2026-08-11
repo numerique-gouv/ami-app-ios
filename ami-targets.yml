@@ -97,8 +97,25 @@ targetTemplates:
       shell: /bin/sh
       script: |
         scripts/ami-xcode-pass-swiftgen.sh
-        
-    postBuildScripts:
+      outputFiles:
+        - "$SRCROOT/AMI/Sources/Generated/Assets-Generated.swift"        
+        - "$SRCROOT/AMI/Sources/Generated/Strings-Generated.swift"        
+
+    - name: 🔐 Generate Secrets 
+      runOnlyWhenInstalling: false
+      basedOnDependencyAnalysis: false
+      inputFiles:
+        - "$SRCROOT/Config/.env.${TARGET_NAME}"
+      outputFiles:
+        - "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"        
+      shell: /bin/sh
+      script: |
+        SECRETS_DEBUG=1 scripts/ami-xcode-pass-generate-secrets.sh \
+          "$SRCROOT/Config/.env.${TARGET_NAME}" \
+          "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"
+          
+                
+    postCompileScripts:
     - name: ⚠️ SwiftLint
       runOnlyWhenInstalling: false
       basedOnDependencyAnalysis: false
@@ -131,7 +148,7 @@ targetTemplates:
     - path: AMI
       excludes:
         - "**/*.md" # excludes all files with the .md extension
-
+        
   BaseTestTarget:
     platform: iOS
     type: bundle.unit-test
