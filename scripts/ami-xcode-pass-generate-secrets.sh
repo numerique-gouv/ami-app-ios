@@ -360,8 +360,8 @@ read_key() {
 # ---------------------------------------------------------------------------
 
 {
-    echo "// swiftgen:ignore"
-    echo "// swiftformat:ignore"
+    echo "// swiftformat:disable all"
+    echo "// swiftlint:disable all"
     echo "// Generated from $(basename "$ENV_FILE") — do not edit"
     echo ""
     echo "enum Secrets {"
