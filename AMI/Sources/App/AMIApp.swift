@@ -5,6 +5,7 @@
 //  Created by Aline Bonnet on 19/10/2025.
 //
 
+import AmiDesignSystem
 import SwiftUI
 @_spi(Advanced) import SwiftUIIntrospect
 
@@ -14,6 +15,12 @@ struct AMIApp: App {
     @Bindable var appState = AMIAppState()
 
     init() {
+        // Set default accent color for UIKit components.
+        Color.setUIKitAccentColor()
+
+        // Load Marianne fonts embedded in AMI Design System
+        FontLoader.registerFonts()
+
         // Set the notificationManager to receive notification events.
         UNUserNotificationCenter.current().delegate = AMIAppState.notificationManager
 
@@ -63,6 +70,8 @@ struct AMIApp: App {
     var body: some Scene {
         WindowGroup {
             mainContent
+                // Define global view hierarchy accent color like this because this color is defined externaly.
+                .tint(.dsfrAccentColor)
         }
     }
 }

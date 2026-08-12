@@ -5,6 +5,7 @@
 //  Created by Aline Bonnet on 19/10/2025.
 //
 
+import AmiDesignSystem
 import SwiftUI
 @_spi(Advanced) import SwiftUIIntrospect
 import WebKit
@@ -87,7 +88,7 @@ struct HomeView: View {
             } label: {
                 Text("Télécharger les logs")
             }
-            .buttonStyle(DsfrButtonStyle(type: .secondary))
+            .buttonStyle(ButtonStyleDsfr(type: .secondary))
             .padding(.vertical)
         }
     }
