@@ -110,7 +110,7 @@ targetTemplates:
         - "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"        
       shell: /bin/sh
       script: |
-        SECRETS_DEBUG=1 scripts/ami-xcode-pass-generate-secrets.sh \
+        scripts/ami-xcode-pass-generate-secrets.sh \
           "$SRCROOT/Config/.env.${TARGET_NAME}" \
           "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"
           
