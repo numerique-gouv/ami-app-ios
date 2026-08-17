@@ -99,21 +99,7 @@ targetTemplates:
         scripts/ami-xcode-pass-swiftgen.sh
       outputFiles:
         - "$SRCROOT/AMI/Sources/Generated/Assets-Generated.swift"        
-        - "$SRCROOT/AMI/Sources/Generated/Strings-Generated.swift"        
-
-    - name: 🔐 Generate Secrets 
-      runOnlyWhenInstalling: false
-      basedOnDependencyAnalysis: false
-      inputFiles:
-        - "$SRCROOT/Config/.env.${TARGET_NAME}"
-      outputFiles:
-        - "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"        
-      shell: /bin/sh
-      script: |
-        scripts/ami-xcode-pass-generate-secrets.sh \
-          "$SRCROOT/Config/.env.${TARGET_NAME}" \
-          "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"
-          
+        - "$SRCROOT/AMI/Sources/Generated/Strings-Generated.swift"                  
                 
     postCompileScripts:
     - name: ⚠️ SwiftLint
@@ -195,6 +181,20 @@ targets:
         CODE_SIGN_ENTITLEMENTS: targets/production/SupportingFiles/ami.entitlements
         OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_PRODUCTION
 
+    preBuildScripts:
+    - name: 🔐 Generate Secrets 
+      runOnlyWhenInstalling: false
+      basedOnDependencyAnalysis: false
+      inputFiles:
+        - "$SRCROOT/Config/.env.${TARGET_NAME}"
+      outputFiles:
+        - "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"        
+      shell: /bin/sh
+      script: |
+        scripts/ami-xcode-pass-generate-secrets.sh \
+          "$SRCROOT/targets/production/SupportingFiles/.env.ami-production" \
+          "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"
+
     sources:
     - path: targets/production/SupportingFiles
 #--------------------------------------------------------------------------------
@@ -213,6 +213,20 @@ targets:
         APP_DISPLAY_NAME: AMI staging # The name used in the application.
         CODE_SIGN_ENTITLEMENTS: targets/staging/SupportingFiles/ami.entitlements
         OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_STAGING
+
+    preBuildScripts:
+    - name: 🔐 Generate Secrets 
+      runOnlyWhenInstalling: false
+      basedOnDependencyAnalysis: false
+      inputFiles:
+        - "$SRCROOT/Config/.env.${TARGET_NAME}"
+      outputFiles:
+        - "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"        
+      shell: /bin/sh
+      script: |
+        scripts/ami-xcode-pass-generate-secrets.sh \
+          "$SRCROOT/targets/staging/SupportingFiles/.env.ami-staging" \
+          "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"
 
     sources:
     - path: targets/staging/Sources
@@ -238,7 +252,7 @@ targets:
     
     dependencies:
       - target: AMI-Staging
-      
+
     sources:
     - path: targets/unitTests/Sources
     - path: targets/unitTests/SupportingFiles
