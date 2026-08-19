@@ -6,7 +6,7 @@
 	<string>development</string>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>webcredentials:ami-back-staging-pr1113.osc-fr1.scalingo.io?mode=developer</string>
+		<string>webcredentials:ami-back-staging-pr1113.osc-fr1.scalingo.io</string>
 	</array>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>

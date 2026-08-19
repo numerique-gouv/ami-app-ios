@@ -202,7 +202,7 @@ targets:
       properties:
         aps-environment: development
         com.apple.developer.associated-domains:
-        - webcredentials:ami-back-staging-pr1113.osc-fr1.scalingo.io?mode=developer
+        - webcredentials:ami-back-staging-pr1113.osc-fr1.scalingo.io
         
     settings:
       base:
