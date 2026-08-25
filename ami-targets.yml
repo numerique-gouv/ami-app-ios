@@ -77,8 +77,12 @@ targetTemplates:
         
     entitlements:
       properties:
-        com.apple.security.app-sandbox: true # Restrict application execution to its sandbox.
-        com.apple.security.network.client: true # Allow a sandboxed application to initiate conections to remote hosts.
+        com.apple.security.app-sandbox: true # Restrict application execution to its sandbox (only for macos version, ont iOS that is always sandboxed).
+        com.apple.security.network.client: true # Allow a macos sandboxed application to initiate conections to remote hosts.
+# aps-environment will be overriden at signing step.
+# If signing with a Development profile, its value will be `developmenet`.
+# If signing with a Distribution profile, its value will be `production`.
+#        aps-environment: development 
 
     settings:
       base:
@@ -178,8 +182,6 @@ targets:
 
     entitlements:
       path: targets/production/SupportingFiles/ami.entitlements
-      properties:
-        aps-environment: production
         
     settings:
       base:
@@ -217,7 +219,6 @@ targets:
     entitlements:
       path: targets/staging/SupportingFiles/ami.entitlements
       properties:
-        aps-environment: development
         com.apple.developer.associated-domains:
         - webcredentials:ami-back-staging-pr1113.osc-fr1.scalingo.io
         
