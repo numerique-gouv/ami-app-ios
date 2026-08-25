@@ -197,7 +197,7 @@ targets:
       runOnlyWhenInstalling: false
       basedOnDependencyAnalysis: false
       inputFiles:
-        - "$SRCROOT/Config/.env.${TARGET_NAME}"
+        - "$SRCROOT/targets/production/SupportingFiles/.env.ami-production"
       outputFiles:
         - "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"        
       shell: /bin/sh
@@ -236,7 +236,7 @@ targets:
       runOnlyWhenInstalling: false
       basedOnDependencyAnalysis: false
       inputFiles:
-        - "$SRCROOT/Config/.env.${TARGET_NAME}"
+        - "$SRCROOT/targets/staging/SupportingFiles/.env.ami-staging"
       outputFiles:
         - "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"        
       shell: /bin/sh
