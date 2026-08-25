@@ -267,7 +267,7 @@ targets:
         BASE_BUNDLE_IDENTIFIER: fr.gouv.ami.unitTests
         APP_NAME: AMI-UnitTests
         APP_DISPLAY_NAME: AMI Unit Tests # The name used in the application.
-        CODE_SIGN_ENTITLEMENTS: targets/unitTests/SupportingFiles/ami.entitlements
+        CODE_SIGN_ENTITLEMENTS: targets/staging/SupportingFiles/ami.entitlements
         OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_UNIT_TESTS
       
         TEST_HOST: $(BUILT_PRODUCTS_DIR)/AMI-Staging.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AMI-Staging
