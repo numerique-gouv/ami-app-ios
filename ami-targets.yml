@@ -75,6 +75,11 @@ targetTemplates:
 # Disable Firebase swizzling to have AppDelegate callback in SwiftUI app: https://firebase.google.com/docs/cloud-messaging/ios/get-started#disable-swizzling
         FirebaseAppDelegateProxyEnabled: false
         
+    entitlements:
+      properties:
+        com.apple.security.app-sandbox: true # Restrict application execution to its sandbox.
+        com.apple.security.network.client: true # Allow a sandboxed application to initiate conections to remote hosts.
+
     settings:
       base:
         PRODUCT_NAME: $(APP_NAME)
@@ -171,6 +176,11 @@ targets:
     info:
       path: targets/production/SupportingFiles/Info.plist
 
+    entitlements:
+      path: targets/production/SupportingFiles/ami.entitlements
+      properties:
+        aps-environment: production
+        
     settings:
       base:
         BASE_BUNDLE_IDENTIFIER: fr.gouv.ami
@@ -204,6 +214,13 @@ targets:
     info:
       path: targets/staging/SupportingFiles/Info.plist
 
+    entitlements:
+      path: targets/staging/SupportingFiles/ami.entitlements
+      properties:
+        aps-environment: development
+        com.apple.developer.associated-domains:
+        - webcredentials:ami-back-staging-pr1113.osc-fr1.scalingo.io
+        
     settings:
       base:
         BASE_BUNDLE_IDENTIFIER: fr.gouv.ami.staging
