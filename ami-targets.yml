@@ -221,6 +221,8 @@ targets:
       path: targets/preproduction/SupportingFiles/ami.entitlements
       properties:
         aps-environment: production
+        com.apple.developer.associated-domains:
+        - webcredentials:preprod.ami.beta.numerique.gouv.fr
         
     settings:
       base:
