@@ -53,6 +53,9 @@ timeline.xctimeline
 *.mobileprovision
 *.certSigningRequest
 
+## Entitlements
+**/SupportingFiles/ami.entitlements
+
 ## Swift Package Manager
 .build/
 .swiftpm/
