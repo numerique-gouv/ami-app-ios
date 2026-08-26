@@ -215,6 +215,9 @@ targets:
           "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"
 
     sources:
+    # add target soucre files if any
+    - path: targets/production/Sources
+    # add target supporting files (except .env)
     - path: targets/production/SupportingFiles
       excludes:
         - "*.env" # excludes all files with the .env extension
@@ -259,8 +262,14 @@ targets:
           "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"
 
     sources:
-     # target the same file as Production target
-    - path: targets/production/SupportingFiles
+    # add target soucre files if any
+    # target the same source files as Production target
+    - path: targets/production/Sources
+    # add target supporting files (except .env)
+    - path: targets/preproduction/SupportingFiles
+      excludes:
+        - "*.env" # excludes all files with the .env extension
+        - ".env.*" # excludes all files with the .env prefix
 #--------------------------------------------------------------------------------
   AMI-Staging:
     templates: 
@@ -299,7 +308,9 @@ targets:
           "$SRCROOT/AMI/Sources/Generated/Secrets-Generated.swift"
 
     sources:
+    # add target soucre files if any
     - path: targets/staging/Sources
+    # add target supporting files (except .env)
     - path: targets/staging/SupportingFiles
       excludes:
         - "*.env" # excludes all files with the .env extension
@@ -327,7 +338,9 @@ targets:
       - target: AMI-Staging
 
     sources:
+    # add target soucre files if any
     - path: targets/unitTests/Sources
+    # add target supporting files (except .env)
     - path: targets/unitTests/SupportingFiles
       excludes:
         - "*.env" # excludes all files with the .env extension
