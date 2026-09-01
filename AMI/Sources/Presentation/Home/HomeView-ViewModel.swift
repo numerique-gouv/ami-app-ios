@@ -25,7 +25,7 @@ extension HomeView {
         private let notificationManager: NotificationManager
         let webViewViewModel: SwiftUIWebView.ViewModel
 
-        private var partnerModels: [URL: PartnerView.ViewModel] = [:]
+        private var desinationLinkModels: [URL: PartnerView.ViewModel] = [:]
 
         // Make `settingsViewViewModel` a computed property initialized on demand with available environment.
         var settingsViewViewModel: SettingsView.ViewModel {
@@ -243,21 +243,21 @@ extension HomeView {
             }
         }
 
-        func partnerModel(for url: URL) -> PartnerView.ViewModel {
-            guard let viewModel = partnerModels[url] else {
-                // Init Partner's view with the HomeView website DataStore (to share cookies and tokens).
+        func destinationLinkModel(for url: URL) -> PartnerView.ViewModel {
+            guard let viewModel = desinationLinkModels[url] else {
+                // Init destination's view with the HomeView website DataStore (to share cookies and tokens).
                 let viewModel = PartnerView.ViewModel(websiteDataStore: webViewViewModel.configuration.websiteDataStore, rootUrl: url) {
-                    self.partnerViewDismissed(partnerUrl: url)
+                    self.destinationLinkViewDismissed(destinationUrl: url)
                 }
-                partnerModels[url] = viewModel
+                desinationLinkModels[url] = viewModel
                 return viewModel
             }
             return viewModel
         }
 
-        private func partnerViewDismissed(partnerUrl: URL) {
+        private func destinationLinkViewDismissed(destinationUrl: URL) {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
-            partnerModels.removeValue(forKey: partnerUrl)
+            desinationLinkModels.removeValue(forKey: destinationUrl)
         }
     }
 }
