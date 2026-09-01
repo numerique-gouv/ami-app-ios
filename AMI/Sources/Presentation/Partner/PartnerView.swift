@@ -46,6 +46,10 @@ struct PartnerView: View {
                       message: Text("Aucun client email correctement configuré n'a été trouvé sur votre appareil."),
                       dismissButton: .default(Text("Ok")))
             }
+            .task(id: viewModel.webViewViewModel.rootUrl) {
+                // Load page now that all is ready.
+                viewModel.webViewViewModel.loadInitialPage()
+            }
     }
 }
 

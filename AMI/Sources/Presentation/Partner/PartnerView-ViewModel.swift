@@ -43,11 +43,6 @@ extension PartnerView {
             self.webViewViewModel.delegate = self
 
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) PartnerView.ViewModel init")
-
-            // Load initial page now that viewModel is fully ready.
-            Task { @MainActor in
-                webViewViewModel.loadInitialPage()
-            }
         }
 
         deinit {
