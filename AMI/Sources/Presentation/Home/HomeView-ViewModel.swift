@@ -18,14 +18,8 @@ extension HomeView {
         private static let AUTHENTICATION_COOKIE_NAME = "token"
         private static let MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION = Double(24 * 60 * 60)
 
-        enum DestinationLink: Hashable {
-            case generic(URL)
-        }
-
         private let notificationManager: NotificationManager
         let webViewViewModel: SwiftUIWebView.ViewModel
-
-        private var desinationLinkModels: [URL: PartnerView.ViewModel] = [:]
 
         // Make `settingsViewViewModel` a computed property initialized on demand with available environment.
         var settingsViewViewModel: SettingsView.ViewModel {
@@ -65,6 +59,7 @@ extension HomeView {
         private var lastCheckNotificationTime = Date.distantPast
 
         var selectedDestination: DestinationLink?
+
         enum Event {
             case navigateToRootUrl
         }
@@ -243,21 +238,9 @@ extension HomeView {
             }
         }
 
-        func destinationLinkModel(for url: URL) -> PartnerView.ViewModel {
-            guard let viewModel = desinationLinkModels[url] else {
-                // Init destination's view with the HomeView website DataStore (to share cookies and tokens).
-                let viewModel = PartnerView.ViewModel(websiteDataStore: webViewViewModel.configuration.websiteDataStore, rootUrl: url) {
-                    self.destinationLinkViewDismissed(destinationUrl: url)
-                }
-                desinationLinkModels[url] = viewModel
-                return viewModel
-            }
-            return viewModel
-        }
-
-        private func destinationLinkViewDismissed(destinationUrl: URL) {
+        private func destinationLinkViewDismissed() {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
-            desinationLinkModels.removeValue(forKey: destinationUrl)
+            selectedDestination = nil
         }
     }
 }
@@ -299,7 +282,9 @@ extension HomeView.ViewModel: WebViewDelegate {
 
         // Special process for destination Url
         if !targetUrl.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) {
-            selectedDestination = .generic(targetUrl)
+            selectedDestination = DestinationLink(url: targetUrl, dataStore: webViewViewModel.configuration.websiteDataStore) { [weak self] in
+                self?.destinationLinkViewDismissed()
+            }
             // Go back to previous page in originating webview.
             Task { @MainActor in
                 webViewViewModel.goBack()

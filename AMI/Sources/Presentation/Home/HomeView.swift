@@ -74,11 +74,8 @@ struct HomeView: View {
             }
             .navigationTitle(AMIL10n.amiTitle)
             .navigationBarHidden(true)
-            .navigationDestination(item: $viewModel.selectedDestination) { partner in
-                switch partner {
-                case let .generic(partnerUrl):
-                    PartnerView(viewModel: viewModel.destinationLinkModel(for: partnerUrl))
-                }
+            .navigationDestination(item: $viewModel.selectedDestination) { destination in
+                PartnerView(viewModel: destination.model)
             }
         if viewModel.isOnContactPage {
             Button {
