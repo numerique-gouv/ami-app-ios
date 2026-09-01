@@ -18,7 +18,7 @@ extension HomeView {
         private static let AUTHENTICATION_COOKIE_NAME = "token"
         private static let MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION = Double(24 * 60 * 60)
 
-        enum Partner: Hashable {
+        enum DestinationLink: Hashable {
             case generic(URL)
         }
 
@@ -64,7 +64,7 @@ extension HomeView {
 
         private var lastCheckNotificationTime = Date.distantPast
 
-        var selectedPartner: Partner?
+        var selectedDestination: DestinationLink?
         enum Event {
             case navigateToRootUrl
         }
@@ -297,9 +297,9 @@ extension HomeView.ViewModel: WebViewDelegate {
             return true
         }
 
-        // Special process for partner Url
+        // Special process for destination Url
         if !targetUrl.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) {
-            selectedPartner = .generic(targetUrl)
+            selectedDestination = .generic(targetUrl)
             // Go back to previous page in originating webview.
             Task { @MainActor in
                 webViewViewModel.goBack()

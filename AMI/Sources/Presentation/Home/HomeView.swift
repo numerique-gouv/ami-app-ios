@@ -74,10 +74,10 @@ struct HomeView: View {
             }
             .navigationTitle(AMIL10n.amiTitle)
             .navigationBarHidden(true)
-            .navigationDestination(item: $viewModel.selectedPartner) { partner in
+            .navigationDestination(item: $viewModel.selectedDestination) { partner in
                 switch partner {
                 case let .generic(partnerUrl):
-                    PartnerView(viewModel: viewModel.partnerModel(for: partnerUrl))
+                    PartnerView(viewModel: viewModel.destinationLinkModel(for: partnerUrl))
                 }
             }
         if viewModel.isOnContactPage {
