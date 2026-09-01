@@ -16,13 +16,13 @@ extension SwiftUIWebView {
 
         weak var webView: WKWebView? {
             didSet {
-                configure()
+                configureWebView()
             }
         }
 
         var urlChangeAction: UrlChangeAction? {
             didSet {
-                configure()
+                configureWebView()
             }
         }
 
@@ -62,7 +62,7 @@ extension SwiftUIWebView {
 
             addUserScripts(userScripts: initialUserScripts)
 
-            configure()
+            configureWebView()
 
             AppLog.viewModel.info("\(AppLog.logHeader(self)) Don't forget to call `loadInitialPage()` in your subclass to load your webView content when your ViewModel is fully ready.")
         }
@@ -93,7 +93,7 @@ extension SwiftUIWebView {
         // Called by the webView:
         //   - mandatory to be called by the webView because of the parameter
         //   - it is the webView who knows what to do with the changes.
-        private func configure() {
+        private func configureWebView() {
             guard let webView else {
                 loadingStateObserver = nil
                 loadingProgressObserver = nil
