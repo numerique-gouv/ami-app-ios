@@ -10,7 +10,6 @@ import SwiftUI
 import WebKit
 
 struct PartnerView: View {
-    @Environment(\.dismiss) var dismiss
     @Bindable var viewModel: ViewModel
 
     init(viewModel: ViewModel) {
@@ -25,7 +24,6 @@ struct PartnerView: View {
     @ViewBuilder
     private var backButton: some View {
         Button {
-            dismiss()
             viewModel.backToHomeAction?()
         } label: {
             Label(AMIL10n.amiTitle, systemImage: "arrowtriangle.left.fill")
