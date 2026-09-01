@@ -34,6 +34,9 @@ extension SwiftUIWebView {
         #if DEBUG
             var acceptSelfSignedCertificate = false
         #endif
+        /// Protocol used to decide how to handle web links to new window ("taregt=_blank")
+        /// By default, links open in current webview.
+        var navigateToNewWindowDestinationProvider: WebViewNavigateToNewWindowProtocol?
 
         private(set) var isLoading = false
         private(set) var estimatedProgress = CGFloat(0.0)
@@ -102,6 +105,7 @@ extension SwiftUIWebView {
                 return
             }
             webView.navigationDelegate = self
+            webView.uiDelegate = self
 
             loadingStateObserver = webView.observe(\.isLoading) { [weak self] webView, _ in
                 self?.isLoading = webView.isLoading
@@ -299,4 +303,36 @@ extension SwiftUIWebView.ViewModel {
         }
         return model
     }()
+}
+
+extension SwiftUIWebView.ViewModel: WKUIDelegate {
+    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+        guard let navigateToNewWindowDestinationProvider else {
+            webView.load(navigationAction.request)
+            return nil
+        }
+
+        switch navigateToNewWindowDestinationProvider.destinationForNewWindow(sourceWebView: webView,
+                                                                              configuration: configuration,
+                                                                              navigationAction: navigationAction,
+                                                                              windowFeatures: windowFeatures) {
+        case .currentWebView:
+            webView.load(navigationAction.request)
+        default:
+            break
+        }
+
+        // Always return nil. The destination is already handled by one of the switch case.
+        return nil
+    }
+}
+
+extension SwiftUIWebView.ViewModel: WebViewNavigateToNewWindowProtocol {
+    // Default behavior: open all links in current webview.
+    func destinationForNewWindow(sourceWebView: WKWebView,
+                                 configuration: WKWebViewConfiguration,
+                                 navigationAction: WKNavigationAction,
+                                 windowFeatures: WKWindowFeatures) -> WebViewNavigateToNewWindowDestination {
+        .currentWebView
+    }
 }
