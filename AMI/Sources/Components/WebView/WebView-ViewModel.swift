@@ -34,7 +34,7 @@ extension SwiftUIWebView {
         #if DEBUG
             var acceptSelfSignedCertificate = false
         #endif
-        /// Protocol used to decide how to handle web links to new window ("taregt=_blank")
+        /// Protocol used to decide how to handle web links to new window ("target=_blank")
         /// By default, links open in current webview.
         weak var navigateToNewWindowManager: WebViewNavigateToNewWindowProtocol?
 
@@ -306,6 +306,7 @@ extension SwiftUIWebView.ViewModel {
 }
 
 extension SwiftUIWebView.ViewModel: WKUIDelegate {
+    /// Delegate method called when an activated link has attribute "target=_blank".
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
         guard let navigateToNewWindowManager else {
             webView.load(navigationAction.request)
@@ -334,7 +335,7 @@ extension SwiftUIWebView.ViewModel: WKUIDelegate {
 }
 
 extension SwiftUIWebView.ViewModel: WebViewNavigateToNewWindowProtocol {
-    // Default behavior: open all links in current webview.
+    /// Default behavior: open all links in current webview.
     func destinationForNewWindow(sourceWebView: WKWebView,
                                  configuration: WKWebViewConfiguration,
                                  navigationAction: WKNavigationAction,

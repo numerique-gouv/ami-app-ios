@@ -96,7 +96,7 @@ extension ServiceView.ViewModel: WebViewDelegate {
 }
 
 extension ServiceView.ViewModel: WebViewNavigateToNewWindowProtocol {
-    // Default behavior: open all links in new webview.
+    /// Default behavior: open all links in new webview.
     func destinationForNewWindow(sourceWebView: WKWebView,
                                  configuration: WKWebViewConfiguration,
                                  navigationAction: WKNavigationAction,
