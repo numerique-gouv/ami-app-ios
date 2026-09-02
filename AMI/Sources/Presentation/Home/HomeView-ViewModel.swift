@@ -58,7 +58,7 @@ extension HomeView {
 
         private var lastCheckNotificationTime = Date.distantPast
 
-        var selectedDestination: DestinationLinkViewModel?
+        var selectedDestination: ServiceLinkViewModel?
 
         enum Event {
             case navigateToRootUrl
@@ -283,7 +283,7 @@ extension HomeView.ViewModel: WebViewDelegate {
         // Special process for destination Url
         // If the destination url is outside the root domain, open as a Servioce in a dedicated webview.
         if !targetUrl.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) {
-            selectedDestination = DestinationLinkViewModel(url: targetUrl, dataStore: webViewViewModel.configuration.websiteDataStore) { [weak self] in
+            selectedDestination = ServiceLinkViewModel(url: targetUrl, dataStore: webViewViewModel.configuration.websiteDataStore) { [weak self] in
                 self?.destinationLinkViewDismissed()
             }
             // Go back to previous page in originating webview.

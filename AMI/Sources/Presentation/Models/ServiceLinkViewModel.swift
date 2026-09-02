@@ -1,5 +1,5 @@
 //
-//  DestinationLinkViewModel.swift
+//  ServiceLinkViewModel.swift
 //  AMI-xcodegen
 //
 //  Created by Nicolas Buquet on 01/09/2026.
@@ -9,7 +9,7 @@
 import Foundation
 import WebKit
 
-struct DestinationLinkViewModel: Hashable {
+struct ServiceLinkViewModel: Hashable {
     typealias DismissedAction = () -> Void
 
     private let url: URL

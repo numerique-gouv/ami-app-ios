@@ -23,7 +23,7 @@ extension ServiceView {
 
         var backToHomeAction: BackToHomeAction?
 
-        var selectedDestination: DestinationLinkViewModel?
+        var selectedDestination: ServiceLinkViewModel?
 
         @MainActor
         func contactByEmail(targetUrl: URL) {
@@ -105,7 +105,7 @@ extension ServiceView.ViewModel: WebViewNavigateToNewWindowProtocol {
     }
 
     func loadInNewWebView(url: URL) {
-        selectedDestination = DestinationLinkViewModel(url: url, dataStore: webViewViewModel.configuration.websiteDataStore) { [weak self] in
+        selectedDestination = ServiceLinkViewModel(url: url, dataStore: webViewViewModel.configuration.websiteDataStore) { [weak self] in
             self?.destinationLinkViewDismissed()
         }
     }
