@@ -36,7 +36,7 @@ extension SwiftUIWebView {
         #endif
         /// Protocol used to decide how to handle web links to new window ("taregt=_blank")
         /// By default, links open in current webview.
-        var navigateToNewWindowDestinationProvider: WebViewNavigateToNewWindowProtocol?
+        weak var navigateToNewWindowManager: WebViewNavigateToNewWindowProtocol?
 
         private(set) var isLoading = false
         private(set) var estimatedProgress = CGFloat(0.0)
@@ -307,7 +307,7 @@ extension SwiftUIWebView.ViewModel {
 
 extension SwiftUIWebView.ViewModel: WKUIDelegate {
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-        guard let navigateToNewWindowDestinationProvider else {
+        guard let navigateToNewWindowManager else {
             webView.load(navigationAction.request)
             return nil
         }
