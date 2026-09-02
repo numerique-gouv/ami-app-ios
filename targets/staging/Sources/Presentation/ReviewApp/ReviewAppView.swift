@@ -21,7 +21,7 @@ struct ReviewAppView: View {
             .font(.title)
         ScrollView {
             ForEach(viewModel.reviewApps) { reviewApp in
-                if let reviewAppUrl = URL(string: reviewApp.url) {
+                if URL(string: reviewApp.url) != nil {
                     Button {
                         viewModel.selectReviewApp(reviewApp: reviewApp)
                     } label: {
