@@ -23,6 +23,8 @@ extension PartnerView {
 
         var backToHomeAction: BackToHomeAction?
 
+        var selectedDestination: DestinationLinkViewModel?
+
         @MainActor
         func contactByEmail(targetUrl: URL) {
             UIApplication.shared.open(targetUrl) { accepted in
@@ -42,7 +44,14 @@ extension PartnerView {
 
             self.webViewViewModel.delegate = self
 
+            self.webViewViewModel.navigateToNewWindowManager = self
+
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) PartnerView.ViewModel init")
+        }
+
+        private func destinationLinkViewDismissed() {
+            AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
+            selectedDestination = nil
         }
 
         deinit {
@@ -83,5 +92,21 @@ extension PartnerView.ViewModel: WebViewDelegate {
 
     func navigationDidFailed(withError error: Error) {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFailed] failed with error \(error)")
+    }
+}
+
+extension PartnerView.ViewModel: WebViewNavigateToNewWindowProtocol {
+    // Default behavior: open all links in new webview.
+    func destinationForNewWindow(sourceWebView: WKWebView,
+                                 configuration: WKWebViewConfiguration,
+                                 navigationAction: WKNavigationAction,
+                                 windowFeatures: WKWindowFeatures) -> WebViewNavigateToNewWindowDestination {
+        .newWebView
+    }
+
+    func loadInNewWebView(url: URL) {
+        selectedDestination = DestinationLinkViewModel(url: url, dataStore: webViewViewModel.configuration.websiteDataStore) { [weak self] in
+            self?.destinationLinkViewDismissed()
+        }
     }
 }
