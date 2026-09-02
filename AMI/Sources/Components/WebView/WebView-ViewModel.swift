@@ -312,14 +312,20 @@ extension SwiftUIWebView.ViewModel: WKUIDelegate {
             return nil
         }
 
-        switch navigateToNewWindowDestinationProvider.destinationForNewWindow(sourceWebView: webView,
-                                                                              configuration: configuration,
-                                                                              navigationAction: navigationAction,
-                                                                              windowFeatures: windowFeatures) {
+        guard let destinationUrl = navigationAction.request.url else {
+            return nil
+        }
+
+        switch navigateToNewWindowManager.destinationForNewWindow(sourceWebView: webView,
+                                                                  configuration: configuration,
+                                                                  navigationAction: navigationAction,
+                                                                  windowFeatures: windowFeatures) {
         case .currentWebView:
-            webView.load(navigationAction.request)
-        default:
-            break
+            webView.load(URLRequest(url: destinationUrl))
+        case .newWebView:
+            navigateToNewWindowManager.loadInNewWebView(url: destinationUrl)
+        case .externalBrowser:
+            UIApplication.shared.open(destinationUrl, options: [:], completionHandler: nil)
         }
 
         // Always return nil. The destination is already handled by one of the switch case.
@@ -334,5 +340,9 @@ extension SwiftUIWebView.ViewModel: WebViewNavigateToNewWindowProtocol {
                                  navigationAction: WKNavigationAction,
                                  windowFeatures: WKWindowFeatures) -> WebViewNavigateToNewWindowDestination {
         .currentWebView
+    }
+
+    func loadInNewWebView(url: URL) {
+        fatalError("Should never happen on base WebView-ViewModel.")
     }
 }
