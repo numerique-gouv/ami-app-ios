@@ -75,7 +75,7 @@ struct HomeView: View {
             .navigationTitle(AMIL10n.amiTitle)
             .navigationBarHidden(true)
             .navigationDestination(item: $viewModel.selectedDestination) { destination in
-                PartnerView(viewModel: destination.model)
+                ServiceView(viewModel: destination.model)
             }
         if viewModel.isOnContactPage {
             Button {

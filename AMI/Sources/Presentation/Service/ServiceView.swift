@@ -1,5 +1,5 @@
 //
-//  PartnerView.swift
+//  ServiceView.swift
 //  AMI
 //
 //  Created by Aline Bonnet on 19/10/2025.
@@ -9,7 +9,7 @@ import SwiftUI
 @_spi(Advanced) import SwiftUIIntrospect
 import WebKit
 
-struct PartnerView: View {
+struct ServiceView: View {
     @Bindable var viewModel: ViewModel
 
     init(viewModel: ViewModel) {
@@ -45,7 +45,7 @@ struct PartnerView: View {
                       dismissButton: .default(Text("Ok")))
             }
             .navigationDestination(item: $viewModel.selectedDestination) { destination in
-                PartnerView(viewModel: destination.model)
+                ServiceView(viewModel: destination.model)
             }
             .task(id: viewModel.webViewViewModel.rootUrl) {
                 // Load page now that all is ready.
@@ -55,8 +55,8 @@ struct PartnerView: View {
 }
 
 #Preview {
-    let viewModel = PartnerView.ViewModel(websiteDataStore: .nonPersistent(), rootUrl: URL(string: "https://numerique.gouv.fr")!) {
+    let viewModel = ServiceView.ViewModel(websiteDataStore: .nonPersistent(), rootUrl: URL(string: "https://numerique.gouv.fr")!) {
         AppLog.viewModel.log("\(AppLog.logHeader()) Back to home called")
     }
-    PartnerView(viewModel: viewModel)
+    ServiceView(viewModel: viewModel)
 }

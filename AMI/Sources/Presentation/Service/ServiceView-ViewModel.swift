@@ -1,5 +1,5 @@
 //
-//  PartnerView-ViewModel.swift
+//  ServiceView-ViewModel.swift
 //  AMI-Production
 //
 //  Created by Nicolas Buquet on 13/02/2026.
@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 import WebKit
 
-extension PartnerView {
+extension ServiceView {
     @Observable
     class ViewModel: NSObject {
         typealias BackToHomeAction = () -> Void
@@ -34,7 +34,7 @@ extension PartnerView {
 
         init(websiteDataStore: WKWebsiteDataStore, rootUrl: URL, backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
-            let userScripts = PartnerUserScripts()
+            let userScripts = ServiceViewUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
                                                             rootUrl: rootUrl,
                                                             initialUserScripts: userScripts)
@@ -46,7 +46,7 @@ extension PartnerView {
 
             self.webViewViewModel.navigateToNewWindowManager = self
 
-            AppLog.viewModel.debug("\(AppLog.logHeader(self)) PartnerView.ViewModel init")
+            AppLog.viewModel.debug("\(AppLog.logHeader(self)) init")
         }
 
         private func destinationLinkViewDismissed() {
@@ -55,12 +55,12 @@ extension PartnerView {
         }
 
         deinit {
-            AppLog.viewModel.debug("\(AppLog.logHeader(self)) PartnerView.ViewModel deinit")
+            AppLog.viewModel.debug("\(AppLog.logHeader(self)) deinit")
         }
     }
 }
 
-extension PartnerView.ViewModel: WebViewDelegate {
+extension ServiceView.ViewModel: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
         guard let targetUrl = navigationAction.request.url else {
             // No special restriction. Return TRUE.
@@ -95,7 +95,7 @@ extension PartnerView.ViewModel: WebViewDelegate {
     }
 }
 
-extension PartnerView.ViewModel: WebViewNavigateToNewWindowProtocol {
+extension ServiceView.ViewModel: WebViewNavigateToNewWindowProtocol {
     // Default behavior: open all links in new webview.
     func destinationForNewWindow(sourceWebView: WKWebView,
                                  configuration: WKWebViewConfiguration,

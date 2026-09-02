@@ -15,13 +15,13 @@ struct DestinationLinkViewModel: Hashable {
     private let url: URL
     private let dataStore: WKWebsiteDataStore
 
-    let model: PartnerView.ViewModel
+    let model: ServiceView.ViewModel
 
     init(url: URL, dataStore: WKWebsiteDataStore, destinationViewDismissedAction: DismissedAction?) {
         self.url = url
         self.dataStore = dataStore
 
-        model = PartnerView.ViewModel(websiteDataStore: dataStore,
+        model = ServiceView.ViewModel(websiteDataStore: dataStore,
                                       rootUrl: url,
                                       backToHomeAction: destinationViewDismissedAction)
     }
