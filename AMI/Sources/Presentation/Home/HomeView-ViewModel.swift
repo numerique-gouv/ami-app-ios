@@ -18,14 +18,8 @@ extension HomeView {
         private static let AUTHENTICATION_COOKIE_NAME = "token"
         private static let MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION = Double(24 * 60 * 60)
 
-        enum Partner: Hashable {
-            case generic(URL)
-        }
-
         private let notificationManager: NotificationManager
         let webViewViewModel: SwiftUIWebView.ViewModel
-
-        private var partnerModels: [URL: PartnerView.ViewModel] = [:]
 
         // Make `settingsViewViewModel` a computed property initialized on demand with available environment.
         var settingsViewViewModel: SettingsView.ViewModel {
@@ -64,7 +58,8 @@ extension HomeView {
 
         private var lastCheckNotificationTime = Date.distantPast
 
-        var selectedPartner: Partner?
+        var selectedDestination: ServiceLinkViewModel?
+
         enum Event {
             case navigateToRootUrl
         }
@@ -243,21 +238,9 @@ extension HomeView {
             }
         }
 
-        func partnerModel(for url: URL) -> PartnerView.ViewModel {
-            guard let viewModel = partnerModels[url] else {
-                // Init Partner's view with the HomeView website DataStore (to share cookies and tokens).
-                let viewModel = PartnerView.ViewModel(websiteDataStore: webViewViewModel.configuration.websiteDataStore, rootUrl: url) {
-                    self.partnerViewDismissed(partnerUrl: url)
-                }
-                partnerModels[url] = viewModel
-                return viewModel
-            }
-            return viewModel
-        }
-
-        private func partnerViewDismissed(partnerUrl: URL) {
+        private func destinationLinkViewDismissed() {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
-            partnerModels.removeValue(forKey: partnerUrl)
+            selectedDestination = nil
         }
     }
 }
@@ -297,9 +280,12 @@ extension HomeView.ViewModel: WebViewDelegate {
             return true
         }
 
-        // Special process for partner Url
+        // Special process for destination Url
+        // If the destination url is outside the root domain, open as a Servioce in a dedicated webview.
         if !targetUrl.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) {
-            selectedPartner = .generic(targetUrl)
+            selectedDestination = ServiceLinkViewModel(url: targetUrl, dataStore: webViewViewModel.configuration.websiteDataStore) { [weak self] in
+                self?.destinationLinkViewDismissed()
+            }
             // Go back to previous page in originating webview.
             Task { @MainActor in
                 webViewViewModel.goBack()
