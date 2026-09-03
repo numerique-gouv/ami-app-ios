@@ -282,7 +282,7 @@ targets:
       path: targets/staging/SupportingFiles/ami.entitlements
       properties:
         com.apple.developer.associated-domains:
-        - webcredentials:ami-back-staging-pr1113.osc-fr1.scalingo.io
+        - webcredentials:ami-back-staging.osc-fr1.scalingo.io
         
     settings:
       base:
