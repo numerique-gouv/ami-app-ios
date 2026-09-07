@@ -29,7 +29,7 @@ extension SwiftUIWebView {
         let configuration = WKWebViewConfiguration()
         let rootUrl: URL
         weak var delegate: WebViewDelegate?
-        let userScripts: WebViewUserScriptsProtocol?
+        private let userScripts: WebViewUserScriptsProtocol?
         let allowsBackForwardNavigationGestures: Bool
         #if DEBUG
             var acceptSelfSignedCertificate = false
@@ -43,6 +43,8 @@ extension SwiftUIWebView {
         private var loadingProgressObserver: NSKeyValueObservation?
         private var canGoBackObserver: NSKeyValueObservation?
         private var urlChangeObserver: NSKeyValueObservation?
+
+        private let downloader = WebViewDownloadCoordinator()
 
         init(websiteDataStore: WKWebsiteDataStore,
              rootUrl: URL,
@@ -103,23 +105,31 @@ extension SwiftUIWebView {
             }
             webView.navigationDelegate = self
 
-            loadingStateObserver = webView.observe(\.isLoading) { [weak self] webView, _ in
-                self?.isLoading = webView.isLoading
-            }
-
-            loadingProgressObserver = webView.observe(\.estimatedProgress) { [weak self] webView, _ in
-                self?.estimatedProgress = webView.estimatedProgress
-            }
-
-            canGoBackObserver = webView.observe(\.canGoBack) { [weak self] webView, _ in
-                self?.canGoBack = webView.canGoBack
-            }
-
-            urlChangeObserver = webView.observe(\.url) { [weak self] webView, _ in
-                guard let self else {
-                    return
+            loadingStateObserver = webView.observe(\.isLoading) { webView, _ in
+                Task { @MainActor [weak self] in
+                    self?.isLoading = webView.isLoading
                 }
-                urlChangeAction?(self, webView.url)
+            }
+
+            loadingProgressObserver = webView.observe(\.estimatedProgress) { webView, _ in
+                Task { @MainActor [weak self] in
+                    self?.estimatedProgress = webView.estimatedProgress
+                }
+            }
+
+            canGoBackObserver = webView.observe(\.canGoBack) { webView, _ in
+                Task { @MainActor [weak self] in
+                    self?.canGoBack = webView.canGoBack
+                }
+            }
+
+            urlChangeObserver = webView.observe(\.url) { webView, _ in
+                Task { @MainActor [weak self] in
+                    guard let self else {
+                        return
+                    }
+                    urlChangeAction?(self, webView.url)
+                }
             }
         }
 
@@ -209,6 +219,8 @@ extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
     }
 }
 
+// MARK: - WebViewDelegate
+
 extension SwiftUIWebView.ViewModel: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
@@ -231,6 +243,8 @@ extension SwiftUIWebView.ViewModel: WebViewDelegate {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation did failed with error: \(error)")
     }
 }
+
+// MARK: - WKNavigationDelegate
 
 extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
@@ -281,6 +295,14 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         delegate?.navigationDidFinish()
+    }
+
+    func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
+        download.delegate = downloader
+    }
+
+    func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
+        download.delegate = downloader
     }
 }
 
