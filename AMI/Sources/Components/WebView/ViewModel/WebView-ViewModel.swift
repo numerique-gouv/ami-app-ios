@@ -44,7 +44,10 @@ extension SwiftUIWebView {
         private var canGoBackObserver: NSKeyValueObservation?
         private var urlChangeObserver: NSKeyValueObservation?
 
+        // Web Downloader properties
         private let downloader = WebViewDownloadCoordinator()
+        var showFileToSaveUI = false
+        var fileToSaveSourceURL: URL?
 
         init(websiteDataStore: WKWebsiteDataStore,
              rootUrl: URL,
@@ -214,7 +217,29 @@ extension SwiftUIWebView {
 
         // Downloader completion handler
         private func downloadDidFinish(_ result: Result<URL, Error>) {
-            print("downloadDidFinish: \(result)")
+            AppLog.viewModel.info("\(AppLog.logHeader(self)) DownloadDidFinish: \(String(describing: result))")
+            switch result {
+            case let .success(downloadUrl):
+                fileToSaveSourceURL = downloadUrl
+                showFileToSaveUI = true
+            case let .failure(error):
+                AppLog.viewModel.error("\(AppLog.logHeader(self)) DownloadDidFinish with error: \(String(describing: error))")
+            }
+        }
+
+        func moveFileDidComplete(sourceUrl: URL?, result: Result<URL, any Error>) {
+            AppLog.viewModel.info("\(AppLog.logHeader(self)) MoveFileDidComplete: \(String(describing: result))")
+            fileToSaveSourceURL = nil
+            if let sourceUrl {
+                downloader.deleteTemporaryDownload(at: sourceUrl.deletingLastPathComponent())
+            }
+        }
+
+        func moveFileCanceled(sourceUrl: URL?) {
+            AppLog.viewModel.info("\(AppLog.logHeader(self)) MoveFileCanceled")
+            if let sourceUrl {
+                downloader.deleteTemporaryDownload(at: sourceUrl.deletingLastPathComponent())
+            }
         }
     }
 }
@@ -309,7 +334,6 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  decidePolicyFor navigationAction: WKNavigationAction,
                  preferences: WKWebpagePreferences) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
-
         navigationAction.shouldPerformDownload || destinationUrlIsFile(navigationAction.request.url) ? (.download, preferences) : (.allow, preferences)
     }
 

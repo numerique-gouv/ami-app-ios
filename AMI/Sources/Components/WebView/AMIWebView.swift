@@ -9,7 +9,8 @@
 import SwiftUI
 
 struct AMIWebView: View {
-    let viewModel: SwiftUIWebView.ViewModel
+    // Make viewModel @Bindable for `fileMover` triggering.
+    @Bindable var viewModel: SwiftUIWebView.ViewModel
 
     @ViewBuilder
     var loadingBar: some View {
@@ -46,6 +47,14 @@ struct AMIWebView: View {
             }
         }
         .navigationBarBackButtonHidden()
+        .fileMover(isPresented: $viewModel.showFileToSaveUI,
+                   file: viewModel.fileToSaveSourceURL,
+                   onCompletion: { result in
+                       viewModel.moveFileDidComplete(sourceUrl: viewModel.fileToSaveSourceURL, result: result)
+                   },
+                   onCancellation: {
+                       viewModel.moveFileCanceled(sourceUrl: viewModel.fileToSaveSourceURL)
+                   })
     }
 }
 

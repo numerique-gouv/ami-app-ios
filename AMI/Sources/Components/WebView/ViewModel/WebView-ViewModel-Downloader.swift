@@ -19,24 +19,29 @@ final class WebViewDownloadCoordinator: NSObject {
 
 extension WebViewDownloadCoordinator: WKDownloadDelegate {
     func download(_ download: WKDownload, decideDestinationUsing response: URLResponse, suggestedFilename: String) async -> URL? {
-        // Create default unique destination temporary folder.
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        do {
+            // Add suggested filename to destination download path.
+            let localDestinationUrl = try createTemporaryDestinationFolder().appendingPathComponent(suggestedFilename)
 
-        // Add suggested filename to destination download path.
-        let url = dir.appendingPathComponent(suggestedFilename)
+            // Store destination url associated with WKDownload object for cleanup on success.
+            destinations[ObjectIdentifier(download)] = localDestinationUrl
 
-        // Store destination url associated with WKDownload object for cleanup on success.
-        destinations[ObjectIdentifier(download)] = url
+            // TODO: Display information about started download.
 
-        return url
+            return localDestinationUrl
+        } catch {
+            // TODO: Display information about error download.
+
+            return nil
+        }
     }
 
     func downloadDidFinish(_ download: WKDownload) {
+        // Remove Download tracking as it succeed.
         guard let url = destinations.removeValue(forKey: ObjectIdentifier(download)) else {
             return
         }
-        
+
         onCompletion?(.success(url))
     }
 
@@ -47,5 +52,16 @@ extension WebViewDownloadCoordinator: WKDownloadDelegate {
         }
 
         onCompletion?(.failure(error))
+    }
+
+    private func createTemporaryDestinationFolder() throws -> URL {
+        // Create a default unique destination temporary folder.
+        let destinationFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .folder)
+        try FileManager.default.createDirectory(at: destinationFolder, withIntermediateDirectories: true)
+        return destinationFolder
+    }
+
+    func deleteTemporaryDownload(at destinationUrl: URL) {
+        try? FileManager.default.removeItem(at: destinationUrl)
     }
 }
