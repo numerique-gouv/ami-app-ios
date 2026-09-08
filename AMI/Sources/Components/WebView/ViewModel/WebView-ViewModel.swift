@@ -62,6 +62,9 @@ extension SwiftUIWebView {
             // Default delegate to self.
             delegate = self
 
+            // Initialize Downloader completion
+            downloader.onCompletion = downloadDidFinish(_:)
+
             addUserScripts(userScripts: initialUserScripts)
 
             configure()
@@ -208,6 +211,11 @@ extension SwiftUIWebView {
                 await configuration.websiteDataStore.removeData(ofTypes: record.dataTypes, for: [record])
             }
         }
+
+        // Downloader completion handler
+        private func downloadDidFinish(_ result: Result<URL, Error>) {
+            print("downloadDidFinish: \(result)")
+        }
     }
 }
 
@@ -295,6 +303,28 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         delegate?.navigationDidFinish()
+    }
+
+    // Link explicitly marked as a download (e.g. <a download>)
+    func webView(_ webView: WKWebView,
+                 decidePolicyFor navigationAction: WKNavigationAction,
+                 preferences: WKWebpagePreferences) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
+
+        navigationAction.shouldPerformDownload || destinationUrlIsFile(navigationAction.request.url) ? (.download, preferences) : (.allow, preferences)
+    }
+
+    private func destinationUrlIsFile(_ destinationUrl: URL?) -> Bool {
+        guard let destinationUrl else {
+            return false
+        }
+
+        return ["pdf"].contains(destinationUrl.pathExtension)
+    }
+
+    // Response the web view can't render itself (.zip, .xlsx, Content-Disposition: attachment…)
+    func webView(_ webView: WKWebView,
+                 decidePolicyFor navigationResponse: WKNavigationResponse) async -> WKNavigationResponsePolicy {
+        navigationResponse.canShowMIMEType ? .allow : .download
     }
 
     func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
