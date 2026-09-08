@@ -65,8 +65,9 @@ extension SwiftUIWebView {
             // Default delegate to self.
             delegate = self
 
-            // Initialize Downloader completion
-            downloader.onCompletion = downloadDidFinish(_:)
+            // Initialize Downloader start and completion handlers,
+            downloader.onDownloadStarted = downloadDidStart(_:)
+            downloader.onDownloadComplete = downloadDidFinish(_:)
 
             addUserScripts(userScripts: initialUserScripts)
 
@@ -215,6 +216,12 @@ extension SwiftUIWebView {
             }
         }
 
+        // Downloader started handler
+        private func downloadDidStart(_ result: Result<String, Error>) {
+            // TODO: Display information to user about Download starting.
+            AppLog.viewModel.info("\(AppLog.logHeader(self)) downloadDidStart: \(String(describing: result))")
+        }
+
         // Downloader completion handler
         private func downloadDidFinish(_ result: Result<URL, Error>) {
             AppLog.viewModel.info("\(AppLog.logHeader(self)) DownloadDidFinish: \(String(describing: result))")
@@ -227,18 +234,19 @@ extension SwiftUIWebView {
             }
         }
 
+        // FileMover completion handlers
         func moveFileDidComplete(sourceUrl: URL?, result: Result<URL, any Error>) {
             AppLog.viewModel.info("\(AppLog.logHeader(self)) MoveFileDidComplete: \(String(describing: result))")
             fileToSaveSourceURL = nil
             if let sourceUrl {
-                downloader.deleteTemporaryDownload(at: sourceUrl.deletingLastPathComponent())
+                downloader.cleanup(downloadedUrl: sourceUrl)
             }
         }
 
         func moveFileCanceled(sourceUrl: URL?) {
             AppLog.viewModel.info("\(AppLog.logHeader(self)) MoveFileCanceled")
             if let sourceUrl {
-                downloader.deleteTemporaryDownload(at: sourceUrl.deletingLastPathComponent())
+                downloader.cleanup(downloadedUrl: sourceUrl)
             }
         }
     }
@@ -334,28 +342,28 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  decidePolicyFor navigationAction: WKNavigationAction,
                  preferences: WKWebpagePreferences) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
-        navigationAction.shouldPerformDownload || destinationUrlIsFile(navigationAction.request.url) ? (.download, preferences) : (.allow, preferences)
-    }
-
-    private func destinationUrlIsFile(_ destinationUrl: URL?) -> Bool {
-        guard let destinationUrl else {
-            return false
+        if navigationAction.shouldPerformDownload || WebViewDownloadCoordinator.destinationUrlIsDownloadableFile(navigationAction.request.url) {
+            (.download, preferences)
+        } else {
+            (.allow, preferences)
         }
-
-        return ["pdf"].contains(destinationUrl.pathExtension)
     }
 
     // Response the web view can't render itself (.zip, .xlsx, Content-Disposition: attachment…)
     func webView(_ webView: WKWebView,
                  decidePolicyFor navigationResponse: WKNavigationResponse) async -> WKNavigationResponsePolicy {
-        navigationResponse.canShowMIMEType ? .allow : .download
-    }
-
-    func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
-        download.delegate = downloader
+        if navigationResponse.canShowMIMEType {
+            .allow
+        } else {
+            .download
+        }
     }
 
     func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
+        download.delegate = downloader
+    }
+
+    func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
         download.delegate = downloader
     }
 }
