@@ -29,7 +29,7 @@ extension SwiftUIWebView {
         let configuration = WKWebViewConfiguration()
         let rootUrl: URL
         weak var delegate: WebViewDelegate?
-        let userScripts: WebViewUserScriptsProtocol?
+        private let userScripts: WebViewUserScriptsProtocol?
         let allowsBackForwardNavigationGestures: Bool
         #if DEBUG
             var acceptSelfSignedCertificate = false
@@ -43,6 +43,11 @@ extension SwiftUIWebView {
         private var loadingProgressObserver: NSKeyValueObservation?
         private var canGoBackObserver: NSKeyValueObservation?
         private var urlChangeObserver: NSKeyValueObservation?
+
+        // Web Downloader properties
+        private let downloader = WebViewDownloadCoordinator()
+        var showFileToSaveUI = false
+        var fileToSaveSourceURL: URL?
 
         init(websiteDataStore: WKWebsiteDataStore,
              rootUrl: URL,
@@ -59,6 +64,10 @@ extension SwiftUIWebView {
 
             // Default delegate to self.
             delegate = self
+
+            // Initialize Downloader start and completion handlers,
+            downloader.onDownloadStarted = downloadDidStart(_:)
+            downloader.onDownloadComplete = downloadDidFinish(_:)
 
             addUserScripts(userScripts: initialUserScripts)
 
@@ -198,6 +207,40 @@ extension SwiftUIWebView {
                 await configuration.websiteDataStore.removeData(ofTypes: record.dataTypes, for: [record])
             }
         }
+
+        // Downloader started handler
+        private func downloadDidStart(_ result: Result<String, Error>) {
+            // TODO: Display information to user about Download starting.
+            AppLog.viewModel.info("\(AppLog.logHeader(self)) downloadDidStart: \(String(describing: result))")
+        }
+
+        // Downloader completion handler
+        private func downloadDidFinish(_ result: Result<URL, Error>) {
+            AppLog.viewModel.info("\(AppLog.logHeader(self)) DownloadDidFinish: \(String(describing: result))")
+            switch result {
+            case let .success(downloadUrl):
+                fileToSaveSourceURL = downloadUrl
+                showFileToSaveUI = true
+            case let .failure(error):
+                AppLog.viewModel.error("\(AppLog.logHeader(self)) DownloadDidFinish with error: \(String(describing: error))")
+            }
+        }
+
+        // FileMover completion handlers
+        func moveFileDidComplete(sourceUrl: URL?, result: Result<URL, any Error>) {
+            AppLog.viewModel.info("\(AppLog.logHeader(self)) MoveFileDidComplete: \(String(describing: result))")
+            fileToSaveSourceURL = nil
+            if let sourceUrl {
+                downloader.cleanup(downloadedUrl: sourceUrl)
+            }
+        }
+
+        func moveFileCanceled(sourceUrl: URL?) {
+            AppLog.viewModel.info("\(AppLog.logHeader(self)) MoveFileCanceled")
+            if let sourceUrl {
+                downloader.cleanup(downloadedUrl: sourceUrl)
+            }
+        }
     }
 }
 
@@ -208,6 +251,8 @@ extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
         userScripts?.userScriptEmittedMessage(message, for: self)
     }
 }
+
+// MARK: - WebViewDelegate
 
 extension SwiftUIWebView.ViewModel: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
@@ -231,6 +276,8 @@ extension SwiftUIWebView.ViewModel: WebViewDelegate {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation did failed with error: \(error)")
     }
 }
+
+// MARK: - WKNavigationDelegate
 
 extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
@@ -281,6 +328,35 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         delegate?.navigationDidFinish()
+    }
+
+    // Link explicitly marked as a download (e.g. <a download>)
+    func webView(_ webView: WKWebView,
+                 decidePolicyFor navigationAction: WKNavigationAction,
+                 preferences: WKWebpagePreferences) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
+        if navigationAction.shouldPerformDownload || WebViewDownloadCoordinator.destinationUrlIsDownloadableFile(navigationAction.request.url) {
+            (.download, preferences)
+        } else {
+            (.allow, preferences)
+        }
+    }
+
+    // Response the web view can't render itself (.zip, .xlsx, Content-Disposition: attachment…)
+    func webView(_ webView: WKWebView,
+                 decidePolicyFor navigationResponse: WKNavigationResponse) async -> WKNavigationResponsePolicy {
+        if navigationResponse.canShowMIMEType {
+            .allow
+        } else {
+            .download
+        }
+    }
+
+    func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
+        download.delegate = downloader
+    }
+
+    func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
+        download.delegate = downloader
     }
 }
 
