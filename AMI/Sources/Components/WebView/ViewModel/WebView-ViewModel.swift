@@ -112,31 +112,23 @@ extension SwiftUIWebView {
             }
             webView.navigationDelegate = self
 
-            loadingStateObserver = webView.observe(\.isLoading) { webView, _ in
-                Task { @MainActor [weak self] in
-                    self?.isLoading = webView.isLoading
-                }
+            loadingStateObserver = webView.observe(\.isLoading) { [weak self] webView, _ in
+                self?.isLoading = webView.isLoading
             }
 
-            loadingProgressObserver = webView.observe(\.estimatedProgress) { webView, _ in
-                Task { @MainActor [weak self] in
-                    self?.estimatedProgress = webView.estimatedProgress
-                }
+            loadingProgressObserver = webView.observe(\.estimatedProgress) { [weak self] webView, _ in
+                self?.estimatedProgress = webView.estimatedProgress
             }
 
-            canGoBackObserver = webView.observe(\.canGoBack) { webView, _ in
-                Task { @MainActor [weak self] in
-                    self?.canGoBack = webView.canGoBack
-                }
+            canGoBackObserver = webView.observe(\.canGoBack) { [weak self] webView, _ in
+                self?.canGoBack = webView.canGoBack
             }
 
-            urlChangeObserver = webView.observe(\.url) { webView, _ in
-                Task { @MainActor [weak self] in
-                    guard let self else {
-                        return
-                    }
-                    urlChangeAction?(self, webView.url)
+            urlChangeObserver = webView.observe(\.url) { [weak self] webView, _ in
+                guard let self else {
+                    return
                 }
+                urlChangeAction?(self, webView.url)
             }
         }
 

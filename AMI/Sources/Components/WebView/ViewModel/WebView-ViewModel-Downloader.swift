@@ -13,10 +13,11 @@ final class WebViewDownloadCoordinator: NSObject {
     typealias DownloadStartedAction = (Result<String, Error>) -> Void // String parameter is suggested filename.
     typealias DownloadCompleteAction = (Result<URL, Error>) -> Void
 
-    private var destinations: [ObjectIdentifier: URL] = [:]
-
     var onDownloadStarted: DownloadStartedAction?
     var onDownloadComplete: DownloadCompleteAction?
+
+    // Association table to keep trace of running downloads.
+    private var destinations: [ObjectIdentifier: URL] = [:]
 
     /// List file extensions that represents resource to download rather than display in web view.
     static func destinationUrlIsDownloadableFile(_ destinationUrl: URL?) -> Bool {
@@ -29,6 +30,7 @@ final class WebViewDownloadCoordinator: NSObject {
         return downloadableFileExtensions.contains(destinationUrl.pathExtension)
     }
 
+    /// Mehtod to be called when controller doesn't need the downloaded file anymore.
     func cleanup(downloadedUrl: URL) {
         // Remove downloaded folder (there is only one unique folder by downloaded file).
         deleteTemporaryDownload(at: downloadedUrl.deletingLastPathComponent())
@@ -77,9 +79,10 @@ extension WebViewDownloadCoordinator: WKDownloadDelegate {
     }
 
     func download(_ download: WKDownload, didFailWithError error: Error, resumeData: Data?) {
+        // Remove Download tracking as it succeed.
         if let url = destinations.removeValue(forKey: ObjectIdentifier(download)) {
             // Remove destination folder if download failed.
-            try? FileManager.default.removeItem(at: url.deletingLastPathComponent())
+            cleanup(downloadedUrl: url)
         }
 
         onDownloadComplete?(.failure(error))
