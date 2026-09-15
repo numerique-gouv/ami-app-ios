@@ -286,19 +286,23 @@ extension SwiftUIWebView.ViewModel: WebViewDelegate {
 extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  decidePolicyFor navigationAction: WKNavigationAction,
-                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+                 preferences: WKWebpagePreferences) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
         guard navigationAction.request.url != nil else {
-            decisionHandler(.cancel)
-            return
+            return (.cancel, preferences)
         }
 
-        // Check with delegate if navigation to destination is allowed.
-        if let delegate,
-           !delegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
-            decisionHandler(.cancel)
+        // Check if link is explicitly marked as a download (e.g. <a download>) or is a downlodable destination for the application.
+        if navigationAction.shouldPerformDownload || WebViewDownloadCoordinator.destinationUrlIsDownloadableFile(navigationAction.request.url) {
+            return (.download, preferences)
         } else {
-            delegate?.navigationWillStart(navigationAction: navigationAction)
-            decisionHandler(.allow)
+            // Check with delegate if navigation to destination is allowed.
+            if let delegate,
+               !delegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
+                return (.cancel, preferences)
+            } else {
+                delegate?.navigationWillStart(navigationAction: navigationAction)
+                return (.allow, preferences)
+            }
         }
     }
 
@@ -332,17 +336,6 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         delegate?.navigationDidFinish()
-    }
-
-    // Link explicitly marked as a download (e.g. <a download>)
-    func webView(_ webView: WKWebView,
-                 decidePolicyFor navigationAction: WKNavigationAction,
-                 preferences: WKWebpagePreferences) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
-        if navigationAction.shouldPerformDownload || WebViewDownloadCoordinator.destinationUrlIsDownloadableFile(navigationAction.request.url) {
-            (.download, preferences)
-        } else {
-            (.allow, preferences)
-        }
     }
 
     // Response the web view can't render itself (.zip, .xlsx, Content-Disposition: attachment…)
