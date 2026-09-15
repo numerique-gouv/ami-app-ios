@@ -17,7 +17,7 @@ extension ReviewAppView {
         let notificationManager: NotificationManager
         var reviewApps: [ReviewApp] = []
 
-        private var viewModels = [URL: AnyObject]()
+        var selectedReviewAppViewModel: HomeView.ViewModel?
 
         init(websiteDataStore: WKWebsiteDataStore, notificationManager: NotificationManager) {
             self.websiteDataStore = websiteDataStore
@@ -29,13 +29,12 @@ extension ReviewAppView {
             }
         }
 
-        func reviewModel(for url: URL) -> AnyObject {
-            guard let viewModel = viewModels[url] else {
-                let viewModel = HomeView.ViewModel(rootUrl: url, websiteDataStore: websiteDataStore, notificationManager: notificationManager)
-                viewModels[url] = viewModel
-                return viewModel
+        func selectReviewApp(reviewApp: ReviewApp) {
+            guard let url = URL(string: reviewApp.url) else {
+                selectedReviewAppViewModel = nil
+                return
             }
-            return viewModel
+            selectedReviewAppViewModel = HomeView.ViewModel(rootUrl: url, websiteDataStore: websiteDataStore, notificationManager: notificationManager)
         }
 
         func fetchReviewApps() async throws {
