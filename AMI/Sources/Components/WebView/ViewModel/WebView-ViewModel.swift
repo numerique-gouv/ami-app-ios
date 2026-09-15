@@ -16,24 +16,27 @@ extension SwiftUIWebView {
 
         weak var webView: WKWebView? {
             didSet {
-                configure()
+                configureWebView()
             }
         }
 
         var urlChangeAction: UrlChangeAction? {
             didSet {
-                configure()
+                configureWebView()
             }
         }
 
         let configuration = WKWebViewConfiguration()
         let rootUrl: URL
         weak var delegate: WebViewDelegate?
-        let userScripts: WebViewUserScriptsProtocol?
+        private let userScripts: WebViewUserScriptsProtocol?
         let allowsBackForwardNavigationGestures: Bool
         #if DEBUG
             var acceptSelfSignedCertificate = false
         #endif
+        /// Protocol used to decide how to handle web links to new window ("target=_blank")
+        /// By default, links open in current webview.
+        weak var navigateToNewWindowManager: WebViewNavigateToNewWindowProtocol?
 
         private(set) var isLoading = false
         private(set) var estimatedProgress = CGFloat(0.0)
@@ -43,6 +46,8 @@ extension SwiftUIWebView {
         private var loadingProgressObserver: NSKeyValueObservation?
         private var canGoBackObserver: NSKeyValueObservation?
         private var urlChangeObserver: NSKeyValueObservation?
+
+        private let downloader = WebViewDownloadCoordinator()
 
         init(websiteDataStore: WKWebsiteDataStore,
              rootUrl: URL,
@@ -62,7 +67,7 @@ extension SwiftUIWebView {
 
             addUserScripts(userScripts: initialUserScripts)
 
-            configure()
+            configureWebView()
 
             AppLog.viewModel.info("\(AppLog.logHeader(self)) Don't forget to call `loadInitialPage()` in your subclass to load your webView content when your ViewModel is fully ready.")
         }
@@ -93,7 +98,7 @@ extension SwiftUIWebView {
         // Called by the webView:
         //   - mandatory to be called by the webView because of the parameter
         //   - it is the webView who knows what to do with the changes.
-        private func configure() {
+        private func configureWebView() {
             guard let webView else {
                 loadingStateObserver = nil
                 loadingProgressObserver = nil
@@ -102,24 +107,33 @@ extension SwiftUIWebView {
                 return
             }
             webView.navigationDelegate = self
+            webView.uiDelegate = self
 
-            loadingStateObserver = webView.observe(\.isLoading) { [weak self] webView, _ in
-                self?.isLoading = webView.isLoading
-            }
-
-            loadingProgressObserver = webView.observe(\.estimatedProgress) { [weak self] webView, _ in
-                self?.estimatedProgress = webView.estimatedProgress
-            }
-
-            canGoBackObserver = webView.observe(\.canGoBack) { [weak self] webView, _ in
-                self?.canGoBack = webView.canGoBack
-            }
-
-            urlChangeObserver = webView.observe(\.url) { [weak self] webView, _ in
-                guard let self else {
-                    return
+            loadingStateObserver = webView.observe(\.isLoading) { webView, _ in
+                Task { @MainActor [weak self] in
+                    self?.isLoading = webView.isLoading
                 }
-                urlChangeAction?(self, webView.url)
+            }
+
+            loadingProgressObserver = webView.observe(\.estimatedProgress) { webView, _ in
+                Task { @MainActor [weak self] in
+                    self?.estimatedProgress = webView.estimatedProgress
+                }
+            }
+
+            canGoBackObserver = webView.observe(\.canGoBack) { webView, _ in
+                Task { @MainActor [weak self] in
+                    self?.canGoBack = webView.canGoBack
+                }
+            }
+
+            urlChangeObserver = webView.observe(\.url) { webView, _ in
+                Task { @MainActor [weak self] in
+                    guard let self else {
+                        return
+                    }
+                    urlChangeAction?(self, webView.url)
+                }
             }
         }
 
@@ -209,6 +223,8 @@ extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
     }
 }
 
+// MARK: - WebViewDelegate
+
 extension SwiftUIWebView.ViewModel: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
@@ -231,6 +247,8 @@ extension SwiftUIWebView.ViewModel: WebViewDelegate {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation did failed with error: \(error)")
     }
 }
+
+// MARK: - WKNavigationDelegate
 
 extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
@@ -282,6 +300,14 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         delegate?.navigationDidFinish()
     }
+
+    func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
+        download.delegate = downloader
+    }
+
+    func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
+        download.delegate = downloader
+    }
 }
 
 extension SwiftUIWebView.ViewModel {
@@ -299,4 +325,47 @@ extension SwiftUIWebView.ViewModel {
         }
         return model
     }()
+}
+
+extension SwiftUIWebView.ViewModel: WKUIDelegate {
+    /// Delegate method called when an activated link has attribute "target=_blank".
+    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+        guard let navigateToNewWindowManager else {
+            webView.load(navigationAction.request)
+            return nil
+        }
+
+        guard let destinationUrl = navigationAction.request.url else {
+            return nil
+        }
+
+        switch navigateToNewWindowManager.destinationForNewWindow(sourceWebView: webView,
+                                                                  configuration: configuration,
+                                                                  navigationAction: navigationAction,
+                                                                  windowFeatures: windowFeatures) {
+        case .currentWebView:
+            webView.load(URLRequest(url: destinationUrl))
+        case .newWebView:
+            navigateToNewWindowManager.loadInNewWebView(url: destinationUrl)
+        case .externalBrowser:
+            UIApplication.shared.open(destinationUrl, options: [:], completionHandler: nil)
+        }
+
+        // Always return nil. The destination is already handled by one of the switch case.
+        return nil
+    }
+}
+
+extension SwiftUIWebView.ViewModel: WebViewNavigateToNewWindowProtocol {
+    /// Default behavior: open all links in current webview.
+    func destinationForNewWindow(sourceWebView: WKWebView,
+                                 configuration: WKWebViewConfiguration,
+                                 navigationAction: WKNavigationAction,
+                                 windowFeatures: WKWindowFeatures) -> WebViewNavigateToNewWindowDestination {
+        .currentWebView
+    }
+
+    func loadInNewWebView(url: URL) {
+        fatalError("Should never happen on base WebView-ViewModel.")
+    }
 }

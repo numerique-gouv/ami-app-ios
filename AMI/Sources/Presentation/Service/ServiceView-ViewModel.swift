@@ -1,5 +1,5 @@
 //
-//  PartnerView-ViewModel.swift
+//  ServiceView-ViewModel.swift
 //  AMI-Production
 //
 //  Created by Nicolas Buquet on 13/02/2026.
@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 import WebKit
 
-extension PartnerView {
+extension ServiceView {
     @Observable
     class ViewModel: NSObject {
         typealias BackToHomeAction = () -> Void
@@ -23,6 +23,8 @@ extension PartnerView {
 
         var backToHomeAction: BackToHomeAction?
 
+        var selectedDestination: ServiceLinkViewModel?
+
         @MainActor
         func contactByEmail(targetUrl: URL) {
             UIApplication.shared.open(targetUrl) { accepted in
@@ -32,7 +34,7 @@ extension PartnerView {
 
         init(websiteDataStore: WKWebsiteDataStore, rootUrl: URL, backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
-            let userScripts = PartnerUserScripts()
+            let userScripts = ServiceViewUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
                                                             rootUrl: rootUrl,
                                                             initialUserScripts: userScripts)
@@ -42,21 +44,23 @@ extension PartnerView {
 
             self.webViewViewModel.delegate = self
 
-            AppLog.viewModel.debug("\(AppLog.logHeader(self)) PartnerView.ViewModel init")
+            self.webViewViewModel.navigateToNewWindowManager = self
 
-            // Load initial page now that viewModel is fully ready.
-            Task { @MainActor in
-                webViewViewModel.loadInitialPage()
-            }
+            AppLog.viewModel.debug("\(AppLog.logHeader(self)) init")
+        }
+
+        private func destinationLinkViewDismissed() {
+            AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
+            selectedDestination = nil
         }
 
         deinit {
-            AppLog.viewModel.debug("\(AppLog.logHeader(self)) PartnerView.ViewModel deinit")
+            AppLog.viewModel.debug("\(AppLog.logHeader(self)) deinit")
         }
     }
 }
 
-extension PartnerView.ViewModel: WebViewDelegate {
+extension ServiceView.ViewModel: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
         guard let targetUrl = navigationAction.request.url else {
             // No special restriction. Return TRUE.
@@ -88,5 +92,21 @@ extension PartnerView.ViewModel: WebViewDelegate {
 
     func navigationDidFailed(withError error: Error) {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFailed] failed with error \(error)")
+    }
+}
+
+extension ServiceView.ViewModel: WebViewNavigateToNewWindowProtocol {
+    /// Default behavior: open all links in new webview.
+    func destinationForNewWindow(sourceWebView: WKWebView,
+                                 configuration: WKWebViewConfiguration,
+                                 navigationAction: WKNavigationAction,
+                                 windowFeatures: WKWindowFeatures) -> WebViewNavigateToNewWindowDestination {
+        .newWebView
+    }
+
+    func loadInNewWebView(url: URL) {
+        selectedDestination = ServiceLinkViewModel(url: url, dataStore: webViewViewModel.configuration.websiteDataStore) { [weak self] in
+            self?.destinationLinkViewDismissed()
+        }
     }
 }
