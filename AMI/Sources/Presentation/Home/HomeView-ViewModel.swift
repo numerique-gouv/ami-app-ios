@@ -32,7 +32,7 @@ extension HomeView {
             SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
                 AppLog.viewModel.notice("\(AppLog.logHeader(self)) notificationsSettingDidChangeAction")
                 Task { @MainActor in
-                    await self.webViewViewModel.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
+                    await self.webViewViewModel.localStorageManager?.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
                 }
             })
         }
@@ -98,8 +98,12 @@ extension HomeView {
         }
 
         func shareLogs() async {
-            let userId = await webViewViewModel.readInLocalStorage(key: "user_fc_hash") as? String
-            LogsExporter(userId: userId?.trimmingCharacters(in: CharacterSet(charactersIn: "\""))).shareLogs()
+            guard let userId = await webViewViewModel.localStorageManager?.readInLocalStorage(key: "user_fc_hash") as? String else {
+                AppLog.viewModel.error("\(AppLog.logHeader(self)) Unable to get `userId`")
+                return
+            }
+
+            LogsExporter(userId: userId.trimmingCharacters(in: CharacterSet(charactersIn: "\""))).shareLogs()
         }
 
         @MainActor
@@ -226,7 +230,7 @@ extension HomeView {
 
             Task { @MainActor in
                 // Remove all session data to avoid reusing automatically them on next connection.
-                await webViewViewModel.deleteSessionLocalData()
+                await webViewViewModel.localStorageManager?.deleteSessionLocalData()
                 webViewViewModel.goBackToRootUrl()
             }
         }
