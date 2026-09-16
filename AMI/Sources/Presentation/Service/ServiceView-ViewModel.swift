@@ -17,7 +17,7 @@ extension ServiceView {
 
         let webViewViewModel: SwiftUIWebView.ViewModel
 
-        var showNoEmailClientAlert = false
+        var alertModel: WebViewAlertModel?
 
         private var checkNotificationStatusDone = false
 
