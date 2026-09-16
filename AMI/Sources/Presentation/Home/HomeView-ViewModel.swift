@@ -241,7 +241,61 @@ extension HomeView {
         private func destinationLinkViewDismissed() {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
             selectedDestination = nil
+            sendCommand(command: .resetViewToHome)
         }
+
+        // MARK: - Commands Stream
+
+        @ObservationIgnored private var commandContinuation = [UUID: AsyncStream<HomeViewCommand>.Continuation]()
+        @ObservationIgnored private var commandPending: [HomeViewCommand] = []
+
+        // Generate new command stream when view regenerates.
+        func commandStream() -> AsyncStream<HomeViewCommand> {
+            // Unique ID for this new command stream
+            let id = UUID()
+
+            // Create the command stream.
+            let (stream, continuation) = AsyncStream.makeStream(
+                of: HomeViewCommand.self,
+                bufferingPolicy: .bufferingNewest(8)
+            )
+
+            // Store the AsyncStream.Continuation asssociated with this ID.
+            commandContinuation[id] = continuation
+
+            // Send any pending command.
+            for command in commandPending {
+                continuation.yield(command)
+            }
+
+            // Remove any pending command.
+            commandPending.removeAll()
+
+            return stream
+        }
+
+        private func sendCommand(command: HomeViewCommand) {
+            var delivered = false
+
+            // Try to send command with existing continuation.
+            for (id, continuation) in commandContinuation {
+                // If the stream is already terminated, remove it from continuations.
+                if case .terminated = continuation.yield(command) {
+                    commandContinuation[id] = nil
+                } else {
+                    // Else, check the command as delivered.
+                    delivered = true
+                }
+            }
+
+            // If no stream was available to deliver the command, appends it to pending commands.
+            // The pending commands will be picked up next time an AsyncStream is needed by a regenerated view.
+            if !delivered {
+                commandPending.append(command)
+            }
+        }
+
+        // MARK: -
     }
 }
 

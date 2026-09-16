@@ -77,6 +77,10 @@ struct HomeView: View {
             .navigationDestination(item: $viewModel.selectedDestination) { destination in
                 ServiceView(viewModel: destination.model)
             }
+            .task {
+                // Attach to webview the loop awaiting for commands emitted by model.
+                await handleCommands()
+            }
         if viewModel.isOnContactPage {
             Button {
                 Task {
@@ -95,6 +99,16 @@ struct HomeView: View {
             webView.goBack()
         } else {
             dismiss()
+        }
+    }
+
+    private func handleCommands() async {
+        // Async loop waiting for incoming commands.
+        for await command in viewModel.commandStream() {
+            switch command {
+            case .resetViewToHome:
+                resetWebview()
+            }
         }
     }
 }
