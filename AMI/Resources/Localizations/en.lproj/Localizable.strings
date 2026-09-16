@@ -26,3 +26,7 @@ ami_title = "AMI";
 
 // Local storage
 local_storage_authentication_prompt = "Reading sensitive data";
+
+// Webview alerts
+webview_alerte_no_email_client_message = "No configured email client found on your device.";
+webview_alerte_no_phone_client_message = "No phone application found on your device.";
