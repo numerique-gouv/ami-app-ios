@@ -12,21 +12,25 @@ import WebKit
 struct ServiceLinkViewModel {
     typealias DismissedAction = () -> Void
 
-    private let url: URL
+    private let sourceUrl: URL?
+    private let destinationUrl: URL
     private let dataStore: WKWebsiteDataStore
     private let specialLinkHandler: SpecialLinkHandler
 
     let model: ServiceView.ViewModel
 
-    init(url: URL,
+    init(destinationUrl: URL,
+         sourceUrl: URL? = nil,
          dataStore: WKWebsiteDataStore,
          specialLinkHandler: SpecialLinkHandler,
          destinationViewDismissedAction: DismissedAction?) {
-        self.url = url
+        self.sourceUrl = sourceUrl
+        self.destinationUrl = destinationUrl
         self.dataStore = dataStore
         self.specialLinkHandler = specialLinkHandler
 
-        model = ServiceView.ViewModel(rootUrl: url,
+        model = ServiceView.ViewModel(rootUrl: destinationUrl,
+                                      refererUrl: sourceUrl,
                                       websiteDataStore: dataStore,
                                       specialLinkHandler: specialLinkHandler,
                                       backToHomeAction: destinationViewDismissedAction)

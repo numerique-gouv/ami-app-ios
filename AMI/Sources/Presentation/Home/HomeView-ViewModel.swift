@@ -277,6 +277,7 @@ extension HomeView.ViewModel: WebViewDelegate {
         if !targetUrl.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) {
             selectedDestination = ServiceLinkViewModel(url: targetUrl,
                                                        dataStore: webViewViewModel.configuration.websiteDataStore,
+                                                       sourceUrl: webViewViewModel.webView?.url,
                                                        specialLinkHandler: webViewViewModel.specialLinkHandler) { [weak self] in
                 self?.destinationLinkViewDismissed()
             }
