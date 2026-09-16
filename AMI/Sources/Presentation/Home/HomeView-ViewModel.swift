@@ -51,7 +51,7 @@ extension HomeView {
 
         var isOnContactPage = false
         var showSettings = false
-        var showNoEmailClientAlert = false
+        var alertModel: WebViewAlertModel?
         var isPresentingOnboardingView = false
         // Temporarily display back button when on OIDC page.
         var showBackButton = false
