@@ -58,6 +58,9 @@ extension HomeView {
 
         private var lastCheckNotificationTime = Date.distantPast
 
+        // Flag to know if we can load initial page when coming back to webview, to reset initial state.
+        private var modelIsFullyConfigured = false
+
         var selectedDestination: ServiceLinkViewModel?
 
         enum Event {
@@ -116,6 +119,17 @@ extension HomeView {
 
             self.webViewViewModel.delegate = self
 
+            webViewViewModel.webViewReplacedAction = { [weak self] _ in
+                guard let self,
+                      modelIsFullyConfigured else {
+                    return
+                }
+
+                Task { @MainActor in
+                    self.webViewViewModel.loadInitialPage()
+                }
+            }
+
             // Init `urlChangeAction` property after fully initialized `self` because closure is referencing `self`.
             // No clean way to pass this closure in the `SwiftUIWebView.ViewModel.init` call.
             webViewViewModel.urlChangeAction = handleUrlChange
@@ -125,9 +139,10 @@ extension HomeView {
             // Set NotificationManager base URL to register the device to AMI backend to allow Push Notifications.
             setNotificationManagerBaseUrl(rootUrl)
 
-            Task.detached(priority: .background) { @MainActor in
+            Task { @MainActor in
                 let nativeInfosScript = await HomeNativeInfosScripts()
                 webViewViewModel.addUserScripts(userScripts: nativeInfosScript)
+                modelIsFullyConfigured = true
 
                 // Load initial page now that viewModel is fully ready.
                 Task { @MainActor in
