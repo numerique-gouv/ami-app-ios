@@ -10,7 +10,7 @@ final class Config {
     static let shared = Config()
 
     let BASE_URL = URL(string: "https://\(Secrets.baseDomainString)/")!
-    let OIDC_HOSTS = Secrets.oidcDomainsStrigns
+    let OIDC_HOSTS = Secrets.oidcDomainsStrings
 
     private init() {}
 }
