@@ -7,7 +7,6 @@
 
 import AmiDesignSystem
 import SwiftUI
-@_spi(Advanced) import SwiftUIIntrospect
 import WebKit
 
 struct HomeView: View {
