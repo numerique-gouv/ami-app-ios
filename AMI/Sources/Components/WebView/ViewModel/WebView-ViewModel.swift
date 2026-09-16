@@ -32,7 +32,9 @@ extension SwiftUIWebView {
         private let userScripts: WebViewUserScriptsProtocol?
         let allowsBackForwardNavigationGestures: Bool
         #if DEBUG
-            var acceptSelfSignedCertificate = false
+            // Property `acceptSelfSignedCertificate` that can be set to TRUE
+            // when debugging against a local backend server using a self-signed certificate.
+            private var acceptSelfSignedCertificate = false
         #endif
         /// Protocol used to decide how to handle web links to new window ("target=_blank")
         /// By default, links open in current webview.
