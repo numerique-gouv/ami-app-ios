@@ -25,12 +25,20 @@ The project is described using 2 files:
 2. Then configure your environnement, execute the script:
 	> scripts/ami-configure-build-tools.sh
 
-3. Then, generate the Xcode project using script:
+4. Get existing `.env` files from AMI tream if possible. There is one `.env` by target, located in `targets/<target-name>/SupportingFiles/`.
+    - `targets/staging/SupportingFiles/.env.ami-staging`
+    - `targets/preproduction/SupportingFiles/.env.ami-preproduction`
+    - `targets/production/SupportingFiles/.env.ami-production`
+
+> [!WARNING]
+> These files are treated as secrets and so are not gitted.
+
+    Each target folder contains an `.env.example` file that list the awaited content.
+
+4. Then, generate the Xcode project using script:
 	> scripts/ami-generate-xcode.sh
 
-
-
-4. Now, you can open the generated `AMI-xcodegen.xcodeproj` in Xcode.
+5. Now, you can open the generated `AMI-xcodegen.xcodeproj` in Xcode.
 	> xed AMI-xcodegen.xcodeproj
 
 ## Information
