@@ -32,11 +32,12 @@ extension ServiceView {
             }
         }
 
-        init(websiteDataStore: WKWebsiteDataStore, rootUrl: URL, backToHomeAction: BackToHomeAction?) {
+        init(websiteDataStore: WKWebsiteDataStore, rootUrl: URL, refererUrl: URL? = nil, backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let userScripts = ServiceViewUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
                                                             rootUrl: rootUrl,
+                                                            refererUrl: refererUrl,
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
@@ -105,7 +106,9 @@ extension ServiceView.ViewModel: WebViewNavigateToNewWindowProtocol {
     }
 
     func loadInNewWebView(url: URL) {
-        selectedDestination = ServiceLinkViewModel(url: url, dataStore: webViewViewModel.configuration.websiteDataStore) { [weak self] in
+        selectedDestination = ServiceLinkViewModel(destinationUrl: url,
+                                                   sourceUrl: nil,
+                                                   dataStore: webViewViewModel.configuration.websiteDataStore) { [weak self] in
             self?.destinationLinkViewDismissed()
         }
     }

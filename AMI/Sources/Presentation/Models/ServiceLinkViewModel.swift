@@ -12,17 +12,20 @@ import WebKit
 struct ServiceLinkViewModel: Hashable {
     typealias DismissedAction = () -> Void
 
-    private let url: URL
+    private let sourceUrl: URL?
+    private let destinationUrl: URL
     private let dataStore: WKWebsiteDataStore
 
     let model: ServiceView.ViewModel
 
-    init(url: URL, dataStore: WKWebsiteDataStore, destinationViewDismissedAction: DismissedAction?) {
-        self.url = url
+    init(destinationUrl: URL, sourceUrl: URL? = nil, dataStore: WKWebsiteDataStore, destinationViewDismissedAction: DismissedAction?) {
+        self.sourceUrl = sourceUrl
+        self.destinationUrl = destinationUrl
         self.dataStore = dataStore
 
         model = ServiceView.ViewModel(websiteDataStore: dataStore,
-                                      rootUrl: url,
+                                      rootUrl: destinationUrl,
+                                      refererUrl: sourceUrl,
                                       backToHomeAction: destinationViewDismissedAction)
     }
 }
