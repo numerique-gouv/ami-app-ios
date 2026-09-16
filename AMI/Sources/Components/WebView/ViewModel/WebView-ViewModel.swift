@@ -13,12 +13,16 @@ extension SwiftUIWebView {
     @Observable
     class ViewModel: NSObject {
         typealias UrlChangeAction = @Sendable (SwiftUIWebView.ViewModel, URL?) -> Void
+        typealias WebviewWasReplacedAction = @Sendable (WKWebView?) -> Void
 
         weak var webView: WKWebView? {
             didSet {
                 configureWebView()
+                webViewReplacedAction?(webView)
             }
         }
+
+        var webViewReplacedAction: WebviewWasReplacedAction?
 
         var urlChangeAction: UrlChangeAction? {
             didSet {
@@ -56,12 +60,14 @@ extension SwiftUIWebView {
              rootUrl: URL,
              initialUserScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
-             urlChangeAction: UrlChangeAction? = nil) {
+             urlChangeAction: UrlChangeAction? = nil,
+             webviewReplacedAction: WebviewWasReplacedAction? = nil) {
             configuration.websiteDataStore = websiteDataStore
             self.rootUrl = rootUrl
             userScripts = initialUserScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
             self.urlChangeAction = urlChangeAction
+            webViewReplacedAction = webviewReplacedAction
 
             super.init()
 
