@@ -90,9 +90,20 @@ extension HomeView {
         }
 
         @MainActor
-        func contactByEmail(targetUrl: URL) {
-            UIApplication.shared.open(targetUrl) { accepted in
-                self.showNoEmailClientAlert = !accepted
+        func contactByEmail(targetUrl: URL) async {
+            if await UIApplication.shared.open(targetUrl) == false {
+                alertModel = WebViewAlertModel(title: AMIL10n.commonError,
+                                               message: AMIL10n.webviewAlerteNoEmailClientMessage,
+                                               closeButtonTitle: AMIL10n.commonOk)
+            }
+        }
+
+        @MainActor
+        func contactByPhone(targetUrl: URL) async {
+            if await UIApplication.shared.open(targetUrl) == false {
+                alertModel = WebViewAlertModel(title: AMIL10n.commonError,
+                                               message: AMIL10n.webviewAlerteNoPhoneClientMessage,
+                                               closeButtonTitle: AMIL10n.commonOk)
             }
         }
 
@@ -244,10 +255,15 @@ extension HomeView.ViewModel: WebViewDelegate {
             return true
         }
 
-        // Special process for `mailto` url.
+        // Special process for `mailto` and 'tel' url schemes.
         if targetUrl.scheme == "mailto" {
             Task { @MainActor in
-                contactByEmail(targetUrl: targetUrl)
+                await contactByEmail(targetUrl: targetUrl)
+            }
+            return false
+        } else if targetUrl.scheme == "tel" {
+            Task { @MainActor in
+                await contactByPhone(targetUrl: targetUrl)
             }
             return false
         }
