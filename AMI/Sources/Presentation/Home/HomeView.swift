@@ -38,6 +38,15 @@ struct HomeView: View {
         AMIWebView(viewModel: viewModel.webViewViewModel)
     }
 
+    // webViewID to enable reset of webView when coming back to Home state.
+    // ResetWebview() will just update this preperty with a new random UUID.
+    @State private var webviewID = UUID()
+
+    private func resetWebview() {
+        // Assign a new random ID to `webviewID` to trigger a regenration of this part of the SwiftUI view.
+        webviewID = UUID()
+    }
+
     // Temporarily display back button when on OIDC page.
     @ViewBuilder
     private var backButton: some View {
@@ -58,6 +67,7 @@ struct HomeView: View {
                 .padding(.horizontal, 8.0)
         }
         webView
+            .id(webviewID)
             .toolbar {
                 toolbarBackButton
             }
