@@ -106,14 +106,14 @@ extension HomeView {
 
         init(rootUrl: URL, websiteDataStore: WKWebsiteDataStore, notificationManager: NotificationManager) {
             let userScripts = HomeUserScripts()
-            let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
-                                                            rootUrl: rootUrl,
-                                                            initialUserScripts: userScripts)
+            let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore, rootUrl: rootUrl)
+
             self.webViewViewModel = webViewViewModel
             self.notificationManager = notificationManager
 
             super.init()
 
+            webViewViewModel.addUserScripts(userScripts: userScripts, handler: self)
             self.webViewViewModel.delegate = self
 
             // Init `urlChangeAction` property after fully initialized `self` because closure is referencing `self`.
@@ -127,7 +127,7 @@ extension HomeView {
 
             Task.detached(priority: .background) { @MainActor in
                 let nativeInfosScript = await HomeNativeInfosScripts()
-                webViewViewModel.addUserScripts(userScripts: nativeInfosScript)
+                webViewViewModel.addUserScripts(userScripts: nativeInfosScript, handler: self)
 
                 // Load initial page now that viewModel is fully ready.
                 Task { @MainActor in
@@ -242,6 +242,10 @@ extension HomeView {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
             selectedDestination = nil
         }
+
+extension HomeView.ViewModel: WKScriptMessageHandler {
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        webViewViewModel.userContentController(userContentController, didReceive: message)
     }
 }
 

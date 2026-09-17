@@ -17,5 +17,5 @@ struct UserScript {
 protocol WebViewUserScriptsProtocol {
     var scripts: [UserScript] { get }
 
-    func userScriptEmittedMessage(_ message: WKScriptMessage, for viewModel: SwiftUIWebView.ViewModel)
+    func userScriptEmittedMessage(_ message: WKScriptMessage)
 }

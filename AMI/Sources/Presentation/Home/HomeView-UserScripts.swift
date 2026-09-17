@@ -114,12 +114,12 @@ class HomeUserScripts {
 }
 
 extension HomeUserScripts: WebViewUserScriptsProtocol {
-    func userScriptEmittedMessage(_ message: WKScriptMessage, for viewModel: SwiftUIWebView.ViewModel) {
+    func userScriptEmittedMessage(_ message: WKScriptMessage) {
         switch Script(rawValue: message.name) {
         case .consoleLog:
             printLog(message)
         case .nativeBridge:
-            processMessage(message, for: viewModel)
+            processMessage(message)
         case .none:
             // Ignore unknown script message names
             break
@@ -146,7 +146,7 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
         }
     }
 
-    func processMessage(_ message: WKScriptMessage, for viewModel: SwiftUIWebView.ViewModel) {
+    func processMessage(_ message: WKScriptMessage) {
         // Parse the message from JavaScript (format: {event: string, data: any})
         if let messageBody = message.body as? [String: Any],
            let eventName = messageBody["event"] as? String {

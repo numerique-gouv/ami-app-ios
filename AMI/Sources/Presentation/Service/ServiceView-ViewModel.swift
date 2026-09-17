@@ -34,14 +34,12 @@ extension ServiceView {
 
         init(websiteDataStore: WKWebsiteDataStore, rootUrl: URL, backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
-            let userScripts = ServiceViewUserScripts()
-            let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
-                                                            rootUrl: rootUrl,
-                                                            initialUserScripts: userScripts)
+            let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore, rootUrl: rootUrl)
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
             super.init()
 
+            webViewViewModel.addUserScripts(userScripts: ServiceViewUserScripts(), handler: self)
             self.webViewViewModel.delegate = self
 
             self.webViewViewModel.navigateToNewWindowManager = self
@@ -57,6 +55,10 @@ extension ServiceView {
         deinit {
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) deinit")
         }
+
+extension ServiceView.ViewModel: WKScriptMessageHandler {
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        webViewViewModel.userContentController(userContentController, didReceive: message)
     }
 }
 

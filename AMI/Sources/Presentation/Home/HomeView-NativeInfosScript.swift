@@ -67,7 +67,7 @@ class HomeNativeInfosScripts {
 }
 
 extension HomeNativeInfosScripts: WebViewUserScriptsProtocol {
-    func userScriptEmittedMessage(_ message: WKScriptMessage, for viewModel: SwiftUIWebView.ViewModel) {
+    func userScriptEmittedMessage(_ message: WKScriptMessage) {
         switch Script(rawValue: message.name) {
         case .getNativeInfos, .none:
             // Ignore unknown script message names
