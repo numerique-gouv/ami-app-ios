@@ -38,6 +38,8 @@ extension ServiceView {
             super.init()
 
             webViewViewModel.addUserScripts(userScripts: ServiceViewUserScripts(), handler: self)
+            webViewViewModel.addUserScripts(userScripts: ServiceViewPostMessageScripts(context: self), handler: self)
+
             self.webViewViewModel.delegate = self
 
             self.webViewViewModel.navigateToNewWindowManager = self
@@ -53,6 +55,10 @@ extension ServiceView {
         deinit {
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) deinit")
         }
+    }
+}
+
+        var receivedContent: InfoPanelContent?
     }
 }
 

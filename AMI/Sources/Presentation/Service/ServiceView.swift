@@ -46,6 +46,9 @@ struct ServiceView: View {
                 // Load page now that all is ready.
                 viewModel.webViewViewModel.loadInitialPage()
             }
+            .sheet(item: $viewModel.receivedContent) { content in
+                InfoPanelView(content: content)
+            }
     }
 }
 
