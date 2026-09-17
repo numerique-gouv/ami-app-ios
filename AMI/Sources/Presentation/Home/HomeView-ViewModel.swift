@@ -238,6 +238,16 @@ extension HomeView {
     }
 }
 
+        func triggerPostMessge() {
+            Task { @MainActor in
+                try await webViewViewModel.webView?.evaluateJavaScript("testPostMessage()")
+            }
+        }
+
+        var receivedContent: InfoPanelContent?
+    }
+}
+
 extension HomeView.ViewModel: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         webViewViewModel.userContentController(userContentController, didReceive: message)

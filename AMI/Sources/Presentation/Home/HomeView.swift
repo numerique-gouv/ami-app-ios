@@ -50,6 +50,17 @@ struct HomeView: View {
     }
 
     @ViewBuilder
+    private var postMessageButton: some View {
+        Button {
+            viewModel.triggerPostMessge()
+        } label: {
+            Text("Trigger PM")
+                .bold()
+        }
+        .buttonStyle(ButtonStyleDsfr(type: .primary))
+    }
+
+    @ViewBuilder
     var body: some View {
         // Temporarily display back button when on OIDC page.
         if viewModel.showBackButton {
