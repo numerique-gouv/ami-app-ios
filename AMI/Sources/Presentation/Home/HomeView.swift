@@ -57,20 +57,34 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 8.0)
         }
-        webView
-            .toolbar {
-                toolbarBackButton
-            }
-            .sheet(isPresented: $viewModel.showSettings) {
-                SettingsView(viewModel: viewModel.settingsViewViewModel)
-            }
-            .sheet(isPresented: $viewModel.isPresentingOnboardingView) {
-                OnboardingView(viewModel: viewModel.onboardingViewViewModel)
-            }
-            .navigationTitle(AMIL10n.amiTitle)
-            .navigationBarHidden(true)
-            .navigationDestination(item: $viewModel.selectedDestination) { destination in
-                ServiceView(viewModel: destination.model)
+        ZStack(alignment: .bottomTrailing) {
+            Group {
+                webView
+                    .toolbar {
+                        toolbarBackButton
+                    }
+                    .sheet(isPresented: $viewModel.showSettings) {
+                        SettingsView(viewModel: viewModel.settingsViewViewModel)
+                    }
+                    .sheet(isPresented: $viewModel.isPresentingOnboardingView) {
+                        OnboardingView(viewModel: viewModel.onboardingViewViewModel)
+                    }
+                    .navigationTitle(AMIL10n.amiTitle)
+                    .navigationBarHidden(true)
+                    .navigationDestination(item: $viewModel.selectedDestination) { destination in
+                        ServiceView(viewModel: destination.model)
+                    }
+                if viewModel.isOnContactPage {
+                    Button {
+                        Task {
+                            await viewModel.shareLogs()
+                        }
+                    } label: {
+                        Text("Télécharger les logs")
+                    }
+                    .buttonStyle(ButtonStyleDsfr(type: .secondary))
+                    .padding(.vertical)
+                }
             }
     }
 

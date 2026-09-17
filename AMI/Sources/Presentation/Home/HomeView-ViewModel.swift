@@ -105,6 +105,8 @@ extension HomeView {
             super.init()
 
             webViewViewModel.addUserScripts(userScripts: userScripts, handler: self)
+            webViewViewModel.addUserScripts(userScripts: ServiceViewPostMessageScripts(context: self), handler: self)
+
             self.webViewViewModel.delegate = self
 
             // Init `urlChangeAction` property after fully initialized `self` because closure is referencing `self`.
