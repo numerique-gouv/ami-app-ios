@@ -78,6 +78,10 @@ extension ServiceView {
     }
 }
 
+        var receivedContent: InfoPanelContent?
+    }
+}
+
 extension ServiceView.ViewModel: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         webViewViewModel.userContentController(userContentController, didReceive: message)
