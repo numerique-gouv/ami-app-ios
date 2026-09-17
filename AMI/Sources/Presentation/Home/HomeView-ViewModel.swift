@@ -114,6 +114,8 @@ extension HomeView {
             super.init()
 
             webViewViewModel.addUserScripts(userScripts: userScripts, handler: self)
+            webViewViewModel.addUserScripts(userScripts: ServiceViewPostMessageScripts(context: self), handler: self)
+
             self.webViewViewModel.delegate = self
 
             // Init `urlChangeAction` property after fully initialized `self` because closure is referencing `self`.
@@ -242,6 +244,16 @@ extension HomeView {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
             selectedDestination = nil
         }
+
+        func triggerPostMessge() {
+            Task { @MainActor in
+                try await webViewViewModel.webView?.evaluateJavaScript("testPostMessage()")
+            }
+        }
+
+        var receivedContent: InfoPanelContent?
+    }
+}
 
 extension HomeView.ViewModel: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {

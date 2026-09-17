@@ -50,6 +50,17 @@ struct HomeView: View {
     }
 
     @ViewBuilder
+    private var postMessageButton: some View {
+        Button {
+            viewModel.triggerPostMessge()
+        } label: {
+            Text("Trigger PM")
+                .bold()
+        }
+        .buttonStyle(ButtonStyleDsfr(type: .primary))
+    }
+
+    @ViewBuilder
     var body: some View {
         // Temporarily display back button when on OIDC page.
         if viewModel.showBackButton {
@@ -57,36 +68,46 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 8.0)
         }
-        webView
-            .toolbar {
-                toolbarBackButton
-            }
-            .sheet(isPresented: $viewModel.showSettings) {
-                SettingsView(viewModel: viewModel.settingsViewViewModel)
-            }
-            .alert(isPresented: $viewModel.showNoEmailClientAlert) {
-                Alert(title: Text("Erreur"),
-                      message: Text("Aucun client email correctement configuré n'a été trouvé sur votre appareil."),
-                      dismissButton: .default(Text("Ok")))
-            }
-            .sheet(isPresented: $viewModel.isPresentingOnboardingView) {
-                OnboardingView(viewModel: viewModel.onboardingViewViewModel)
-            }
-            .navigationTitle(AMIL10n.amiTitle)
-            .navigationBarHidden(true)
-            .navigationDestination(item: $viewModel.selectedDestination) { destination in
-                ServiceView(viewModel: destination.model)
-            }
-        if viewModel.isOnContactPage {
-            Button {
-                Task {
-                    await viewModel.shareLogs()
+        ZStack(alignment: .bottomTrailing) {
+            Group {
+                webView
+                    .toolbar {
+                        toolbarBackButton
+                    }
+                    .sheet(isPresented: $viewModel.showSettings) {
+                        SettingsView(viewModel: viewModel.settingsViewViewModel)
+                    }
+                    .alert(isPresented: $viewModel.showNoEmailClientAlert) {
+                        Alert(title: Text("Erreur"),
+                              message: Text("Aucun client email correctement configuré n'a été trouvé sur votre appareil."),
+                              dismissButton: .default(Text("Ok")))
+                    }
+                    .sheet(isPresented: $viewModel.isPresentingOnboardingView) {
+                        OnboardingView(viewModel: viewModel.onboardingViewViewModel)
+                    }
+                    .navigationTitle(AMIL10n.amiTitle)
+                    .navigationBarHidden(true)
+                    .navigationDestination(item: $viewModel.selectedDestination) { destination in
+                        ServiceView(viewModel: destination.model)
+                    }
+                if viewModel.isOnContactPage {
+                    Button {
+                        Task {
+                            await viewModel.shareLogs()
+                        }
+                    } label: {
+                        Text("Télécharger les logs")
+                    }
+                    .buttonStyle(ButtonStyleDsfr(type: .secondary))
+                    .padding(.vertical)
                 }
-            } label: {
-                Text("Télécharger les logs")
             }
-            .buttonStyle(ButtonStyleDsfr(type: .secondary))
-            .padding(.vertical)
+            postMessageButton
+                .fixedSize()
+                .offset(x: -16.0, y: -64.0)
+        }
+        .sheet(item: $viewModel.receivedContent) { content in
+            InfoPanelView(content: content)
         }
     }
 
