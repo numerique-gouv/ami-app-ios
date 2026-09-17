@@ -31,7 +31,7 @@ extension SwiftUIWebView {
         let specialLinkHandler: SpecialLinkHandler
         let refererUrl: URL?
         weak var delegate: WebViewDelegate?
-        private let userScripts: WebViewUserScriptsProtocol?
+        private var userScriptsStorage = [WebViewUserScriptsProtocol]()
         let allowsBackForwardNavigationGestures: Bool
         #if DEBUG
             // Property `acceptSelfSignedCertificate` that can be set to TRUE
@@ -86,26 +86,28 @@ extension SwiftUIWebView {
             downloader.onDownloadStarted = downloadDidStart(_:)
             downloader.onDownloadComplete = downloadDidFinish(_:)
 
-            addUserScripts(userScripts: initialUserScripts)
-
             configureWebView()
 
             AppLog.viewModel.info("\(AppLog.logHeader(self)) Don't forget to call `loadInitialPage()` in your subclass to load your webView content when your ViewModel is fully ready.")
         }
 
         // Set `addUserScripts` method public because it can be used later than at `init` call if a script needs async values.
-        func addUserScripts(userScripts: WebViewUserScriptsProtocol?) {
-            guard let scripts = userScripts?.scripts else {
+        func addUserScripts(userScripts: WebViewUserScriptsProtocol?, handler: any WKScriptMessageHandler) {
+            guard let userScripts,
+                  userScripts.scripts.count > 0 else {
                 return
             }
 
             Task { @MainActor in
-                for userScript in scripts {
+                for userScript in userScripts.scripts {
                     configuration.userContentController.addUserScript(userScript.script)
                     // Use WeakScriptMessageHandler to avoid retain cycle:
                     //   WebView.ViewModel -> WKWebViewConfiguration -> WKUserContentController -> WebView.ViewModel (self)
-                    configuration.userContentController.add(WeakScriptMessageHandler(self), name: userScript.name)
+                    configuration.userContentController.add(WeakScriptMessageHandler(handler), name: userScript.name)
                 }
+
+                // Add userScripts to script storage for message dispatching when a new message will come from web page.
+                userScriptsStorage.append(userScripts)
             }
         }
 
@@ -222,9 +224,12 @@ extension SwiftUIWebView {
 
 extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        // Dispatch message to message handler, passing the view model to be able to act on it.
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) didReceive message: \(message.name)")
-        userScripts?.userScriptEmittedMessage(message, for: self)
+
+        // Dispatch message to each message handler, passing the view model to be able to act on it.
+        for scriptHandler in userScriptsStorage {
+            scriptHandler.userScriptEmittedMessage(message)
+        }
     }
 }
 

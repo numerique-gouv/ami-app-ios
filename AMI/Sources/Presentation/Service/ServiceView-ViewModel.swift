@@ -39,6 +39,7 @@ extension ServiceView {
             self.backToHomeAction = backToHomeAction
             super.init()
 
+            webViewViewModel.addUserScripts(userScripts: ServiceViewUserScripts(), handler: self)
             self.webViewViewModel.delegate = self
 
             self.webViewViewModel.navigateToNewWindowManager = self
@@ -54,6 +55,10 @@ extension ServiceView {
         deinit {
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) deinit")
         }
+
+extension ServiceView.ViewModel: WKScriptMessageHandler {
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        webViewViewModel.userContentController(userContentController, didReceive: message)
     }
 }
 

@@ -83,7 +83,7 @@ class ServiceViewUserScripts {
 }
 
 extension ServiceViewUserScripts: WebViewUserScriptsProtocol {
-    func userScriptEmittedMessage(_ message: WKScriptMessage, for viewModel: SwiftUIWebView.ViewModel) {
+    func userScriptEmittedMessage(_ message: WKScriptMessage) {
         switch Script(rawValue: message.name) {
         case .consoleLog:
             printLog(message)
