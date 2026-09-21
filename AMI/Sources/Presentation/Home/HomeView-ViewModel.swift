@@ -49,7 +49,6 @@ extension HomeView {
             return onboardingViewViewModel
         }
 
-        var isOnContactPage = false
         var showSettings = false
         var showNoEmailClientAlert = false
         var isPresentingOnboardingView = false
@@ -69,14 +68,12 @@ extension HomeView {
         @Sendable
         private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
             let shoudlShowNotificationsSettings = SpecialWebPageUrl.notificationsSettings.match(url)
-            isOnContactPage = SpecialWebPageUrl.contact.match(url)
 
             // swiftformat:disable redundantSelf
             AppLog.viewModel.notice(
                 """
                 \(AppLog.logHeader(self)) URL Change Action \(url?.debugDescription ?? "<nil>")
                 \tsettings: \(self.showSettings)
-                \tcontact: \(self.isOnContactPage)
                 """
             )
             // swiftformat:enable redundantSelf
@@ -90,11 +87,6 @@ extension HomeView {
                     self.showSettings = true
                 }
             }
-        }
-
-        func shareLogs() async {
-            let userId = await webViewViewModel.readInLocalStorage(key: "user_fc_hash") as? String
-            LogsExporter(userId: userId?.trimmingCharacters(in: CharacterSet(charactersIn: "\""))).shareLogs()
         }
 
         @MainActor

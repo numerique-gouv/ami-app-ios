@@ -77,17 +77,6 @@ struct HomeView: View {
             .navigationDestination(item: $viewModel.selectedDestination) { destination in
                 ServiceView(viewModel: destination.model)
             }
-        if viewModel.isOnContactPage {
-            Button {
-                Task {
-                    await viewModel.shareLogs()
-                }
-            } label: {
-                Text("Télécharger les logs")
-            }
-            .buttonStyle(ButtonStyleDsfr(type: .secondary))
-            .padding(.vertical)
-        }
     }
 
     private func handleBackAction() {
