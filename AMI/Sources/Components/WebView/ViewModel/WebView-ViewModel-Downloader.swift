@@ -16,6 +16,9 @@ final class WebViewDownloadCoordinator: NSObject {
     var onDownloadStarted: DownloadStartedAction?
     var onDownloadComplete: DownloadCompleteAction?
 
+    // List file extensions that are allowed to be downloadable.
+    static let DOWNLOADABLE_FILE_EXTENSIONS = ["pdf", "png", "jpeg", "jpg"]
+
     // Association table to keep trace of running downloads.
     private var destinations: [ObjectIdentifier: URL] = [:]
 
@@ -25,9 +28,7 @@ final class WebViewDownloadCoordinator: NSObject {
             return false
         }
 
-        let downloadableFileExtensions = ["pdf"]
-
-        return downloadableFileExtensions.contains(destinationUrl.pathExtension)
+        return DOWNLOADABLE_FILE_EXTENSIONS.contains(destinationUrl.pathExtension)
     }
 
     /// Mehtod to be called when controller doesn't need the downloaded file anymore.
