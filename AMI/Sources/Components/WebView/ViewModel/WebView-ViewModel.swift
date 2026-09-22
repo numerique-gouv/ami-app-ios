@@ -49,6 +49,8 @@ extension SwiftUIWebView {
         private var canGoBackObserver: NSKeyValueObservation?
         private var urlChangeObserver: NSKeyValueObservation?
 
+        var localStorageManager: WebViewLocalStorageManager?
+
         // Web Downloader properties
         private let downloader = WebViewDownloadCoordinator()
         var showFileToSaveUI = false
@@ -113,6 +115,7 @@ extension SwiftUIWebView {
                 loadingProgressObserver = nil
                 canGoBackObserver = nil
                 urlChangeObserver = nil
+                localStorageManager = nil
                 return
             }
             webView.navigationDelegate = self
@@ -136,46 +139,8 @@ extension SwiftUIWebView {
                 }
                 urlChangeAction?(self, webView.url)
             }
-        }
 
-        @MainActor // `evaluateJavaScript` must be used from main thread only.
-        func readInLocalStorage(key: String) async -> Any? {
-            guard let webView else {
-                AppLog.viewModel.notice("\(AppLog.logHeader(self)) ReadInLocalStorage not called because no webView initialzed")
-                return nil
-            }
-
-            // Prepare javaScript script.
-            let script = "localStorage.getItem('\(key)');"
-
-            do {
-                // Execute javaScript script
-                let value = try await webView.evaluateJavaScript(script)
-                AppLog.viewModel.notice("\(AppLog.logHeader(self)) ReadInLocalStorage success - `\(key)` -> `\(value.debugDescription, privacy: .private)`")
-                return value
-            } catch {
-                AppLog.viewModel.notice("\(AppLog.logHeader(self)) ReadInLocalStorage failed to read key `\(key)`: \(error)")
-                return nil
-            }
-        }
-
-        @MainActor // `evaluateJavaScript` must be used from main thread only.
-        func writeInLocalStorage(key: String, value: String) async {
-            guard let webView else {
-                AppLog.viewModel.notice("\(AppLog.logHeader(self)) WriteInLocalStorage not called because no webView initialzed")
-                return
-            }
-
-            // Prepare javaScript script.
-            let script = "localStorage.setItem('\(key)', '\(value)');"
-
-            do {
-                // Execute javaScript script
-                _ = try await webView.evaluateJavaScript(script)
-                AppLog.viewModel.notice("\(AppLog.logHeader(self)) WriteInLocalStorage success - `\(key)` = `\(value, privacy: .private)`")
-            } catch {
-                AppLog.viewModel.notice("\(AppLog.logHeader(self)) WriteInLocalStorage failed to set key `\(key)` to value `\(value, privacy: .private)`: \(error)")
-            }
+            localStorageManager = WebViewLocalStorageManager(webView: webView)
         }
 
         deinit {
@@ -205,16 +170,7 @@ extension SwiftUIWebView {
             webView.go(to: firstItem)
         }
 
-        // Delete all local data and cookies associated with the current web session.
-        @MainActor
-        func deleteSessionLocalData() async {
-            let records = await configuration.websiteDataStore.dataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes())
-            for record in records {
-                await configuration.websiteDataStore.removeData(ofTypes: record.dataTypes, for: [record])
-            }
-        }
-
-        // Downloader started handler
+         // Downloader started handler
         private func downloadDidStart(_ result: Result<String, Error>) {
             // TODO: Display information to user about Download starting.
             AppLog.viewModel.info("\(AppLog.logHeader(self)) downloadDidStart: \(String(describing: result))")

@@ -26,7 +26,7 @@ extension HomeView {
             SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
                 AppLog.viewModel.notice("\(AppLog.logHeader(self)) notificationsSettingDidChangeAction")
                 Task { @MainActor in
-                    await self.webViewViewModel.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
+                    await self.webViewViewModel.localStorageManager?.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
                 }
             })
         }
@@ -213,7 +213,7 @@ extension HomeView {
 
             Task { @MainActor in
                 // Remove all session data to avoid reusing automatically them on next connection.
-                await webViewViewModel.deleteSessionLocalData()
+                await webViewViewModel.localStorageManager?.deleteSessionLocalData()
                 webViewViewModel.goBackToRootUrl()
             }
         }
