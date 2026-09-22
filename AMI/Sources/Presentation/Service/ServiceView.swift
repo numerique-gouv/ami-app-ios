@@ -1,5 +1,5 @@
 //
-//  PartnerView.swift
+//  ServiceView.swift
 //  AMI
 //
 //  Created by Aline Bonnet on 19/10/2025.
@@ -9,8 +9,7 @@ import SwiftUI
 @_spi(Advanced) import SwiftUIIntrospect
 import WebKit
 
-struct PartnerView: View {
-    @Environment(\.dismiss) var dismiss
+struct ServiceView: View {
     @Bindable var viewModel: ViewModel
 
     init(viewModel: ViewModel) {
@@ -25,7 +24,6 @@ struct PartnerView: View {
     @ViewBuilder
     private var backButton: some View {
         Button {
-            dismiss()
             viewModel.backToHomeAction?()
         } label: {
             Label(AMIL10n.amiTitle, systemImage: "arrowtriangle.left.fill")
@@ -46,12 +44,19 @@ struct PartnerView: View {
                       message: Text("Aucun client email correctement configuré n'a été trouvé sur votre appareil."),
                       dismissButton: .default(Text("Ok")))
             }
+            .navigationDestination(item: $viewModel.selectedDestination) { destination in
+                ServiceView(viewModel: destination.model)
+            }
+            .task(id: viewModel.webViewViewModel.rootUrl) {
+                // Load page now that all is ready.
+                viewModel.webViewViewModel.loadInitialPage()
+            }
     }
 }
 
 #Preview {
-    let viewModel = PartnerView.ViewModel(websiteDataStore: .nonPersistent(), rootUrl: URL(string: "https://numerique.gouv.fr")!) {
+    let viewModel = ServiceView.ViewModel(websiteDataStore: .nonPersistent(), rootUrl: URL(string: "https://numerique.gouv.fr")!) {
         AppLog.viewModel.log("\(AppLog.logHeader()) Back to home called")
     }
-    PartnerView(viewModel: viewModel)
+    ServiceView(viewModel: viewModel)
 }

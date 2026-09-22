@@ -1,5 +1,5 @@
 //
-//  PartnerView-UserScripts.swift
+//  ServiceView-UserScripts.swift
 //  AMI-Production
 //
 //  Created by Nicolas Buquet on 13/02/2026.
@@ -10,7 +10,7 @@ import Foundation
 import SwiftUI
 import WebKit
 
-class PartnerUserScripts {
+class ServiceViewUserScripts {
     // Enumerate existing scripts
     enum Script: String {
         case consoleLog
@@ -82,7 +82,7 @@ class PartnerUserScripts {
     """
 }
 
-extension PartnerUserScripts: WebViewUserScriptsProtocol {
+extension ServiceViewUserScripts: WebViewUserScriptsProtocol {
     func userScriptEmittedMessage(_ message: WKScriptMessage, for viewModel: SwiftUIWebView.ViewModel) {
         switch Script(rawValue: message.name) {
         case .consoleLog:

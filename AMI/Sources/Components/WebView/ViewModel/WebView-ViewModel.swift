@@ -16,24 +16,29 @@ extension SwiftUIWebView {
 
         weak var webView: WKWebView? {
             didSet {
-                configure()
+                configureWebView()
             }
         }
 
         var urlChangeAction: UrlChangeAction? {
             didSet {
-                configure()
+                configureWebView()
             }
         }
 
         let configuration = WKWebViewConfiguration()
         let rootUrl: URL
         weak var delegate: WebViewDelegate?
-        let userScripts: WebViewUserScriptsProtocol?
+        private let userScripts: WebViewUserScriptsProtocol?
         let allowsBackForwardNavigationGestures: Bool
         #if DEBUG
-            var acceptSelfSignedCertificate = false
+            // Property `acceptSelfSignedCertificate` that can be set to TRUE
+            // when debugging against a local backend server using a self-signed certificate.
+            private var acceptSelfSignedCertificate = false
         #endif
+        /// Protocol used to decide how to handle web links to new window ("target=_blank")
+        /// By default, links open in current webview.
+        weak var navigateToNewWindowManager: WebViewNavigateToNewWindowProtocol?
 
         private(set) var isLoading = false
         private(set) var estimatedProgress = CGFloat(0.0)
@@ -45,6 +50,11 @@ extension SwiftUIWebView {
         private var urlChangeObserver: NSKeyValueObservation?
 
         var localStorageManager: WebViewLocalStorageManager?
+
+        // Web Downloader properties
+        private let downloader = WebViewDownloadCoordinator()
+        var showFileToSaveUI = false
+        var fileToSaveSourceURL: URL?
 
         init(websiteDataStore: WKWebsiteDataStore,
              rootUrl: URL,
@@ -62,9 +72,13 @@ extension SwiftUIWebView {
             // Default delegate to self.
             delegate = self
 
+            // Initialize Downloader start and completion handlers,
+            downloader.onDownloadStarted = downloadDidStart(_:)
+            downloader.onDownloadComplete = downloadDidFinish(_:)
+
             addUserScripts(userScripts: initialUserScripts)
 
-            configure()
+            configureWebView()
 
             AppLog.viewModel.info("\(AppLog.logHeader(self)) Don't forget to call `loadInitialPage()` in your subclass to load your webView content when your ViewModel is fully ready.")
         }
@@ -95,7 +109,7 @@ extension SwiftUIWebView {
         // Called by the webView:
         //   - mandatory to be called by the webView because of the parameter
         //   - it is the webView who knows what to do with the changes.
-        private func configure() {
+        private func configureWebView() {
             guard let webView else {
                 loadingStateObserver = nil
                 loadingProgressObserver = nil
@@ -105,6 +119,7 @@ extension SwiftUIWebView {
                 return
             }
             webView.navigationDelegate = self
+            webView.uiDelegate = self
 
             loadingStateObserver = webView.observe(\.isLoading) { [weak self] webView, _ in
                 self?.isLoading = webView.isLoading
@@ -154,6 +169,40 @@ extension SwiftUIWebView {
             }
             webView.go(to: firstItem)
         }
+
+         // Downloader started handler
+        private func downloadDidStart(_ result: Result<String, Error>) {
+            // TODO: Display information to user about Download starting.
+            AppLog.viewModel.info("\(AppLog.logHeader(self)) downloadDidStart: \(String(describing: result))")
+        }
+
+        // Downloader completion handler
+        private func downloadDidFinish(_ result: Result<URL, Error>) {
+            AppLog.viewModel.info("\(AppLog.logHeader(self)) DownloadDidFinish: \(String(describing: result))")
+            switch result {
+            case let .success(downloadUrl):
+                fileToSaveSourceURL = downloadUrl
+                showFileToSaveUI = true
+            case let .failure(error):
+                AppLog.viewModel.error("\(AppLog.logHeader(self)) DownloadDidFinish with error: \(String(describing: error))")
+            }
+        }
+
+        // FileMover completion handlers
+        func moveFileDidComplete(sourceUrl: URL?, result: Result<URL, any Error>) {
+            AppLog.viewModel.info("\(AppLog.logHeader(self)) MoveFileDidComplete: \(String(describing: result))")
+            fileToSaveSourceURL = nil
+            if let sourceUrl {
+                downloader.cleanup(downloadedUrl: sourceUrl)
+            }
+        }
+
+        func moveFileCanceled(sourceUrl: URL?) {
+            AppLog.viewModel.info("\(AppLog.logHeader(self)) MoveFileCanceled")
+            if let sourceUrl {
+                downloader.cleanup(downloadedUrl: sourceUrl)
+            }
+        }
     }
 }
 
@@ -164,6 +213,8 @@ extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
         userScripts?.userScriptEmittedMessage(message, for: self)
     }
 }
+
+// MARK: - WebViewDelegate
 
 extension SwiftUIWebView.ViewModel: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
@@ -188,39 +239,43 @@ extension SwiftUIWebView.ViewModel: WebViewDelegate {
     }
 }
 
+// MARK: - WKNavigationDelegate
+
 extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  decidePolicyFor navigationAction: WKNavigationAction,
-                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+                 preferences: WKWebpagePreferences) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
         guard navigationAction.request.url != nil else {
-            decisionHandler(.cancel)
-            return
+            return (.cancel, preferences)
         }
 
-        // Check with delegate if navigation to destination is allowed.
-        if let delegate,
-           !delegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
-            decisionHandler(.cancel)
+        // Check if link is explicitly marked as a download (e.g. <a download>) or is a downlodable destination for the application.
+        if navigationAction.shouldPerformDownload || WebViewDownloadCoordinator.destinationUrlIsDownloadableFile(navigationAction.request.url) {
+            return (.download, preferences)
         } else {
-            delegate?.navigationWillStart(navigationAction: navigationAction)
-            decisionHandler(.allow)
+            // Check with delegate if navigation to destination is allowed.
+            if let delegate,
+               !delegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
+                return (.cancel, preferences)
+            } else {
+                delegate?.navigationWillStart(navigationAction: navigationAction)
+                return (.allow, preferences)
+            }
         }
     }
 
     func webView(_ webView: WKWebView,
-                 didReceive challenge: URLAuthenticationChallenge,
-                 completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+                 respondTo challenge: URLAuthenticationChallenge) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
         #if DEBUG
             if acceptSelfSignedCertificate,
                challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
                let serverTrust = challenge.protectionSpace.serverTrust {
                 let credential = URLCredential(trust: serverTrust)
-                completionHandler(.useCredential, credential)
-                return
+                return (.useCredential, credential)
             }
         #endif
 
-        completionHandler(.performDefaultHandling, nil)
+        return (.performDefaultHandling, nil)
     }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
@@ -237,6 +292,24 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         delegate?.navigationDidFinish()
+    }
+
+    // Response the web view can't render itself (.zip, .xlsx, Content-Disposition: attachment…)
+    func webView(_ webView: WKWebView,
+                 decidePolicyFor navigationResponse: WKNavigationResponse) async -> WKNavigationResponsePolicy {
+        if navigationResponse.canShowMIMEType {
+            .allow
+        } else {
+            .download
+        }
+    }
+
+    func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
+        download.delegate = downloader
+    }
+
+    func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
+        download.delegate = downloader
     }
 }
 
@@ -255,4 +328,47 @@ extension SwiftUIWebView.ViewModel {
         }
         return model
     }()
+}
+
+extension SwiftUIWebView.ViewModel: WKUIDelegate {
+    /// Delegate method called when an activated link has attribute "target=_blank".
+    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+        guard let navigateToNewWindowManager else {
+            webView.load(navigationAction.request)
+            return nil
+        }
+
+        guard let destinationUrl = navigationAction.request.url else {
+            return nil
+        }
+
+        switch navigateToNewWindowManager.destinationForNewWindow(sourceWebView: webView,
+                                                                  configuration: configuration,
+                                                                  navigationAction: navigationAction,
+                                                                  windowFeatures: windowFeatures) {
+        case .currentWebView:
+            webView.load(URLRequest(url: destinationUrl))
+        case .newWebView:
+            navigateToNewWindowManager.loadInNewWebView(url: destinationUrl)
+        case .externalBrowser:
+            UIApplication.shared.open(destinationUrl, options: [:], completionHandler: nil)
+        }
+
+        // Always return nil. The destination is already handled by one of the switch case.
+        return nil
+    }
+}
+
+extension SwiftUIWebView.ViewModel: WebViewNavigateToNewWindowProtocol {
+    /// Default behavior: open all links in current webview.
+    func destinationForNewWindow(sourceWebView: WKWebView,
+                                 configuration: WKWebViewConfiguration,
+                                 navigationAction: WKNavigationAction,
+                                 windowFeatures: WKWindowFeatures) -> WebViewNavigateToNewWindowDestination {
+        .currentWebView
+    }
+
+    func loadInNewWebView(url: URL) {
+        fatalError("Should never happen on base WebView-ViewModel.")
+    }
 }

@@ -74,23 +74,9 @@ struct HomeView: View {
             }
             .navigationTitle(AMIL10n.amiTitle)
             .navigationBarHidden(true)
-            .navigationDestination(item: $viewModel.selectedPartner) { partner in
-                switch partner {
-                case let .generic(partnerUrl):
-                    PartnerView(viewModel: viewModel.partnerModel(for: partnerUrl))
-                }
+            .navigationDestination(item: $viewModel.selectedDestination) { destination in
+                ServiceView(viewModel: destination.model)
             }
-        if viewModel.isOnContactPage {
-            Button {
-                Task {
-                    await viewModel.shareLogs()
-                }
-            } label: {
-                Text("Télécharger les logs")
-            }
-            .buttonStyle(ButtonStyleDsfr(type: .secondary))
-            .padding(.vertical)
-        }
     }
 
     private func handleBackAction() {
