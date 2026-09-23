@@ -100,4 +100,29 @@ struct WebViewLocalStorageManager {
             await cookieStore.setCookie(protectedCookie)
         }
     }
+
+    #if IS_AMI_STAGING
+        /// Delete FranceConnect cookie named `fc_session_id` to simulate FranceConnect session expiration.
+        @MainActor
+        func expireFranceConnectSession() async {
+            // Check if website data store store exists.
+            guard let websiteDataStore = webView?.configuration.websiteDataStore else {
+                return
+            }
+
+            // Get cookies store.
+            let cookieStore = websiteDataStore.httpCookieStore
+
+            // Add dot prefix to OIDC domains
+            let oidcDomainsDotPrefixed = Secrets.oidcDomainsStrings.map { "." + $0 }
+
+            // Grab cookie to delete and delete it if it is found.
+            if let cookieToDelete = await cookieStore.allCookies().first(where: {
+                $0.name == "fc_session_id" && oidcDomainsDotPrefixed.contains($0.domain)
+            }) {
+                await cookieStore.deleteCookie(cookieToDelete)
+                AppLog.view.notice("\(AppLog.logHeader(self)) FranceConnect 'fc_session_id' cookie deleted.")
+            }
+        }
+    #endif
 }
