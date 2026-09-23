@@ -85,6 +85,11 @@ struct HomeView: View {
                 // Attach to webview the loop awaiting for commands emitted by model.
                 await handleCommands()
             }
+        #if IS_AMI_STAGING
+            .onShake {
+                viewModel.expireFranceConnectSession()
+            }
+        #endif
     }
 
     private func handleBackAction() {
