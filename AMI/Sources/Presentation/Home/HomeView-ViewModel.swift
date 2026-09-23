@@ -252,6 +252,18 @@ extension HomeView.ViewModel: WebViewDelegate {
             return false
         }
 
+        let targetUrlHost = targetUrl.host()
+
+        #if IS_AMI_PRODUCTION
+            // Special case of FranceIdentité application URL.
+            // Accessing this URL should launch France Identité application if installed
+            // or France Identité website in external Safari browser if the application is not present on the device.
+            if targetUrlHost == Secrets.franceidentiteHost {
+                UIApplication.shared.open(targetUrl)
+                return false
+            }
+        #endif
+
         // Special case of OIDC web page for HomeView
         // Continue normal navigation inside the Home webView.
         //
@@ -259,8 +271,8 @@ extension HomeView.ViewModel: WebViewDelegate {
         // on France Connect page when loging out without any way to exit the error page.
         // So let's the back button be present.
         //
-        if let targetHost = targetUrl.host(),
-           Config.shared.OIDC_HOSTS.contains(targetHost) {
+        if let targetUrlHost,
+           Config.shared.OIDC_HOSTS.contains(targetUrlHost) {
             showBackButton = true
             return true
         } else {
@@ -268,7 +280,7 @@ extension HomeView.ViewModel: WebViewDelegate {
         }
 
         // Special case of "about:blank" (used on FI impots.gouv.fr)
-        if targetUrl.host() == nil {
+        if targetUrlHost == nil {
             return true
         }
 
