@@ -77,6 +77,11 @@ struct HomeView: View {
             .navigationDestination(item: $viewModel.selectedDestination) { destination in
                 ServiceView(viewModel: destination.model)
             }
+        #if IS_AMI_STAGING
+            .onShake {
+                viewModel.expireFranceConnectSession()
+            }
+        #endif
     }
 
     private func handleBackAction() {
