@@ -350,3 +350,13 @@ extension HomeView {
         }
     }
 }
+
+#if IS_AMI_STAGING
+    extension HomeView.ViewModel {
+        func expireFranceConnectSession() {
+            Task {
+                await webViewViewModel.localStorageManager?.expireFranceConnectSession()
+            }
+        }
+    }
+#endif
