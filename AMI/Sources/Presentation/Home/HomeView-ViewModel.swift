@@ -264,9 +264,9 @@ extension HomeView.ViewModel: WebViewDelegate {
 
         #if IS_AMI_PRODUCTION
             // Special case of FranceIdentité application URL.
-            // Accessign this url should launch France Identité application if installed
-            // or France Identité website in external Safari browser if the application is not present.
-            if targetUrlHost == "idp.sir.france-identite.gouv.fr" {
+            // Accessing this URL should launch France Identité application if installed
+            // or France Identité website in external Safari browser if the application is not present on the device.
+            if targetUrlHost == Secrets.franceidentiteHost {
                 UIApplication.shared.open(targetUrl)
                 return false
             }
