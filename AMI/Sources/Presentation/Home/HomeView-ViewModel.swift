@@ -423,3 +423,13 @@ extension HomeView.ViewModel: @MainActor WebViewDelegate {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFailed] failed with error \(error)")
     }
 }
+
+#if IS_AMI_STAGING
+    extension HomeView.ViewModel {
+        func expireFranceConnectSession() {
+            Task {
+                await webViewViewModel.localStorageManager?.expireFranceConnectSession()
+            }
+        }
+    }
+#endif
