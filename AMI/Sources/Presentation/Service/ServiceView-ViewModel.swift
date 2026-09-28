@@ -41,6 +41,7 @@ extension ServiceView {
                                                             navigationState: defaultNavigationState,
                                                             refererUrl: refererUrl,
                                                             initialUserScripts: userScripts)
+            self.notificationManager = notificationManager
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
 
