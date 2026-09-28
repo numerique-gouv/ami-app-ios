@@ -35,6 +35,7 @@ extension ServiceView {
                                                             specialLinkHandler: specialLinkHandler,
                                                             refererUrl: refererUrl,
                                                             initialUserScripts: userScripts)
+            self.notificationManager = notificationManager
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
             super.init()
