@@ -55,6 +55,8 @@ extension ServiceView {
         deinit {
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) deinit")
         }
+    }
+}
 
 extension ServiceView.ViewModel: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
