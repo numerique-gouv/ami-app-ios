@@ -231,6 +231,8 @@ extension HomeView {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
             selectedDestination = nil
         }
+    }
+}
 
 extension HomeView.ViewModel: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
