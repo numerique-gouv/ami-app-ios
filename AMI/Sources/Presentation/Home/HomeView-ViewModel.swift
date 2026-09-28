@@ -48,6 +48,9 @@ extension HomeView {
 
         // MARK: - Init
 
+        @ObservationIgnored
+        private var notificationsObserverTask: Task<Void, Never>?
+
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
              specialLinkHandler: any SpecialLinkProtocol,
@@ -293,9 +296,8 @@ extension HomeView {
             if case .userResponse = event.source, // Did user tap the notification?
                let notificationPageUrl = URL(string: "https://\(Secrets.baseDomainString)/#/notifications") {
                 Task { @MainActor in
-                    // Dismiss any Service view.
-                    // Don't reset to Home else the reset to Home will occur after navigation to Notifications page.
-                    destinationLinkViewDismissed(resetToHome: false)
+                    // Dosmiss any Service view.
+                    backToHomeViewAction()
                     // Go to Notifications screen.
                     webViewViewModel.webView?.load(URLRequest(url: notificationPageUrl))
                 }
