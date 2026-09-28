@@ -244,8 +244,7 @@ targets:
         APP_NAME: AMI-Preproduction
         APP_DISPLAY_NAME: AMI PreProd # The name used in the application.
         CODE_SIGN_ENTITLEMENTS: targets/preproduction/SupportingFiles/ami.entitlements
-        # Don't add `IS_AMI_PREPRODUCTION` flag, but use `IS_AMI_PRODUCTION` to use the exact saame code as Production.
-        OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_PRODUCTION
+        OTHER_SWIFT_FLAGS: $(inherited) -D IS_MAIN_APP -D IS_AMI_PREPRODUCTION
 
     preBuildScripts:
     - name: 🔐 Generate Secrets 
