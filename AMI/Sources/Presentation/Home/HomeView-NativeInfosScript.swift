@@ -32,6 +32,8 @@ class HomeNativeInfosScripts {
 
     #if IS_AMI_PRODUCTION
         private static let environement = "production"
+    #elseif IS_AMI_PREPRODUCTION
+        private static let environement = "preproduction"
     #elseif IS_AMI_STAGING
         private static let environement = "staging"
     #else

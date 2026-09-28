@@ -42,10 +42,14 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         }
 
         FirebaseApp.configure(options: options)
-        #if IS_AMI_STAGING
+        #if IS_AMI_PREPRODUCTION
+            AppLog.app.notice("\(type(of: self)) Firebase configured with \(firebaseConfigFilename).plist for environment: PREPRODUCTION")
+        #elseif IS_AMI_PREPRODUCTION
+            AppLog.app.notice("\(type(of: self)) Firebase configured with \(firebaseConfigFilename).plist for environment: PRODUCTION")
+        #elseif IS_AMI_STAGING
             AppLog.app.notice("\(AppLog.logHeader(self)) Firebase configured with \(firebaseConfigFilename).plist for environment: STAGING")
         #else
-            AppLog.app.notice("\(type(of: self)) Firebase configured with \(firebaseConfigFilename).plist for environment: PRODUCTION")
+            AppLog.app.notice("\(type(of: self)) Firebase configured with \(firebaseConfigFilename).plist for environment: UNKNOWN")
         #endif
 
         // Set Messaging Delegate to receive FCM token updates
