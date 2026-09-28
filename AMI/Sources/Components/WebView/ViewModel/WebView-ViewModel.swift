@@ -170,7 +170,7 @@ extension SwiftUIWebView {
             webView.go(to: firstItem)
         }
 
-         // Downloader started handler
+        // Downloader started handler
         private func downloadDidStart(_ result: Result<String, Error>) {
             // TODO: Display information to user about Download starting.
             AppLog.viewModel.info("\(AppLog.logHeader(self)) downloadDidStart: \(String(describing: result))")
