@@ -55,8 +55,6 @@ extension ServiceView {
         deinit {
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) deinit")
         }
-    }
-}
 
         var receivedContent: InfoPanelContent?
     }
