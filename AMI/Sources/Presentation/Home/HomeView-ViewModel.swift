@@ -43,6 +43,9 @@ extension HomeView {
         /// Only used in `webViewReplacedAction` when we reset its state to Home state.
         private var modelIsFullyConfigured = false
 
+        @ObservationIgnored
+        private var notificationsObserverTask: Task<Void, Never>?
+
         // MARK: - Init
 
         init(rootUrl: URL,
@@ -86,6 +89,13 @@ extension HomeView {
             // Set NotificationManager base URL to register the device to AMI backend to allow Push Notifications.
             setNotificationManagerBaseUrl(rootUrl)
 
+            // Created in a @MainActor init, so the task inherits MainActor isolation.
+            // `weak self`: the task does not keep the model alive.
+            notificationsObserverTask = Task { [weak self] in
+                guard let self else { return }
+                await observeNotifications()
+            }
+
             Task { @MainActor in
                 let nativeInfosScript = await HomeNativeInfosScripts()
                 webViewViewModel.addUserScripts(userScripts: nativeInfosScript)
@@ -94,6 +104,12 @@ extension HomeView {
                 // Load initial page now that viewModel is fully ready.
                 loadInitialPage()
             }
+        }
+
+        deinit {
+            // Ends the for-await loop, which triggers the stream's onTermination
+            // and unsubscribes from the hub.
+            notificationsObserverTask?.cancel()
         }
 
         @MainActor
@@ -238,6 +254,51 @@ extension HomeView {
 
         private func resetNotificationManagerUserAuthentificationToken() {
             notificationManager.setUserAuthenticationToken(nil)
+        }
+
+        /// Runs until the calling task is cancelled (e.g. the view's `.task` ends).
+        private func observeNotifications() async {
+            for await event in notificationManager.dispatcher.events() {
+                handleIncomingNotification(event)
+            }
+        }
+
+        private func handleIncomingNotification(_ event: NotificationEvent) {
+            switch event.source {
+            case .foreground:
+                break // e.g. refresh data
+            case let .userResponse(action):
+                _ = action // e.g. deep link / navigate
+            case .silent:
+                break // e.g. sync in background
+            }
+
+            let payloadString = if let jsonData = event.payloadJSON,
+                                   let payloadString = String(data: jsonData, encoding: .utf8) {
+                payloadString
+            } else {
+                "<no payload>"
+            }
+
+            AppLog.viewModel.notice(
+                """
+                        \(AppLog.logHeader(self)) ViewModel received notification:
+                        \tNotification title: \(event.title)")
+                        \tNotification body: \(event.body)")
+                        \tNotification data: \(payloadString)")
+                        \tSource: \(event.source)
+                """
+            )
+
+            if case .userResponse = event.source, // Did user tap the notification?
+               let notificationPageUrl = URL(string: "https://\(Secrets.baseDomainString)/#/notifications") {
+                Task { @MainActor in
+                    // Dosmiss any Service view.
+                    destinationLinkViewDismissed()
+                    // Go to Notifications screen.
+                    webViewViewModel.webView?.load(URLRequest(url: notificationPageUrl))
+                }
+            }
         }
 
         // MARK: - View models builders
