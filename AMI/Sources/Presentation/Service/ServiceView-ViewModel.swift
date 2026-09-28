@@ -19,6 +19,7 @@ extension ServiceView {
 
         var showNoEmailClientAlert = false
 
+        private let notificationManager: NotificationManager
 
         var backToHomeAction: BackToHomeAction?
 
@@ -31,12 +32,13 @@ extension ServiceView {
             }
         }
 
-        init(websiteDataStore: WKWebsiteDataStore, rootUrl: URL, backToHomeAction: BackToHomeAction?) {
+        init(websiteDataStore: WKWebsiteDataStore, rootUrl: URL, notificationManager: NotificationManager, backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let userScripts = ServiceViewUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
                                                             rootUrl: rootUrl,
                                                             initialUserScripts: userScripts)
+            self.notificationManager = notificationManager
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
             super.init()
@@ -104,7 +106,9 @@ extension ServiceView.ViewModel: WebViewNavigateToNewWindowProtocol {
     }
 
     func loadInNewWebView(url: URL) {
-        selectedDestination = ServiceLinkViewModel(url: url, dataStore: webViewViewModel.configuration.websiteDataStore) { [weak self] in
+        selectedDestination = ServiceLinkViewModel(url: url,
+                                                   dataStore: webViewViewModel.configuration.websiteDataStore,
+                                                   notificationManager: notificationManager) { [weak self] in
             self?.destinationLinkViewDismissed()
         }
     }

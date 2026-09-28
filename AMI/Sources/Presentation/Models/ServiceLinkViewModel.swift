@@ -14,15 +14,20 @@ struct ServiceLinkViewModel: Hashable {
 
     private let url: URL
     private let dataStore: WKWebsiteDataStore
+    private let notificationManager: NotificationManager
 
     let model: ServiceView.ViewModel
 
-    init(url: URL, dataStore: WKWebsiteDataStore, destinationViewDismissedAction: DismissedAction?) {
+    init(url: URL, dataStore: WKWebsiteDataStore,
+         notificationManager: NotificationManager,
+         destinationViewDismissedAction: DismissedAction?) {
         self.url = url
         self.dataStore = dataStore
+        self.notificationManager = notificationManager
 
         model = ServiceView.ViewModel(websiteDataStore: dataStore,
                                       rootUrl: url,
+                                      notificationManager: notificationManager,
                                       backToHomeAction: destinationViewDismissedAction)
     }
 }

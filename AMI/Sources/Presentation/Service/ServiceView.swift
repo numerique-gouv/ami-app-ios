@@ -55,7 +55,9 @@ struct ServiceView: View {
 }
 
 #Preview {
-    let viewModel = ServiceView.ViewModel(websiteDataStore: .nonPersistent(), rootUrl: URL(string: "https://numerique.gouv.fr")!) {
+    let viewModel = ServiceView.ViewModel(websiteDataStore: .nonPersistent(),
+                                          rootUrl: URL(string: "https://numerique.gouv.fr")!,
+                                          notificationManager: NotificationManager()) {
         AppLog.viewModel.log("\(AppLog.logHeader()) Back to home called")
     }
     ServiceView(viewModel: viewModel)
