@@ -13,13 +13,18 @@ import UIKit
 import WebKit
 
 class NotificationManager: NSObject {
-    // The base URL (used in AppReview). Filled by calling `registerForRemoteNotifications(baseUrl: URL)`.
-    // It is used to call the correct endpoint for device registration.
+    /// The base URL (used in AppReview). Filled by calling `registerForRemoteNotifications(baseUrl: URL)`.
+    /// It is used to call the correct endpoint for device registration.
     private var baseUrl: URL?
-    // userAuthenticationToken will be set after user logged in successfully.
+    /// userAuthenticationToken will be set after user logged in successfully.
     private var userAuthenticationToken: String?
-    // apnsToken will be set after allowing Push Notifications or Push Notification token renewal.
+    /// apnsToken will be set after allowing Push Notifications or Push Notification token renewal.
     private var apnsToken: String?
+
+    /// How foreground notifications are displayed. Adjust as needed.
+    private var foregroundPresentation: UNNotificationPresentationOptions = [.banner, .list, .sound]
+
+    let dispatcher = NotificationDispatcher()
 
     override init() {
         super.init()
@@ -71,7 +76,7 @@ class NotificationManager: NSObject {
             return
         }
 
-        // Execute `registerDevice` task in background job.
+        /// Execute `registerDevice` task in background job.
         Task(priority: .background) {
             await RegisterDevice().registerDevice(baseUrl: baseUrl,
                                                   apnsToken: apnsToken,
@@ -81,7 +86,7 @@ class NotificationManager: NSObject {
 }
 
 extension NotificationManager: UNUserNotificationCenterDelegate {
-    // Called when a push notification is delivered to the device while the application is in foreground.
+    /// Called when a push notification is delivered to the device while the application is in foreground.
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
@@ -96,14 +101,19 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
             """
         )
 
-        // Display notification banner, play sound, and update badge even when app is open
-        completionHandler([.banner, .sound, .badge])
+        /// Disaptch notification to subscribers.
+        dispatcher.publish(NotificationEvent(request: notification.request,
+                                             date: notification.date,
+                                             source: .foreground))
+
+        /// Display notification banner, play sound, and update badge even when app is open
+        completionHandler(foregroundPresentation)
     }
 
-    // Called when a push notification is tapped by the user when the application is in background.
-    // Annotate with @MainActor else when called, the application is in background state and this will trigger a crash: `NSInternalInconsistencyException', reason: 'Call must be made on main thread'`
-    @MainActor
-    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+    /// Called when a push notification is tapped by the user when the application is in background.
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
         let userInfo = response.notification.request.content.userInfo
 
         AppLog.service.notice(
@@ -116,29 +126,31 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
             """
         )
 
-        // Handle different action types
+        /// Handle different action types
         if response.actionIdentifier == UNNotificationDefaultActionIdentifier {
             AppLog.service.notice("\(AppLog.logHeader(self)) User tapped the notification banner, navigating to the notifications page")
 
-            // Handle reception of notification (review app for instance)
-            if let appUrlString = userInfo["app_url"] as? String,
-               let targetApplicationUrl = URL(string: appUrlString) {
-                handleIncomingNotificationUrl(url: targetApplicationUrl)
-            }
+            /// Handle reception of notification (review app for instance)
+//            if let appUrlString = userInfo["app_url"] as? String,
+//               let targetApplicationUrl = URL(string: appUrlString) {
+//                handleIncomingNotificationUrl(url: targetApplicationUrl)
+//            }
         } else if response.actionIdentifier == UNNotificationDismissActionIdentifier {
             AppLog.service.notice("\(AppLog.logHeader(self)) User dismissed the notification")
         }
+
+        /// Disaptch notification to subscribers.
+        dispatcher.publish(NotificationEvent(request: response.notification.request,
+                                             date: response.notification.date,
+                                             source: .userResponse(actionIdentifier: response.actionIdentifier)))
+
+        /// Call completion handler.
+        completionHandler()
     }
 
-    private func handleIncomingNotificationUrl(url: URL) {
-        AppLog.service.notice("\(AppLog.logHeader(self)) app_url received: \(url)")
-        guard let notificationsURL = URL(string: "/#/notifications", relativeTo: url) else {
-            return
-        }
-
-        // Use NotificationCenter rather than callback to be sure the notification is treated on the main UI thread.
-        let notification = Notification(name: Notification.Name.pendingUrl, object: nil, userInfo: [Notification.Name.pendingUrl: notificationsURL])
-        NotificationCenter.default.post(notification)
+    /// Call from the AppDelegate's didReceiveRemoteNotification for silent pushes.
+    func publishSilentPush(userInfo: [AnyHashable: Any]) {
+        dispatcher.publishSilentPush(userInfo: userInfo)
     }
 }
 
