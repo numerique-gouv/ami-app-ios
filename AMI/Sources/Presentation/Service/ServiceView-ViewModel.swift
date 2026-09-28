@@ -34,8 +34,15 @@ extension ServiceView {
 
         init(websiteDataStore: WKWebsiteDataStore, rootUrl: URL, backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
-            let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore, rootUrl: rootUrl)
-            self.webViewViewModel = webViewViewModel
+            if rootUrl.host() == "preprod.demarches.service-public.gouv.fr" {
+                let qualifUrl = URL(string: rootUrl.absoluteString.replacingOccurrences(of: "preprod.demarches.service-public.gouv.fr",
+                                                                                        with: "qualif.demarches.service-public.gouv.fr"))!
+                let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore, rootUrl: qualifUrl)
+                self.webViewViewModel = webViewViewModel
+            } else {
+                let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore, rootUrl: rootUrl)
+                self.webViewViewModel = webViewViewModel
+            }
             self.backToHomeAction = backToHomeAction
             super.init()
 
@@ -57,8 +64,6 @@ extension ServiceView {
         deinit {
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) deinit")
         }
-    }
-}
 
         var receivedContent: InfoPanelContent?
     }

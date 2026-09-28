@@ -244,8 +244,6 @@ extension HomeView {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
             selectedDestination = nil
         }
-    }
-}
 
         func triggerPostMessge() {
             Task { @MainActor in
