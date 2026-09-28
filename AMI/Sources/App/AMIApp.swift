@@ -53,9 +53,6 @@ struct AMIApp: App {
             }
         }
         .animation(.easeInOut(duration: 0.3), value: appState.bannerManager.banners.count)
-        .onReceive(NotificationCenter.default.publisher(for: .pendingUrl)) { notification in
-            appState.notificationReceived(notification: notification)
-        }
     }
 
     var body: some Scene {

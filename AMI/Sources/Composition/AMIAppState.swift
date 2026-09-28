@@ -13,6 +13,12 @@ import WebKit
 @Observable
 @MainActor
 class AMIAppState: NSObject {
+    static let notificationManager = NotificationManager()
+
+    // This common website DataStore will be injected n root views to be shared with all child webviews.
+    private static let commonWebsiteDataStore: WKWebsiteDataStore = .default()
+
+    static let notificationManager = NotificationManager()
     var bannerManager = InformationBannerManager.shared
     private var offlineBannerId: UUID?
 
@@ -49,10 +55,5 @@ class AMIAppState: NSObject {
                 hasCloseIcon: false
             )
         }
-    }
-
-    func notificationReceived(notification: Notification) {
-        /// Nothing to do for the moment in PreProduction or Production mode.
-        /// A Special treatment is done in Staging mode in `ReviewApp-ViewModel`.
     }
 }
