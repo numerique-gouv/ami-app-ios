@@ -18,6 +18,8 @@ extension ServiceView {
 
         let webViewViewModel: SwiftUIWebView.ViewModel
 
+        private let notificationManager: NotificationManager
+
         var backToHomeAction: BackToHomeAction?
 
         var selectedDestination: ServiceLinkViewModel?
@@ -26,6 +28,7 @@ extension ServiceView {
              websiteDataStore: WKWebsiteDataStore,
              refererUrl: URL? = nil,
              specialLinkHandler: any SpecialLinkProtocol,
+             notificationManager: NotificationManager,
              backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let navigationHandler = ServiceViewNavigationHandler(rootUrl: rootUrl,
@@ -39,6 +42,7 @@ extension ServiceView {
                                                             navigationState: defaultNavigationState,
                                                             refererUrl: refererUrl,
                                                             initialUserScripts: userScripts)
+            self.notificationManager = notificationManager
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
 
