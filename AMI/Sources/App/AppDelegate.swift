@@ -9,10 +9,6 @@ import FirebaseCore
 import FirebaseMessaging
 import SwiftUI
 
-extension Notification.Name {
-    static let pendingUrl = Notification.Name("pendingUrl")
-}
-
 class AppDelegate: NSObject, UIApplicationDelegate {
     // The notificationManager is set by AMIApp.
     var notificationManager: NotificationManager? {

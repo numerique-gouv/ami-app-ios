@@ -22,22 +22,16 @@ class AMIAppState: NSObject {
 
     private let networkMonitor = NetworkMonitor()
 
-    var notificationTriggeredHomeViewModel: HomeView.ViewModel!
-    // State to force refresh view when a notification is tapped by the user.
-    var notificationActivatedHomeViewModelId: UUID?
-
     #if IS_AMI_STAGING
         let reviewAppViewModel = ReviewAppView.ViewModel(websiteDataStore: commonWebsiteDataStore,
                                                          notificationManager: AMIAppState.notificationManager)
+    #else
+        let mainViewModel = HomeView.ViewModel(rootUrl: Config.shared.BASE_URL,
+                                               websiteDataStore: AMIAppState.commonWebsiteDataStore,
+                                               notificationManager: AMIAppState.notificationManager)
     #endif
 
-    let defaultHomeViewModel = HomeView.ViewModel(rootUrl: Config.shared.BASE_URL,
-                                                  websiteDataStore: AMIAppState.commonWebsiteDataStore,
-                                                  notificationManager: AMIAppState.notificationManager)
-
     override init() {
-        notificationTriggeredHomeViewModel = defaultHomeViewModel
-
         super.init()
 
         networkMonitor.eventReceiver = { connectionState in
@@ -68,20 +62,5 @@ class AMIAppState: NSObject {
                 hasCloseIcon: false
             )
         }
-    }
-
-    func notificationReceived(notification: Notification) {
-        guard let appReviewUrl = notification.userInfo?[Notification.Name.pendingUrl] as? URL else {
-            notificationTriggeredHomeViewModel = defaultHomeViewModel
-            notificationActivatedHomeViewModelId = nil
-            return
-        }
-        AppLog.app.notice("\(AppLog.logHeader(self)) Notification Received: \(appReviewUrl)")
-
-        notificationTriggeredHomeViewModel = HomeView.ViewModel(rootUrl: appReviewUrl.absoluteURL,
-                                                                websiteDataStore: Self.commonWebsiteDataStore,
-                                                                notificationManager: Self.notificationManager)
-        // Change view ID to force refresh.
-        notificationActivatedHomeViewModelId = UUID()
     }
 }

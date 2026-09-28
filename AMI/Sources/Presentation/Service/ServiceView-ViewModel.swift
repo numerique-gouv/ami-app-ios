@@ -19,7 +19,6 @@ extension ServiceView {
 
         var showNoEmailClientAlert = false
 
-        private var checkNotificationStatusDone = false
 
         var backToHomeAction: BackToHomeAction?
 

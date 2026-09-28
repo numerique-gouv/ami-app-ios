@@ -33,15 +33,10 @@ struct AMIApp: App {
         ZStack(alignment: .top) {
             NavigationStack {
                 #if IS_AMI_STAGING
-                    if let notificationActivatedHomeViewModelId = appState.notificationActivatedHomeViewModelId {
-                        HomeView(viewModel: appState.notificationTriggeredHomeViewModel)
-                            .id(notificationActivatedHomeViewModelId)
-                    } else {
-                        ReviewAppView(viewModel: appState.reviewAppViewModel)
-                    }
-                #elseif IS_AMI_PRODUCTION
-                    HomeView(viewModel: appState.defaultHomeViewModel)
-                        .id(appState.notificationActivatedHomeViewModelId ?? UUID())
+                    // In Staging, main view is a list of Review apps.
+                    ReviewAppView(viewModel: appState.reviewAppViewModel)
+                #elseif IS_AMI_PRODUCTION // AMI preProduction target has IS_AMI_PRODUCTION tag.
+                    HomeView(viewModel: appState.mainViewModel)
                 #else
                     EmptyView()
                 #endif
@@ -62,9 +57,6 @@ struct AMIApp: App {
             }
         }
         .animation(.easeInOut(duration: 0.3), value: appState.bannerManager.banners.count)
-        .onReceive(NotificationCenter.default.publisher(for: .pendingUrl)) { notification in
-            appState.notificationReceived(notification: notification)
-        }
     }
 
     var body: some Scene {
