@@ -60,6 +60,8 @@ extension ServiceView {
         deinit {
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) deinit")
         }
+    }
+}
 
         func receivePSLFinalPayload(payload: Data) async {
             do {
