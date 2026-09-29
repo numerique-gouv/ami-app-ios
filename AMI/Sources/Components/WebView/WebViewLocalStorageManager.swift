@@ -102,6 +102,22 @@ struct WebViewLocalStorageManager {
     }
 
     #if IS_AMI_STAGING
+        func listCookies() {
+            // Check if website cookies store store exists.
+            guard let cookiesStore = webView?.configuration.websiteDataStore.httpCookieStore else {
+                return
+            }
+
+            cookiesStore.getAllCookies { cookies in
+                DispatchQueue.main.async {
+                    print("Found \(cookies.count) cookies")
+                    for cookie in cookies {
+                        print("name: \(cookie.name) domain: \(cookie.domain)")
+                    }
+                }
+            }
+        }
+
         /// Delete FranceConnect cookie named `fc_session_id` to simulate FranceConnect session expiration.
         @MainActor
         func expireFranceConnectSession() async {
@@ -110,19 +126,31 @@ struct WebViewLocalStorageManager {
                 return
             }
 
+            listCookies()
+
             // Get cookies store.
             let cookieStore = websiteDataStore.httpCookieStore
 
-            // Add dot prefix to OIDC domains
-            let oidcDomainsDotPrefixed = Secrets.oidcDomainsStrings.map { "." + $0 }
-
-            // Grab cookie to delete and delete it if it is found.
-            if let cookieToDelete = await cookieStore.allCookies().first(where: {
-                $0.name == "fc_session_id" && oidcDomainsDotPrefixed.contains($0.domain)
-            }) {
-                await cookieStore.deleteCookie(cookieToDelete)
-                AppLog.view.notice("\(AppLog.logHeader(self)) FranceConnect 'fc_session_id' cookie deleted.")
+            let cookiesDomainsToDelete = Secrets.oidcDomainsStrings.flatMap {
+                [$0, "." + $0]
             }
+
+            let cookiesToDelete = await cookieStore.allCookies().filter { cookie in
+                cookiesDomainsToDelete.contains(cookie.domain)
+            }
+
+            for cookie in cookiesToDelete {
+                await cookieStore.deleteCookie(cookie)
+                AppLog.view.notice("\(AppLog.logHeader(self)) cookie named \"\(cookie.name)\" for domain \"\(cookie.domain)\" deleted.")
+            }
+
+//            // Grab cookie to delete and delete it if it is found.
+//            if let cookieToDelete = await cookieStore.allCookies().first(where: {
+//                $0.name == "fc_session_id" && oidcDomainsDotPrefixed.contains($0.domain)
+//            }) {
+//                await cookieStore.deleteCookie(cookieToDelete)
+//                AppLog.view.notice("\(AppLog.logHeader(self)) FranceConnect 'fc_session_id' cookie deleted.")
+//            }
         }
     #endif
 }
