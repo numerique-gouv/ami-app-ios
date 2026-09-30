@@ -95,8 +95,7 @@ extension HomeView {
             let userScripts = HomeUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                                             websiteDataStore: websiteDataStore,
-                                                            specialLinkHandler: specialLinkHandler,
-                                                            initialUserScripts: userScripts)
+                                                            specialLinkHandler: specialLinkHandler)
             self.webViewViewModel = webViewViewModel
             self.notificationManager = notificationManager
 
@@ -231,10 +230,6 @@ extension HomeView {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
             selectedDestination = nil
         }
-
-extension HomeView.ViewModel: WKScriptMessageHandler {
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        webViewViewModel.userContentController(userContentController, didReceive: message)
     }
 }
 

@@ -25,8 +25,8 @@ enum DependencyContainer {
     static func makeSimulatorPreviewSwiftUIWebViewModel() -> SwiftUIWebView.ViewModel {
         let model = SwiftUIWebView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
                                              websiteDataStore: .nonPersistent(),
-                                             specialLinkHandler: Self.specialLinkHandler,
-                                             initialUserScripts: HomeUserScripts())
+                                             specialLinkHandler: Self.specialLinkHandler)
+        model.addUserScripts(userScripts: HomeUserScripts(), handler: model)
         model.delegate = Self.webViewDelegateSimulatorImplementation
 
         #if DEBUG
