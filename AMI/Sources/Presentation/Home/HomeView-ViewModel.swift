@@ -88,11 +88,6 @@ extension HomeView {
             }
         }
 
-        func shareLogs() async {
-            let userId = await webViewViewModel.readInLocalStorage(key: "user_fc_hash") as? String
-            LogsExporter(userId: userId?.trimmingCharacters(in: CharacterSet(charactersIn: "\""))).shareLogs()
-        }
-
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
              specialLinkHandler: SpecialLinkHandler,
@@ -244,6 +239,18 @@ extension HomeView.ViewModel: WebViewDelegate {
             // No special restriction. Return TRUE.
             return true
         }
+
+        let targetUrlHost = targetUrl.host()
+
+        #if IS_AMI_PRODUCTION
+            // Special case of FranceIdentité application URL.
+            // Accessing this URL should launch France Identité application if installed
+            // or France Identité website in external Safari browser if the application is not present on the device.
+            if targetUrlHost == Secrets.franceidentiteHost {
+                UIApplication.shared.open(targetUrl)
+                return false
+            }
+        #endif
 
         // Special case of OIDC web page for HomeView
         // Continue normal navigation inside the Home webView.
