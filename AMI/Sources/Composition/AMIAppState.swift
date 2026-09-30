@@ -11,12 +11,8 @@ import Observation
 import WebKit
 
 @Observable
+@MainActor
 class AMIAppState: NSObject {
-    static let notificationManager = NotificationManager()
-
-    // This common website DataStore will be injected n root views to be shared with all child webviews.
-    private static let commonWebsiteDataStore: WKWebsiteDataStore = .default()
-
     var bannerManager = InformationBannerManager.shared
     private var offlineBannerId: UUID?
 
@@ -26,17 +22,10 @@ class AMIAppState: NSObject {
     // State to force refresh view when a notification is tapped by the user.
     var notificationActivatedHomeViewModelId: UUID?
 
-    #if IS_AMI_STAGING
-        let reviewAppViewModel = ReviewAppView.ViewModel(websiteDataStore: commonWebsiteDataStore,
-                                                         notificationManager: AMIAppState.notificationManager)
-    #endif
-
-    let defaultHomeViewModel = HomeView.ViewModel(rootUrl: Config.shared.BASE_URL,
-                                                  websiteDataStore: AMIAppState.commonWebsiteDataStore,
-                                                  notificationManager: AMIAppState.notificationManager)
+    let defaultHomeViewModel = DependencyContainer.makeHomeViewModel()
 
     override init() {
-        notificationTriggeredHomeViewModel = defaultHomeViewModel
+        notificationTriggeredHomeViewModel = DependencyContainer.makeHomeViewModel()
 
         super.init()
 
@@ -72,15 +61,14 @@ class AMIAppState: NSObject {
 
     func notificationReceived(notification: Notification) {
         guard let appReviewUrl = notification.userInfo?[Notification.Name.pendingUrl] as? URL else {
-            notificationTriggeredHomeViewModel = defaultHomeViewModel
+            notificationTriggeredHomeViewModel = DependencyContainer.makeHomeViewModel()
             notificationActivatedHomeViewModelId = nil
             return
         }
         AppLog.app.notice("\(AppLog.logHeader(self)) Notification Received: \(appReviewUrl)")
 
-        notificationTriggeredHomeViewModel = HomeView.ViewModel(rootUrl: appReviewUrl.absoluteURL,
-                                                                websiteDataStore: Self.commonWebsiteDataStore,
-                                                                notificationManager: Self.notificationManager)
+        notificationTriggeredHomeViewModel = DependencyContainer.makeReviewAppHomeViewModel(rootUrl: appReviewUrl)
+
         // Change view ID to force refresh.
         notificationActivatedHomeViewModelId = UUID()
     }

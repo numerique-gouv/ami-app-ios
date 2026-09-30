@@ -84,8 +84,5 @@ struct HomeView: View {
 }
 
 #Preview {
-    let viewModel = HomeView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
-                                       websiteDataStore: .nonPersistent(),
-                                       notificationManager: NotificationManager())
-    HomeView(viewModel: viewModel)
+    HomeView(viewModel: DependencyContainer.makePreviewHomeViewModel())
 }

@@ -12,7 +12,7 @@ import SwiftUI
 @main
 struct AMIApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    @Bindable var appState = AMIAppState()
+    @Bindable var appState = DependencyContainer.appState
 
     init() {
         // Set default accent color for UIKit components.
@@ -22,10 +22,10 @@ struct AMIApp: App {
         FontLoader.registerFonts()
 
         // Set the notificationManager to receive notification events.
-        UNUserNotificationCenter.current().delegate = AMIAppState.notificationManager
+        UNUserNotificationCenter.current().delegate = DependencyContainer.notificationManager
 
         // Set AppDelegate notificationManager for Firebase configuration.
-        delegate.notificationManager = AMIAppState.notificationManager
+        delegate.notificationManager = DependencyContainer.notificationManager
     }
 
     @ViewBuilder
@@ -37,7 +37,7 @@ struct AMIApp: App {
                         HomeView(viewModel: appState.notificationTriggeredHomeViewModel)
                             .id(notificationActivatedHomeViewModelId)
                     } else {
-                        ReviewAppView(viewModel: appState.reviewAppViewModel)
+                        ReviewAppView(viewModel: DependencyContainer.makeReviewAppViewModel())
                     }
                 #elseif IS_AMI_PRODUCTION
                     HomeView(viewModel: appState.defaultHomeViewModel)
