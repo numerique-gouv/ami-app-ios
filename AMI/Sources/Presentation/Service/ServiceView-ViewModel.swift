@@ -23,10 +23,13 @@ extension ServiceView {
 
         var selectedDestination: ServiceLinkViewModel?
 
+        private let receivePSLFinalPayload: ReceivePSLFinalPayloadUseCase
+
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
              refererUrl: URL? = nil,
              specialLinkHandler: SpecialLinkHandler,
+             receivePSLFinalPayload: ReceivePSLFinalPayloadUseCase,
              backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
@@ -34,7 +37,9 @@ extension ServiceView {
                                                             specialLinkHandler: specialLinkHandler,
                                                             refererUrl: refererUrl)
             self.webViewViewModel = webViewViewModel
+            self.receivePSLFinalPayload = receivePSLFinalPayload
             self.backToHomeAction = backToHomeAction
+
             super.init()
 
             webViewViewModel.addUserScripts(userScripts: ServiceViewUserScripts(), handler: self)
@@ -97,7 +102,8 @@ extension ServiceView.ViewModel: WebViewNavigateToNewWindowProtocol {
         selectedDestination = ServiceLinkViewModel(destinationUrl: url,
                                                    dataStore: webViewViewModel.configuration.websiteDataStore,
                                                    sourceUrl: nil,
-                                                   specialLinkHandler: webViewViewModel.specialLinkHandler) { [weak self] in
+                                                   specialLinkHandler: webViewViewModel.specialLinkHandler,
+                                                   receivePSLFinalPayload: receivePSLFinalPayload) { [weak self] in
             self?.destinationLinkViewDismissed()
         }
     }

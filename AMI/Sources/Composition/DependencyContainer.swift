@@ -21,6 +21,14 @@ enum DependencyContainer {
 
     private static let webViewDelegateSimulatorImplementation = WebViewDelegateSimulatorImplementation()
 
+    // PSF final payload
+    private static let pslFinalPayloadRepository = PSLFinalPayloadRepositoryDefault()
+
+    static func makeRecceivePSLFinalPayloadUseCase() -> ReceivePSLFinalPayloadUseCase {
+        ReceivePSLFinalPayloadUseCase(decoder: PSLFinalPayloadJsonDecoder(),
+                                      repository: pslFinalPayloadRepository)
+    }
+
     /// ViewModel used by `SwiftUIWebView` preview in Xcode.
     static func makeSimulatorPreviewSwiftUIWebViewModel() -> SwiftUIWebView.ViewModel {
         let model = SwiftUIWebView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
@@ -43,13 +51,15 @@ enum DependencyContainer {
         HomeView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
                            websiteDataStore: .nonPersistent(),
                            specialLinkHandler: specialLinkHandler,
+                           receivePSLFinalPayload: makeRecceivePSLFinalPayloadUseCase(),
                            notificationManager: notificationManager)
     }
 
     static func makePreviewServiceViewModel() -> ServiceView.ViewModel {
         ServiceView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
                               websiteDataStore: .nonPersistent(),
-                              specialLinkHandler: specialLinkHandler) {
+                              specialLinkHandler: specialLinkHandler,
+                              receivePSLFinalPayload: makeRecceivePSLFinalPayloadUseCase()) {
             AppLog.viewModel.log("\(AppLog.logHeader()) Back to home called")
         }
     }
@@ -72,6 +82,7 @@ enum DependencyContainer {
         HomeView.ViewModel(rootUrl: Config.shared.BASE_URL,
                            websiteDataStore: commonWebsiteDataStore,
                            specialLinkHandler: specialLinkHandler,
+                           receivePSLFinalPayload: makeRecceivePSLFinalPayloadUseCase(),
                            notificationManager: notificationManager)
     }
 
@@ -79,6 +90,7 @@ enum DependencyContainer {
         HomeView.ViewModel(rootUrl: rootUrl,
                            websiteDataStore: commonWebsiteDataStore,
                            specialLinkHandler: specialLinkHandler,
+                           receivePSLFinalPayload: makeRecceivePSLFinalPayloadUseCase(),
                            notificationManager: notificationManager)
     }
 }

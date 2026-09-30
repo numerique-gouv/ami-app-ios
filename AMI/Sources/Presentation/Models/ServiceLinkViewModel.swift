@@ -15,7 +15,6 @@ struct ServiceLinkViewModel {
     private let destinationUrl: URL
     private let dataStore: WKWebsiteDataStore
     private let sourceUrl: URL?
-    private let specialLinkHandler: SpecialLinkHandler
 
     let model: ServiceView.ViewModel
 
@@ -23,16 +22,17 @@ struct ServiceLinkViewModel {
          dataStore: WKWebsiteDataStore,
          sourceUrl: URL? = nil,
          specialLinkHandler: SpecialLinkHandler,
+         receivePSLFinalPayload: ReceivePSLFinalPayloadUseCase,
          destinationViewDismissedAction: DismissedAction?) {
         self.destinationUrl = destinationUrl
         self.dataStore = dataStore
         self.sourceUrl = sourceUrl
-        self.specialLinkHandler = specialLinkHandler
 
         model = ServiceView.ViewModel(rootUrl: destinationUrl,
                                       websiteDataStore: dataStore,
                                       refererUrl: sourceUrl,
                                       specialLinkHandler: specialLinkHandler,
+                                      receivePSLFinalPayload: receivePSLFinalPayload,
                                       backToHomeAction: destinationViewDismissedAction)
     }
 }

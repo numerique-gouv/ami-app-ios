@@ -18,6 +18,7 @@ extension HomeView {
         private static let AUTHENTICATION_COOKIE_NAME = "token"
         private static let MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION = Double(24 * 60 * 60)
 
+        private let receivePSLFinalPayload: ReceivePSLFinalPayloadUseCase
         private let notificationManager: NotificationManager
         let webViewViewModel: SwiftUIWebView.ViewModel
 
@@ -91,12 +92,14 @@ extension HomeView {
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
              specialLinkHandler: SpecialLinkHandler,
+             receivePSLFinalPayload: ReceivePSLFinalPayloadUseCase,
              notificationManager: NotificationManager) {
             let userScripts = HomeUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                                             websiteDataStore: websiteDataStore,
                                                             specialLinkHandler: specialLinkHandler)
             self.webViewViewModel = webViewViewModel
+            self.receivePSLFinalPayload = receivePSLFinalPayload
             self.notificationManager = notificationManager
 
             super.init()
@@ -284,7 +287,8 @@ extension HomeView.ViewModel: WebViewDelegate {
             selectedDestination = ServiceLinkViewModel(destinationUrl: targetUrl,
                                                        dataStore: webViewViewModel.configuration.websiteDataStore,
                                                        sourceUrl: webViewViewModel.webView?.url,
-                                                       specialLinkHandler: webViewViewModel.specialLinkHandler) { [weak self] in
+                                                       specialLinkHandler: webViewViewModel.specialLinkHandler,
+                                                       receivePSLFinalPayload: receivePSLFinalPayload) { [weak self] in
                 self?.destinationLinkViewDismissed()
             }
             // Go back to previous page in originating webview.
