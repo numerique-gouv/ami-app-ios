@@ -12,22 +12,26 @@ import WebKit
 struct ServiceLinkViewModel {
     typealias DismissedAction = () -> Void
 
-    private let url: URL
+    private let destinationUrl: URL
     private let dataStore: WKWebsiteDataStore
+    private let sourceUrl: URL?
     private let specialLinkHandler: SpecialLinkHandler
 
     let model: ServiceView.ViewModel
 
-    init(url: URL,
+    init(destinationUrl: URL,
          dataStore: WKWebsiteDataStore,
+         sourceUrl: URL? = nil,
          specialLinkHandler: SpecialLinkHandler,
          destinationViewDismissedAction: DismissedAction?) {
-        self.url = url
+        self.destinationUrl = destinationUrl
         self.dataStore = dataStore
+        self.sourceUrl = sourceUrl
         self.specialLinkHandler = specialLinkHandler
 
-        model = ServiceView.ViewModel(rootUrl: url,
+        model = ServiceView.ViewModel(rootUrl: destinationUrl,
                                       websiteDataStore: dataStore,
+                                      refererUrl: sourceUrl,
                                       specialLinkHandler: specialLinkHandler,
                                       backToHomeAction: destinationViewDismissedAction)
     }
@@ -35,13 +39,14 @@ struct ServiceLinkViewModel {
 
 extension ServiceLinkViewModel: Equatable {
     static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.url == rhs.url && lhs.dataStore == rhs.dataStore
+        lhs.destinationUrl == rhs.destinationUrl && lhs.dataStore == rhs.dataStore && lhs.sourceUrl == rhs.sourceUrl
     }
 }
 
 extension ServiceLinkViewModel: Hashable {
     func hash(into hasher: inout Hasher) {
-        hasher.combine(url)
+        hasher.combine(destinationUrl)
+        hasher.combine(sourceUrl)
         hasher.combine(dataStore)
     }
 }

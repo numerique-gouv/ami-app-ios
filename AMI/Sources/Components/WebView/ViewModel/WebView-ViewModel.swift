@@ -29,6 +29,7 @@ extension SwiftUIWebView {
         let rootUrl: URL
         let configuration = WKWebViewConfiguration()
         let specialLinkHandler: SpecialLinkHandler
+        let refererUrl: URL?
         weak var delegate: WebViewDelegate?
         private let userScripts: WebViewUserScriptsProtocol?
         let allowsBackForwardNavigationGestures: Bool
@@ -63,12 +64,15 @@ extension SwiftUIWebView {
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
              specialLinkHandler: SpecialLinkHandler,
+             refererUrl: URL? = nil,
              initialUserScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
              urlChangeAction: UrlChangeAction? = nil) {
             self.rootUrl = rootUrl
             configuration.websiteDataStore = websiteDataStore
             self.specialLinkHandler = specialLinkHandler
+            self.refererUrl = refererUrl
+
             userScripts = initialUserScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
             self.urlChangeAction = urlChangeAction
@@ -161,7 +165,11 @@ extension SwiftUIWebView {
 
         @MainActor
         func loadInitialPage() {
-            webView?.load(URLRequest(url: rootUrl))
+            var request = URLRequest(url: rootUrl)
+            if let refererUrl {
+                request.setValue(refererUrl.absoluteString, forHTTPHeaderField: "Referer")
+            }
+            webView?.load(request)
         }
 
         // The `goBackToRootUrl()` method doesn't seem to work reliably with Single Page Application in WKWebView.
