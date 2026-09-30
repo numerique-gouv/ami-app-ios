@@ -64,11 +64,6 @@ struct HomeView: View {
             .sheet(isPresented: $viewModel.showSettings) {
                 SettingsView(viewModel: viewModel.settingsViewViewModel)
             }
-            .alert(item: $viewModel.alertModel) { alert in
-                Alert(title: Text(alert.title),
-                      message: Text(alert.message),
-                      dismissButton: .default(Text(alert.closeButtonTitle)))
-            }
             .sheet(isPresented: $viewModel.isPresentingOnboardingView) {
                 OnboardingView(viewModel: viewModel.onboardingViewViewModel)
             }

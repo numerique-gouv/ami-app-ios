@@ -39,11 +39,6 @@ struct ServiceView: View {
         webView
             // Hide Back button on Partner's view.
             .navigationBarBackButtonHidden(true)
-            .alert(item: $viewModel.alertModel) { alert in
-                Alert(title: Text(alert.title),
-                      message: Text(alert.message),
-                      dismissButton: .default(Text(alert.closeButtonTitle)))
-            }
             .navigationDestination(item: $viewModel.selectedDestination) { destination in
                 ServiceView(viewModel: destination.model)
             }
