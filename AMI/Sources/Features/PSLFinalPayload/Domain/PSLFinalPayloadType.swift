@@ -22,7 +22,7 @@ struct PSLFinalPayloadType {
 
 /// PSLFinalPayloadType is `Identifiable`for free
 /// because i`id` property is present and hashable.
-extension PSLFinalPayloadType: Identifiable {}
+extension PSLFinalPayloadType: Identifiable, Equatable, Sendable {}
 
 /// Sample
 /// {
