@@ -38,7 +38,7 @@ class ServiceViewPostMessageScripts {
             window.webkit.messageHandlers.postMessage.postMessage(body);
         };
     })();
-    
+
     console.log('ApplicationAmi.servicePostMessage initialized');
     """
 }

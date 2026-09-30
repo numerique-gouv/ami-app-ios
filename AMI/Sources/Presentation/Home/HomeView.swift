@@ -77,11 +77,6 @@ struct HomeView: View {
                     .sheet(isPresented: $viewModel.showSettings) {
                         SettingsView(viewModel: viewModel.settingsViewViewModel)
                     }
-                    .alert(isPresented: $viewModel.showNoEmailClientAlert) {
-                        Alert(title: Text("Erreur"),
-                              message: Text("Aucun client email correctement configuré n'a été trouvé sur votre appareil."),
-                              dismissButton: .default(Text("Ok")))
-                    }
                     .sheet(isPresented: $viewModel.isPresentingOnboardingView) {
                         OnboardingView(viewModel: viewModel.onboardingViewViewModel)
                     }
@@ -90,17 +85,6 @@ struct HomeView: View {
                     .navigationDestination(item: $viewModel.selectedDestination) { destination in
                         ServiceView(viewModel: destination.model)
                     }
-                if viewModel.isOnContactPage {
-                    Button {
-                        Task {
-                            await viewModel.shareLogs()
-                        }
-                    } label: {
-                        Text("Télécharger les logs")
-                    }
-                    .buttonStyle(ButtonStyleDsfr(type: .secondary))
-                    .padding(.vertical)
-                }
             }
             postMessageButton
                 .fixedSize()
