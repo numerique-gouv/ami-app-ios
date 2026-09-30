@@ -43,6 +43,8 @@ extension ServiceView {
             super.init()
 
             webViewViewModel.addUserScripts(userScripts: ServiceViewUserScripts(), handler: self)
+            webViewViewModel.addUserScripts(userScripts: ServiceViewPostMessageScripts(context: self), handler: self)
+
             self.webViewViewModel.delegate = self
 
             self.webViewViewModel.navigateToNewWindowManager = self
@@ -57,6 +59,15 @@ extension ServiceView {
 
         deinit {
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) deinit")
+        }
+
+        func receivePSLFinalPayload(payload: Data) async {
+            do {
+                _ = try await receivePSLFinalPayload.execute(payload: payload)
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) Saved received PSF final payload")
+            } catch {
+                AppLog.viewModel.error("\(AppLog.logHeader(self)) Error with received PSF final payload: \(error)")
+            }
         }
     }
 }
