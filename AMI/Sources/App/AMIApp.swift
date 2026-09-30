@@ -32,16 +32,19 @@ struct AMIApp: App {
     private var mainContent: some View {
         ZStack(alignment: .top) {
             NavigationStack {
-                #if IS_AMI_STAGING
+                #if IS_AMI_PRODUCTION
+                    HomeView(viewModel: appState.defaultHomeViewModel)
+                        .id(appState.notificationActivatedHomeViewModelId ?? UUID())
+                #elseif IS_AMI_PREPRODUCTION
+                    HomeView(viewModel: appState.defaultHomeViewModel)
+                        .id(appState.notificationActivatedHomeViewModelId ?? UUID())
+                #elseif IS_AMI_STAGING
                     if let notificationActivatedHomeViewModelId = appState.notificationActivatedHomeViewModelId {
                         HomeView(viewModel: appState.notificationTriggeredHomeViewModel)
                             .id(notificationActivatedHomeViewModelId)
                     } else {
                         ReviewAppView(viewModel: DependencyContainer.makeReviewAppViewModel())
                     }
-                #elseif IS_AMI_PRODUCTION
-                    HomeView(viewModel: appState.defaultHomeViewModel)
-                        .id(appState.notificationActivatedHomeViewModelId ?? UUID())
                 #else
                     EmptyView()
                 #endif
