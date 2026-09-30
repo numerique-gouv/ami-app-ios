@@ -51,7 +51,6 @@ extension HomeView {
 
         var isOnContactPage = false
         var showSettings = false
-        var alertModel: WebViewAlertModel?
         var isPresentingOnboardingView = false
         // Temporarily display back button when on OIDC page.
         var showBackButton = false
@@ -115,10 +114,14 @@ extension HomeView {
             }
         }
 
-        init(rootUrl: URL, websiteDataStore: WKWebsiteDataStore, notificationManager: NotificationManager) {
+        init(rootUrl: URL,
+             websiteDataStore: WKWebsiteDataStore,
+             specialLinkHandler: SpecialLinkHandler,
+             notificationManager: NotificationManager) {
             let userScripts = HomeUserScripts()
-            let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
-                                                            rootUrl: rootUrl,
+            let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
+                                                            websiteDataStore: websiteDataStore,
+                                                            specialLinkHandler: specialLinkHandler,
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.notificationManager = notificationManager
@@ -299,7 +302,9 @@ extension HomeView.ViewModel: WebViewDelegate {
         // Special process for destination Url
         // If the destination url is outside the root domain, open as a Service in a dedicated webview.
         if !targetUrl.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) {
-            selectedDestination = ServiceLinkViewModel(url: targetUrl, dataStore: webViewViewModel.configuration.websiteDataStore) { [weak self] in
+            selectedDestination = ServiceLinkViewModel(url: targetUrl,
+                                                       dataStore: webViewViewModel.configuration.websiteDataStore,
+                                                       specialLinkHandler: webViewViewModel.specialLinkHandler) { [weak self] in
                 self?.destinationLinkViewDismissed()
             }
             // Go back to previous page in originating webview.

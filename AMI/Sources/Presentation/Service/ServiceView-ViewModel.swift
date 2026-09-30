@@ -17,8 +17,6 @@ extension ServiceView {
 
         let webViewViewModel: SwiftUIWebView.ViewModel
 
-        var alertModel: WebViewAlertModel?
-
         private var checkNotificationStatusDone = false
 
         var backToHomeAction: BackToHomeAction?
@@ -43,11 +41,15 @@ extension ServiceView {
             }
         }
 
-        init(websiteDataStore: WKWebsiteDataStore, rootUrl: URL, backToHomeAction: BackToHomeAction?) {
+        init(rootUrl: URL,
+             websiteDataStore: WKWebsiteDataStore,
+             specialLinkHandler: SpecialLinkHandler,
+             backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let userScripts = ServiceViewUserScripts()
-            let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
-                                                            rootUrl: rootUrl,
+            let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
+                                                            websiteDataStore: websiteDataStore,
+                                                            specialLinkHandler: specialLinkHandler,
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
@@ -121,7 +123,9 @@ extension ServiceView.ViewModel: WebViewNavigateToNewWindowProtocol {
     }
 
     func loadInNewWebView(url: URL) {
-        selectedDestination = ServiceLinkViewModel(url: url, dataStore: webViewViewModel.configuration.websiteDataStore) { [weak self] in
+        selectedDestination = ServiceLinkViewModel(url: url,
+                                                   dataStore: webViewViewModel.configuration.websiteDataStore,
+                                                   specialLinkHandler: webViewViewModel.specialLinkHandler) { [weak self] in
             self?.destinationLinkViewDismissed()
         }
     }

@@ -26,8 +26,9 @@ extension SwiftUIWebView {
             }
         }
 
-        let configuration = WKWebViewConfiguration()
         let rootUrl: URL
+        let configuration = WKWebViewConfiguration()
+        let specialLinkHandler: SpecialLinkHandler
         weak var delegate: WebViewDelegate?
         private let userScripts: WebViewUserScriptsProtocol?
         let allowsBackForwardNavigationGestures: Bool
@@ -49,18 +50,23 @@ extension SwiftUIWebView {
         private var canGoBackObserver: NSKeyValueObservation?
         private var urlChangeObserver: NSKeyValueObservation?
 
+        // Alert to display above webView.
+        var alertModel: AlertModel?
+
         // Web Downloader properties
         private let downloader = WebViewDownloadCoordinator()
         var showFileToSaveUI = false
         var fileToSaveSourceURL: URL?
 
-        init(websiteDataStore: WKWebsiteDataStore,
-             rootUrl: URL,
+        init(rootUrl: URL,
+             websiteDataStore: WKWebsiteDataStore,
+             specialLinkHandler: SpecialLinkHandler,
              initialUserScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
              urlChangeAction: UrlChangeAction? = nil) {
-            configuration.websiteDataStore = websiteDataStore
             self.rootUrl = rootUrl
+            configuration.websiteDataStore = websiteDataStore
+            self.specialLinkHandler = specialLinkHandler
             userScripts = initialUserScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
             self.urlChangeAction = urlChangeAction
