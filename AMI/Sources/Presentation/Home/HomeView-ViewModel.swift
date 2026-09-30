@@ -88,22 +88,9 @@ extension HomeView {
             }
         }
 
-        @MainActor
-        func contactByEmail(targetUrl: URL) async {
-            if await UIApplication.shared.open(targetUrl) == false {
-                alertModel = WebViewAlertModel(title: AMIL10n.commonError,
-                                               message: AMIL10n.webviewAlerteNoEmailClientMessage,
-                                               closeButtonTitle: AMIL10n.commonOk)
-            }
-        }
-
-        @MainActor
-        func contactByPhone(targetUrl: URL) async {
-            if await UIApplication.shared.open(targetUrl) == false {
-                alertModel = WebViewAlertModel(title: AMIL10n.commonError,
-                                               message: AMIL10n.webviewAlerteNoPhoneClientMessage,
-                                               closeButtonTitle: AMIL10n.commonOk)
-            }
+        func shareLogs() async {
+            let userId = await webViewViewModel.readInLocalStorage(key: "user_fc_hash") as? String
+            LogsExporter(userId: userId?.trimmingCharacters(in: CharacterSet(charactersIn: "\""))).shareLogs()
         }
 
         init(rootUrl: URL,
@@ -257,31 +244,6 @@ extension HomeView.ViewModel: WebViewDelegate {
             // No special restriction. Return TRUE.
             return true
         }
-
-        // Special process for `mailto` and 'tel' url schemes.
-        if targetUrl.scheme == "mailto" {
-            Task { @MainActor in
-                await contactByEmail(targetUrl: targetUrl)
-            }
-            return false
-        } else if targetUrl.scheme == "tel" {
-            Task { @MainActor in
-                await contactByPhone(targetUrl: targetUrl)
-            }
-            return false
-        }
-
-        let targetUrlHost = targetUrl.host()
-
-        #if IS_AMI_PRODUCTION
-            // Special case of FranceIdentité application URL.
-            // Accessing this URL should launch France Identité application if installed
-            // or France Identité website in external Safari browser if the application is not present on the device.
-            if targetUrlHost == Secrets.franceidentiteHost {
-                UIApplication.shared.open(targetUrl)
-                return false
-            }
-        #endif
 
         // Special case of OIDC web page for HomeView
         // Continue normal navigation inside the Home webView.
