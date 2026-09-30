@@ -47,6 +47,11 @@ struct AMIWebView: View {
             }
         }
         .navigationBarBackButtonHidden()
+        .alert(item: $viewModel.alertModel) { alert in
+            Alert(title: Text(alert.title),
+                  message: Text(alert.message),
+                  dismissButton: .default(Text(alert.closeButtonTitle)))
+        }
         .fileMover(isPresented: $viewModel.showFileToSaveUI,
                    file: viewModel.fileToSaveSourceURL,
                    onCompletion: { result in
@@ -73,6 +78,5 @@ extension AMIWebView {
 }
 
 #Preview {
-    let viewModel = SwiftUIWebView.ViewModel.default
-    AMIWebView(viewModel: viewModel)
+    AMIWebView(viewModel: DependencyContainer.makeSimulatorPreviewSwiftUIWebViewModel())
 }

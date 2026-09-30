@@ -17,12 +17,13 @@ common_back = "Back";
 settings_title = "Settings";
 settings_notifications_allow_title = "Receive notifications on my mobile device";
 
-// Logs Exporter
-logs_error_unable_to_access_log = "Unable to access logs";
-logs_error_unable_to_write_log = "Unable to write log files";
-
 // AMI Application
 ami_title = "AMI";
 
 // Local storage
 local_storage_authentication_prompt = "Reading sensitive data";
+
+// Special links alerts
+error_system_is_unable_to_handle_link = "System doesn't handle link \"$0\"";
+alert_cant_handle_email_link = "No configured email client found on your device.";
+alert_cant_handle_phone_link = "No phone application found on your device.";

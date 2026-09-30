@@ -39,11 +39,6 @@ struct ServiceView: View {
         webView
             // Hide Back button on Partner's view.
             .navigationBarBackButtonHidden(true)
-            .alert(isPresented: $viewModel.showNoEmailClientAlert) {
-                Alert(title: Text("Erreur"),
-                      message: Text("Aucun client email correctement configuré n'a été trouvé sur votre appareil."),
-                      dismissButton: .default(Text("Ok")))
-            }
             .navigationDestination(item: $viewModel.selectedDestination) { destination in
                 ServiceView(viewModel: destination.model)
             }
@@ -55,8 +50,5 @@ struct ServiceView: View {
 }
 
 #Preview {
-    let viewModel = ServiceView.ViewModel(websiteDataStore: .nonPersistent(), rootUrl: URL(string: "https://numerique.gouv.fr")!) {
-        AppLog.viewModel.log("\(AppLog.logHeader()) Back to home called")
-    }
-    ServiceView(viewModel: viewModel)
+    ServiceView(viewModel: DependencyContainer.makePreviewServiceViewModel())
 }

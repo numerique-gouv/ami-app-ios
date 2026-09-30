@@ -64,11 +64,6 @@ struct HomeView: View {
             .sheet(isPresented: $viewModel.showSettings) {
                 SettingsView(viewModel: viewModel.settingsViewViewModel)
             }
-            .alert(isPresented: $viewModel.showNoEmailClientAlert) {
-                Alert(title: Text("Erreur"),
-                      message: Text("Aucun client email correctement configuré n'a été trouvé sur votre appareil."),
-                      dismissButton: .default(Text("Ok")))
-            }
             .sheet(isPresented: $viewModel.isPresentingOnboardingView) {
                 OnboardingView(viewModel: viewModel.onboardingViewViewModel)
             }
@@ -89,8 +84,5 @@ struct HomeView: View {
 }
 
 #Preview {
-    let viewModel = HomeView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
-                                       websiteDataStore: .nonPersistent(),
-                                       notificationManager: NotificationManager())
-    HomeView(viewModel: viewModel)
+    HomeView(viewModel: DependencyContainer.makePreviewHomeViewModel())
 }

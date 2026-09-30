@@ -17,26 +17,21 @@ extension ServiceView {
 
         let webViewViewModel: SwiftUIWebView.ViewModel
 
-        var showNoEmailClientAlert = false
-
         private var checkNotificationStatusDone = false
 
         var backToHomeAction: BackToHomeAction?
 
         var selectedDestination: ServiceLinkViewModel?
 
-        @MainActor
-        func contactByEmail(targetUrl: URL) {
-            UIApplication.shared.open(targetUrl) { accepted in
-                self.showNoEmailClientAlert = !accepted
-            }
-        }
-
-        init(websiteDataStore: WKWebsiteDataStore, rootUrl: URL, backToHomeAction: BackToHomeAction?) {
+        init(rootUrl: URL,
+             websiteDataStore: WKWebsiteDataStore,
+             specialLinkHandler: SpecialLinkHandler,
+             backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let userScripts = ServiceViewUserScripts()
-            let webViewViewModel = SwiftUIWebView.ViewModel(websiteDataStore: websiteDataStore,
-                                                            rootUrl: rootUrl,
+            let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
+                                                            websiteDataStore: websiteDataStore,
+                                                            specialLinkHandler: specialLinkHandler,
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
@@ -62,20 +57,7 @@ extension ServiceView {
 
 extension ServiceView.ViewModel: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
-        guard let targetUrl = navigationAction.request.url else {
-            // No special restriction. Return TRUE.
-            return true
-        }
-
-        // Special process for `mailto` url.
-        if targetUrl.scheme == "mailto" {
-            Task { @MainActor in
-                contactByEmail(targetUrl: targetUrl)
-            }
-            return false
-        }
-
-        return true
+        true
     }
 
     func navigationWillStart(navigationAction: WKNavigationAction) {
@@ -105,7 +87,9 @@ extension ServiceView.ViewModel: WebViewNavigateToNewWindowProtocol {
     }
 
     func loadInNewWebView(url: URL) {
-        selectedDestination = ServiceLinkViewModel(url: url, dataStore: webViewViewModel.configuration.websiteDataStore) { [weak self] in
+        selectedDestination = ServiceLinkViewModel(url: url,
+                                                   dataStore: webViewViewModel.configuration.websiteDataStore,
+                                                   specialLinkHandler: webViewViewModel.specialLinkHandler) { [weak self] in
             self?.destinationLinkViewDismissed()
         }
     }

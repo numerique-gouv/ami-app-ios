@@ -26,15 +26,16 @@ extension SwiftUIWebView {
             }
         }
 
-        let configuration = WKWebViewConfiguration()
         let rootUrl: URL
+        let configuration = WKWebViewConfiguration()
+        let specialLinkHandler: SpecialLinkHandler
         weak var delegate: WebViewDelegate?
         private let userScripts: WebViewUserScriptsProtocol?
         let allowsBackForwardNavigationGestures: Bool
         #if DEBUG
             // Property `acceptSelfSignedCertificate` that can be set to TRUE
             // when debugging against a local backend server using a self-signed certificate.
-            private var acceptSelfSignedCertificate = false
+            var acceptSelfSignedCertificate = false
         #endif
         /// Protocol used to decide how to handle web links to new window ("target=_blank")
         /// By default, links open in current webview.
@@ -51,18 +52,23 @@ extension SwiftUIWebView {
 
         var localStorageManager: WebViewLocalStorageManager?
 
+        // Alert to display above webView.
+        var alertModel: AlertModel?
+
         // Web Downloader properties
         private let downloader = WebViewDownloadCoordinator()
         var showFileToSaveUI = false
         var fileToSaveSourceURL: URL?
 
-        init(websiteDataStore: WKWebsiteDataStore,
-             rootUrl: URL,
+        init(rootUrl: URL,
+             websiteDataStore: WKWebsiteDataStore,
+             specialLinkHandler: SpecialLinkHandler,
              initialUserScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
              urlChangeAction: UrlChangeAction? = nil) {
-            configuration.websiteDataStore = websiteDataStore
             self.rootUrl = rootUrl
+            configuration.websiteDataStore = websiteDataStore
+            self.specialLinkHandler = specialLinkHandler
             userScripts = initialUserScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
             self.urlChangeAction = urlChangeAction
@@ -170,7 +176,7 @@ extension SwiftUIWebView {
             webView.go(to: firstItem)
         }
 
-         // Downloader started handler
+        // Downloader started handler
         private func downloadDidStart(_ result: Result<String, Error>) {
             // TODO: Display information to user about Download starting.
             AppLog.viewModel.info("\(AppLog.logHeader(self)) downloadDidStart: \(String(describing: result))")
@@ -245,7 +251,7 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  decidePolicyFor navigationAction: WKNavigationAction,
                  preferences: WKWebpagePreferences) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
-        guard navigationAction.request.url != nil else {
+        guard let linkUrl = navigationAction.request.url else {
             return (.cancel, preferences)
         }
 
@@ -253,13 +259,24 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
         if navigationAction.shouldPerformDownload || WebViewDownloadCoordinator.destinationUrlIsDownloadableFile(navigationAction.request.url) {
             return (.download, preferences)
         } else {
-            // Check with delegate if navigation to destination is allowed.
-            if let delegate,
-               !delegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
+            do {
+                // Check if it is a special link to intercept.
+                if try await specialLinkHandler.handleLink(link: linkUrl) {
+                    // The special link is intercepted. Cancel navigation.
+                    return (.cancel, preferences)
+                } else {
+                    // Check with delegate if navigation to destination is allowed.
+                    if let delegate,
+                       !delegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
+                        return (.cancel, preferences)
+                    } else {
+                        delegate?.navigationWillStart(navigationAction: navigationAction)
+                        return (.allow, preferences)
+                    }
+                }
+            } catch {
+                alertModel = error.alert
                 return (.cancel, preferences)
-            } else {
-                delegate?.navigationWillStart(navigationAction: navigationAction)
-                return (.allow, preferences)
             }
         }
     }
@@ -311,23 +328,6 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
         download.delegate = downloader
     }
-}
-
-extension SwiftUIWebView.ViewModel {
-    static let simulatorDelegate = WebViewDelegateSimulatorImplementation()
-    static let `default` = {
-        let model = SwiftUIWebView.ViewModel(websiteDataStore: .nonPersistent(),
-                                             rootUrl: URL(string: "https://numerique.gouv.fr")!,
-                                             initialUserScripts: HomeUserScripts())
-        model.delegate = simulatorDelegate
-        #if DEBUG
-            model.acceptSelfSignedCertificate = true
-        #endif
-        model.urlChangeAction = { _, url in
-            AppLog.viewModel.notice("\(AppLog.logHeader(SwiftUIWebView.ViewModel.self)) Url did change to \(url.debugDescription)")
-        }
-        return model
-    }()
 }
 
 extension SwiftUIWebView.ViewModel: WKUIDelegate {

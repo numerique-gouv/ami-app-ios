@@ -17,12 +17,13 @@ common_back = "Retour";
 settings_title = "Paramètres";
 settings_notifications_allow_title = "Recevoir les notifications sur mon appareil mobile";
 
-// Logs Exporter
-logs_error_unable_to_access_log = "Impossible d'accéder aux logs";
-logs_error_unable_to_write_log = "Impossible d'enregistrer le fichier de logs";
-
 // AMI Application
 ami_title = "AMI";
 
 // Local storage
 local_storage_authentication_prompt = "Lecture de données sensibles";
+
+// Special links alerts
+error_system_is_unable_to_handle_link = "Le système ne gère pas le lien \"%s\"";
+alert_cant_handle_email_link = "Aucun client email correctement configuré n'a été trouvé sur votre appareil.";
+alert_cant_handle_phone_link = "Aucune application téléphonique n'a été trouvée sur votre appareil.";
