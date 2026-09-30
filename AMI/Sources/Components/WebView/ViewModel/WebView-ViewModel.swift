@@ -71,7 +71,7 @@ extension SwiftUIWebView {
              refererUrl: URL? = nil,
              initialUserScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
-             urlChangeAction: UrlChangeAction? = nil),
+             urlChangeAction: UrlChangeAction? = nil,
              webviewReplacedAction: WebviewWasReplacedAction? = nil) {
             self.rootUrl = rootUrl
             configuration.websiteDataStore = websiteDataStore
