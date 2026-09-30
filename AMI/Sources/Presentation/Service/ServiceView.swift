@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-@_spi(Advanced) import SwiftUIIntrospect
 import WebKit
 
 struct ServiceView: View {
