@@ -96,24 +96,6 @@ extension HomeView {
             LogsExporter(userId: userId?.trimmingCharacters(in: CharacterSet(charactersIn: "\""))).shareLogs()
         }
 
-        @MainActor
-        func contactByEmail(targetUrl: URL) async {
-            if await UIApplication.shared.open(targetUrl) == false {
-                alertModel = WebViewAlertModel(title: AMIL10n.commonError,
-                                               message: AMIL10n.webviewAlerteNoEmailClientMessage,
-                                               closeButtonTitle: AMIL10n.commonOk)
-            }
-        }
-
-        @MainActor
-        func contactByPhone(targetUrl: URL) async {
-            if await UIApplication.shared.open(targetUrl) == false {
-                alertModel = WebViewAlertModel(title: AMIL10n.commonError,
-                                               message: AMIL10n.webviewAlerteNoPhoneClientMessage,
-                                               closeButtonTitle: AMIL10n.commonOk)
-            }
-        }
-
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
              specialLinkHandler: SpecialLinkHandler,
@@ -264,19 +246,6 @@ extension HomeView.ViewModel: WebViewDelegate {
         guard let targetUrl = navigationAction.request.url else {
             // No special restriction. Return TRUE.
             return true
-        }
-
-        // Special process for `mailto` and 'tel' url schemes.
-        if targetUrl.scheme == "mailto" {
-            Task { @MainActor in
-                await contactByEmail(targetUrl: targetUrl)
-            }
-            return false
-        } else if targetUrl.scheme == "tel" {
-            Task { @MainActor in
-                await contactByPhone(targetUrl: targetUrl)
-            }
-            return false
         }
 
         // Special case of OIDC web page for HomeView
