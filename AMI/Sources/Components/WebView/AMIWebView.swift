@@ -78,6 +78,5 @@ extension AMIWebView {
 }
 
 #Preview {
-    let viewModel = SwiftUIWebView.ViewModel.default
-    AMIWebView(viewModel: viewModel)
+    AMIWebView(viewModel: DependencyContainer.makeSimulatorPreviewSwiftUIWebViewModel())
 }
