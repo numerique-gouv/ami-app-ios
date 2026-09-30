@@ -275,7 +275,7 @@ extension HomeView.ViewModel: WebViewDelegate {
         // Special process for destination Url
         // If the destination url is outside the root domain, open as a Service in a dedicated webview.
         if !targetUrl.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) {
-            selectedDestination = ServiceLinkViewModel(url: targetUrl,
+            selectedDestination = ServiceLinkViewModel(destinationUrl: targetUrl,
                                                        dataStore: webViewViewModel.configuration.websiteDataStore,
                                                        sourceUrl: webViewViewModel.webView?.url,
                                                        specialLinkHandler: webViewViewModel.specialLinkHandler) { [weak self] in

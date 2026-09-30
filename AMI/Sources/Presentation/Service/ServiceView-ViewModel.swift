@@ -33,6 +33,7 @@ extension ServiceView {
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                                             websiteDataStore: websiteDataStore,
                                                             specialLinkHandler: specialLinkHandler,
+                                                            refererUrl: refererUrl,
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
@@ -89,8 +90,8 @@ extension ServiceView.ViewModel: WebViewNavigateToNewWindowProtocol {
 
     func loadInNewWebView(url: URL) {
         selectedDestination = ServiceLinkViewModel(destinationUrl: url,
-                                                   sourceUrl: nil,,
                                                    dataStore: webViewViewModel.configuration.websiteDataStore,
+                                                   sourceUrl: nil,
                                                    specialLinkHandler: webViewViewModel.specialLinkHandler) { [weak self] in
             self?.destinationLinkViewDismissed()
         }
