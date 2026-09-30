@@ -60,8 +60,6 @@ extension ServiceView {
         deinit {
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) deinit")
         }
-    }
-}
 
         func receivePSLFinalPayload(payload: Data) async {
             do {
@@ -71,12 +69,6 @@ extension ServiceView {
                 AppLog.viewModel.error("\(AppLog.logHeader(self)) Error with received PSF final payload: \(error)")
             }
         }
-    }
-}
-
-        var receivedContent: InfoPanelContent?
-    }
-}
 
         var receivedContent: InfoPanelContent?
     }

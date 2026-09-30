@@ -86,6 +86,7 @@ struct HomeView: View {
                         ServiceView(viewModel: destination.model)
                     }
             }
+        }
     }
 
     private func handleBackAction() {
