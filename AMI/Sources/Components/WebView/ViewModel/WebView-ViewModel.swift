@@ -35,7 +35,7 @@ extension SwiftUIWebView {
         #if DEBUG
             // Property `acceptSelfSignedCertificate` that can be set to TRUE
             // when debugging against a local backend server using a self-signed certificate.
-            private var acceptSelfSignedCertificate = false
+            var acceptSelfSignedCertificate = false
         #endif
         /// Protocol used to decide how to handle web links to new window ("target=_blank")
         /// By default, links open in current webview.
