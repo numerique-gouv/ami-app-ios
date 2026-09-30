@@ -64,6 +64,7 @@ extension ServiceView {
         func receivePSLFinalPayload(payload: Data) async {
             do {
                 _ = try await receivePSLFinalPayload.execute(payload: payload)
+                receivedContent = InfoPanelContent(text: String(data: payload, encoding: .utf8)!)
                 AppLog.viewModel.notice("\(AppLog.logHeader(self)) Saved received PSF final payload")
             } catch {
                 AppLog.viewModel.error("\(AppLog.logHeader(self)) Error with received PSF final payload: \(error)")
