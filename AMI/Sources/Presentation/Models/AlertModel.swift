@@ -1,5 +1,5 @@
 //
-//  WebViewAlertModel.swift
+//  AlertModel.swift
 //  AMI-xcodegen
 //
 //  Created by Nicolas Buquet on 16/09/2026.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct WebViewAlertModel: Identifiable {
+struct AlertModel: Identifiable {
     let id = UUID()
     let title: String
     let message: String
