@@ -90,6 +90,8 @@ extension HomeView {
                 }
             }
         }
+        // PromotedUrls Feature
+        private var promotedUrls: PromotedUrlsFeature?
 
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
@@ -104,6 +106,10 @@ extension HomeView {
             self.notificationManager = notificationManager
 
             super.init()
+
+            // PromotedUrls Feature
+            //
+            promotedUrls = PromotedUrlsFeature(catalogProvider: loadUrlAliasedUrls)
 
             self.webViewViewModel.delegate = self
 
@@ -123,6 +129,7 @@ extension HomeView {
             webViewViewModel.urlChangeAction = handleUrlChange
             userScripts.userLoggedInAction = userLoginActions
             userScripts.userLoggedOutAction = userLogoutActions
+            userScripts.webappIsReadyAction = webappIsReadyAction
 
             // Set NotificationManager base URL to register the device to AMI backend to allow Push Notifications.
             setNotificationManagerBaseUrl(rootUrl)
@@ -229,6 +236,47 @@ extension HomeView {
             }
         }
 
+        private func webappIsReadyAction() {
+            Task {
+                // PromotedUrls Feature
+                //
+                // Prepare the PromotedUrls Feature viewModel when the web app is ready.
+                // This will load the alaised URLs catalog using `loadUrlAliasedUrls` method.
+                await promotedUrls?.viewModel.prepare()
+            }
+        }
+
+        /// PromotedUrls Feature
+        ///
+        /// Aliased URLs loader
+        ///
+        @MainActor // `evaluateJavaScript` must be used from main thread only.
+        @Sendable
+        func loadUrlAliasedUrls() async throws(AliasedUrlsError) -> [AliasedUrlDTO] {
+            guard let webView = webViewViewModel.webView else {
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) webAppReadyPostActions not called because no webView initialzed")
+                throw .pageNotReady
+            }
+
+            // Prepare javaScript script.
+            let script = "window.WebAppBridge.getUrlAliases();"
+
+            do {
+                // Execute javaScript script
+                guard let urlAliasesString = try await webView.evaluateJavaScript(script) as? String,
+                      let urlAliasesData = urlAliasesString.data(using: .utf8) else {
+                    throw AliasedUrlsError.pageNotReady
+                }
+
+                let urlAliasesDto = try JSONDecoder().decode([AliasedUrlDTO].self, from: urlAliasesData)
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) webAppReadyPostActions success")
+                return urlAliasesDto
+            } catch {
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) webAppReadyPostActions failed to execute: \(error)")
+                throw .invalidPayload
+            }
+        }
+
         // Get the auth token from cookie store.
         // Return nil if no token is found.
         private var getUserAuthenticationToken: String? {
@@ -306,6 +354,25 @@ extension HomeView.ViewModel: WebViewDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
         guard let targetUrl = navigationAction.request.url else {
             // No special restriction. Return TRUE.
+            return true
+        }
+
+        // PromotedUrls Feature
+        //
+        // Intercept only tapped link or navigation triggered by the web app.
+        if [WKNavigationType.linkActivated, WKNavigationType.other].contains(navigationAction.navigationType),
+           let promotedUrl = try? await promotedUrls?.handleNavigationUseCase.handle(url: targetUrl) {
+            AppLog.viewModel.notice("\(AppLog.logHeader(self)) checkIfNavigationIsAllowed Promoted URL detected: \(targetUrl)")
+            switch promotedUrl {
+            case .amiNotificationsSettings:
+                showSettings = true
+                Task {
+                    try? await Task.sleep(for: .seconds(0.5))
+                    webViewViewModel.goBack()
+                }
+            default:
+                break
+            }
             return true
         }
 

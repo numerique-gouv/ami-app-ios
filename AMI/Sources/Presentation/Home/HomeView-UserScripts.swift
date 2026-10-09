@@ -23,14 +23,17 @@ class HomeUserScripts {
         case userLoggedOut = "user_logged_out"
         case notificationPermissionRequested = "notification_permission_requested"
         case notificationPermissionRemoved = "notification_permission_removed"
+        case webappBridgeReady
     }
 
     typealias UserLoggedInAction = () -> Void
     typealias UserLoggedOutAction = () -> Void
+    typealias WebappIsReadyAction = () -> Void
 
     var scripts: [UserScript]
     var userLoggedInAction: UserLoggedInAction?
     var userLoggedOutAction: UserLoggedOutAction?
+    var webappIsReadyAction: WebappIsReadyAction?
 
     required init() {
         scripts = [
@@ -162,6 +165,8 @@ extension HomeUserScripts: WebViewUserScriptsProtocol {
                 NotificationStatus.requestPermission()
             case .notificationPermissionRemoved:
                 NotificationStatus.openSettings()
+            case .webappBridgeReady:
+                webappIsReadyAction?()
             default:
                 break
             }
