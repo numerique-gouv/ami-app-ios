@@ -12,6 +12,7 @@ import UIKit
 import WebKit
 
 extension HomeView {
+    @MainActor
     @Observable
     class ViewModel: NSObject {
         // The name of the cookie containing the authentication token.
@@ -67,29 +68,8 @@ extension HomeView {
 
         let eventsStream = PassthroughSubject<Event, Never>()
 
-        @Sendable
-        private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
-            let shoudlShowNotificationsSettings = SpecialWebPageUrl.notificationsSettings.match(url)
-
-            // swiftformat:disable redundantSelf
-            AppLog.viewModel.notice(
-                """
-                \(AppLog.logHeader(self)) URL Change Action \(url?.debugDescription ?? "<nil>")
-                \tsettings: \(self.showSettings)
-                """
-            )
-            // swiftformat:enable redundantSelf
-
-            Task { @MainActor in
-                if shoudlShowNotificationsSettings,
-                   self.webViewViewModel.webView?.canGoBack ?? false {
-                    // As new page should not be handled by webview, reset webView last step navigation (to clean history).
-                    self.webViewViewModel.webView?.goBack()
-                    // Force `showSettings` to true because it is reset to false by the `goBack` command.
-                    self.showSettings = true
-                }
-            }
-        }
+        // PromotedUrls Feature
+        private var promotedUrls: PromotedUrlsFeature?
 
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
@@ -105,6 +85,10 @@ extension HomeView {
 
             super.init()
 
+            // PromotedUrls Feature
+            //
+            promotedUrls = PromotedUrlsFeature(catalogProvider: loadUrlAliasedUrls)
+
             self.webViewViewModel.delegate = self
 
             webViewViewModel.webViewReplacedAction = { [weak self] _ in
@@ -118,11 +102,9 @@ extension HomeView {
                 }
             }
 
-            // Init `urlChangeAction` property after fully initialized `self` because closure is referencing `self`.
-            // No clean way to pass this closure in the `SwiftUIWebView.ViewModel.init` call.
-            webViewViewModel.urlChangeAction = handleUrlChange
             userScripts.userLoggedInAction = userLoginActions
             userScripts.userLoggedOutAction = userLogoutActions
+            userScripts.webappIsReadyAction = webappIsReadyAction
 
             // Set NotificationManager base URL to register the device to AMI backend to allow Push Notifications.
             setNotificationManagerBaseUrl(rootUrl)
@@ -229,6 +211,47 @@ extension HomeView {
             }
         }
 
+        private func webappIsReadyAction() {
+            Task {
+                // PromotedUrls Feature
+                //
+                // Prepare the PromotedUrls Feature viewModel when the web app is ready.
+                // This will load the alaised URLs catalog using `loadUrlAliasedUrls` method.
+                await promotedUrls?.viewModel.prepare()
+            }
+        }
+
+        /// PromotedUrls Feature
+        ///
+        /// Aliased URLs loader
+        ///
+        @MainActor // `evaluateJavaScript` must be used from main thread only.
+        @Sendable
+        func loadUrlAliasedUrls() async throws(AliasedUrlsError) -> [AliasedUrlDTO] {
+            guard let webView = webViewViewModel.webView else {
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) webAppReadyPostActions not called because no webView initialzed")
+                throw .pageNotReady
+            }
+
+            // Prepare javaScript script.
+            let script = "window.WebAppBridge.getUrlAliases();"
+
+            do {
+                // Execute javaScript script
+                guard let urlAliasesString = try await webView.evaluateJavaScript(script) as? String,
+                      let urlAliasesData = urlAliasesString.data(using: .utf8) else {
+                    throw AliasedUrlsError.pageNotReady
+                }
+
+                let urlAliasesDto = try JSONDecoder().decode([AliasedUrlDTO].self, from: urlAliasesData)
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) webAppReadyPostActions success")
+                return urlAliasesDto
+            } catch {
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) webAppReadyPostActions failed to execute: \(error)")
+                throw .invalidPayload
+            }
+        }
+
         // Get the auth token from cookie store.
         // Return nil if no token is found.
         private var getUserAuthenticationToken: String? {
@@ -302,10 +325,29 @@ extension HomeView {
     }
 }
 
-extension HomeView.ViewModel: WebViewDelegate {
-    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
+extension HomeView.ViewModel: @MainActor WebViewDelegate {
+    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool {
         guard let targetUrl = navigationAction.request.url else {
             // No special restriction. Return TRUE.
+            return true
+        }
+
+        // PromotedUrls Feature
+        //
+        // Intercept only tapped link or navigation triggered by the web app.
+        if [WKNavigationType.linkActivated, WKNavigationType.other].contains(navigationAction.navigationType),
+           let promotedUrl = try? await promotedUrls?.handleNavigationUseCase.handle(url: targetUrl) {
+            AppLog.viewModel.notice("\(AppLog.logHeader(self)) checkIfNavigationIsAllowed Promoted URL detected: \(targetUrl)")
+            switch promotedUrl {
+            case .amiNotificationsSettings:
+                showSettings = true
+                Task {
+                    try? await Task.sleep(for: .seconds(0.5))
+                    webViewViewModel.goBack()
+                }
+            default:
+                break
+            }
             return true
         }
 
@@ -316,7 +358,7 @@ extension HomeView.ViewModel: WebViewDelegate {
             // Accessing this URL should launch France Identité application if installed
             // or France Identité website in external Safari browser if the application is not present on the device.
             if targetUrlHost == Secrets.franceidentiteHost {
-                UIApplication.shared.open(targetUrl)
+                await UIApplication.shared.open(targetUrl)
                 return false
             }
         #endif
