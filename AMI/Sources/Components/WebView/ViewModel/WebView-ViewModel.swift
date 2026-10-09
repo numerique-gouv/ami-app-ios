@@ -120,7 +120,7 @@ extension SwiftUIWebView {
             guard let webView else {
                 loadingStateObserver = nil
                 loadingProgressObserver = nil
-               localStorageManager = nil
+                localStorageManager = nil
                 return
             }
             webView.navigationDelegate = self
