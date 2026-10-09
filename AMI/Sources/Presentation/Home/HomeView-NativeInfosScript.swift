@@ -47,26 +47,56 @@ class HomeNativeInfosScripts {
     #endif
 
     // This creates window.NativeBridge.getNativeVersion() HS function.
-    private static func getNativeInfosScript(deviceID: DeviceID.DeviceIdType) -> String { """
-    (function() {
-        window.NativeInfos = window.NativeInfos || {};
+    private static func getNativeInfosScript(deviceID: DeviceID.DeviceIdType) -> String {
+        // Private structure containing strucutured data passed to web page.
+        struct NativeInfos: Encodable {
+            let platform: String
+            let app_name: String
+            let version: String
+            let build: String
+            let environment: String
+            let mode: String
+            let device_id: String
+            let promoted_url_aliases: [String]
+        }
 
-        window.NativeInfos.getInfos = function() {
-            return {
-                    platform: "ios",
-                    app_name: "\(AppBundle.name)",
-                    version: "\(AppBundle.version)",
-                    build: \(AppBundle.build),
-                    environment: "\(environement)",
-                    mode: "\(mode)",
-                    device_id: "\(deviceID)"
-                   };
-        };
-    })();
-    console.log('NativeInfos initialized');
-    """
+        // The data structure filled with actual values.
+        let infos = NativeInfos(
+            platform: "ios",
+            app_name: AppBundle.name,
+            version: AppBundle.version,
+            build: AppBundle.build,
+            environment: "\(environement)",
+            mode: "\(mode)",
+            device_id: deviceID,
+            promoted_url_aliases: PromotedAliases.allCases.map(\.rawValue)
+        )
+
+        // Encode string value for transfer.
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .withoutEscapingSlashes
+        guard let jsonData = try? encoder.encode(infos) else {
+            return ""
+        }
+        // Force non-optional else an optional description string will be interpolated
+        // in the following JS script.
+        let jsonString = String(bytes: jsonData, encoding: .utf8) ?? ""
+
+        return """
+        (function() {
+            window.NativeInfos = window.NativeInfos || {};
+
+            window.NativeInfos.getInfos = function() {
+                return \(jsonString);
+            };
+        })();
+        console.log('NativeInfos initialized');
+        """
     }
 }
+
+// Encodable capability is only used here.
+extension PromotedAliases: Encodable {}
 
 extension HomeNativeInfosScripts: WebViewUserScriptsProtocol {
     func userScriptEmittedMessage(_ message: WKScriptMessage, for viewModel: SwiftUIWebView.ViewModel) {
