@@ -9,6 +9,7 @@
 import Foundation
 import WebKit
 
+@MainActor
 struct ServiceLinkViewModel {
     typealias DismissedAction = () -> Void
 
@@ -37,13 +38,13 @@ struct ServiceLinkViewModel {
     }
 }
 
-extension ServiceLinkViewModel: Equatable {
+extension ServiceLinkViewModel: @MainActor Equatable {
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.destinationUrl == rhs.destinationUrl && lhs.dataStore == rhs.dataStore && lhs.sourceUrl == rhs.sourceUrl
     }
 }
 
-extension ServiceLinkViewModel: Hashable {
+extension ServiceLinkViewModel: @MainActor Hashable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(destinationUrl)
         hasher.combine(sourceUrl)

@@ -10,10 +10,10 @@ import Foundation
 import WebKit
 
 extension SwiftUIWebView {
+    @MainActor
     @Observable
     class ViewModel: NSObject {
-        typealias UrlChangeAction = @Sendable (SwiftUIWebView.ViewModel, URL?) -> Void
-        typealias WebviewWasReplacedAction = @Sendable (WKWebView?) -> Void
+        typealias WebviewWasReplacedAction = (WKWebView?) -> Void
 
         weak var webView: WKWebView? {
             didSet {
@@ -104,11 +104,13 @@ extension SwiftUIWebView {
             }
         }
 
-        private func removeAllUserScripts() {
+        private nonisolated func removeAllUserScripts() {
             // WKUserContentController holds a strong reference to every registered
             // WKScriptMessageHandler, which would create a retain cycle because
             // `configuration` is also strongly held by this view model.
-            configuration.userContentController.removeAllScriptMessageHandlers()
+            Task { @MainActor in
+                configuration.userContentController.removeAllScriptMessageHandlers()
+            }
         }
 
         // Called by the webView:
@@ -220,8 +222,8 @@ extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
 
 // MARK: - WebViewDelegate
 
-extension SwiftUIWebView.ViewModel: WebViewDelegate {
-    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
+extension SwiftUIWebView.ViewModel: @MainActor WebViewDelegate {
+    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
         return true
     }
@@ -265,7 +267,7 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
                 } else {
                     // Check with delegate if navigation to destination is allowed.
                     if let delegate,
-                       !delegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
+                       await !delegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
                         return (.cancel, preferences)
                     } else {
                         delegate?.navigationWillStart(navigationAction: navigationAction)
@@ -357,7 +359,7 @@ extension SwiftUIWebView.ViewModel: WKUIDelegate {
     }
 }
 
-extension SwiftUIWebView.ViewModel: WebViewNavigateToNewWindowProtocol {
+extension SwiftUIWebView.ViewModel: @MainActor WebViewNavigateToNewWindowProtocol {
     /// Default behavior: open all links in current webview.
     func destinationForNewWindow(sourceWebView: WKWebView,
                                  configuration: WKWebViewConfiguration,

@@ -12,6 +12,7 @@ import UIKit
 import WebKit
 
 extension HomeView {
+    @MainActor
     @Observable
     class ViewModel: NSObject {
         // The name of the cookie containing the authentication token.
@@ -324,8 +325,8 @@ extension HomeView {
     }
 }
 
-extension HomeView.ViewModel: WebViewDelegate {
-    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
+extension HomeView.ViewModel: @MainActor WebViewDelegate {
+    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool {
         guard let targetUrl = navigationAction.request.url else {
             // No special restriction. Return TRUE.
             return true
@@ -357,7 +358,7 @@ extension HomeView.ViewModel: WebViewDelegate {
             // Accessing this URL should launch France Identité application if installed
             // or France Identité website in external Safari browser if the application is not present on the device.
             if targetUrlHost == Secrets.franceidentiteHost {
-                UIApplication.shared.open(targetUrl)
+                await UIApplication.shared.open(targetUrl)
                 return false
             }
         #endif
