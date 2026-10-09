@@ -33,9 +33,6 @@ enum DependencyContainer {
             model.acceptSelfSignedCertificate = true
         #endif
 
-        model.urlChangeAction = { _, url in
-            AppLog.viewModel.notice("\(AppLog.logHeader(SwiftUIWebView.ViewModel.self)) Url did change to \(url.debugDescription)")
-        }
         return model
     }
 

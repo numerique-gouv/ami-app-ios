@@ -67,29 +67,6 @@ extension HomeView {
 
         let eventsStream = PassthroughSubject<Event, Never>()
 
-        @Sendable
-        private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
-            let shoudlShowNotificationsSettings = SpecialWebPageUrl.notificationsSettings.match(url)
-
-            // swiftformat:disable redundantSelf
-            AppLog.viewModel.notice(
-                """
-                \(AppLog.logHeader(self)) URL Change Action \(url?.debugDescription ?? "<nil>")
-                \tsettings: \(self.showSettings)
-                """
-            )
-            // swiftformat:enable redundantSelf
-
-            Task { @MainActor in
-                if shoudlShowNotificationsSettings,
-                   self.webViewViewModel.webView?.canGoBack ?? false {
-                    // As new page should not be handled by webview, reset webView last step navigation (to clean history).
-                    self.webViewViewModel.webView?.goBack()
-                    // Force `showSettings` to true because it is reset to false by the `goBack` command.
-                    self.showSettings = true
-                }
-            }
-        }
         // PromotedUrls Feature
         private var promotedUrls: PromotedUrlsFeature?
 
@@ -124,9 +101,6 @@ extension HomeView {
                 }
             }
 
-            // Init `urlChangeAction` property after fully initialized `self` because closure is referencing `self`.
-            // No clean way to pass this closure in the `SwiftUIWebView.ViewModel.init` call.
-            webViewViewModel.urlChangeAction = handleUrlChange
             userScripts.userLoggedInAction = userLoginActions
             userScripts.userLoggedOutAction = userLogoutActions
             userScripts.webappIsReadyAction = webappIsReadyAction
