@@ -9,9 +9,10 @@
 // swiftlint:disable all
 // swiftformat:disable all
 
-@testable import AMI_Staging
 import Foundation
 import Testing
+
+@testable import AMI_Staging
 
 @Suite("UserDefaultsStorage - Low-level storage operations")
 struct UserDefaultsStorageTests {
