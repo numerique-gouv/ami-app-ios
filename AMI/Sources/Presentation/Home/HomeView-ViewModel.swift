@@ -341,13 +341,18 @@ extension HomeView.ViewModel: @MainActor WebViewDelegate {
             switch promotedUrl {
             case .amiNotificationsSettings:
                 showSettings = true
+                // Although a promoted page will be presented, the initial navigation still occurs (Single Page Application side-effect?)
+                // So, go back to the previous page.
                 Task {
                     try? await Task.sleep(for: .seconds(0.5))
                     webViewViewModel.goBack()
                 }
+                // Block initial navigation as a promoted page is presented.
+                return false
             default:
                 break
             }
+            // Allow initial navigation
             return true
         }
 
