@@ -13,12 +13,6 @@ import WebKit
 @Observable
 @MainActor
 class AMIAppState: NSObject {
-    static let notificationManager = NotificationManager()
-
-    // This common website DataStore will be injected n root views to be shared with all child webviews.
-    private static let commonWebsiteDataStore: WKWebsiteDataStore = .default()
-
-    static let notificationManager = NotificationManager()
     var bannerManager = InformationBannerManager.shared
     private var offlineBannerId: UUID?
 
