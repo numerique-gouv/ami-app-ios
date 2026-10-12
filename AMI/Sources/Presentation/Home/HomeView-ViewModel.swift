@@ -151,7 +151,7 @@ extension HomeView {
 
         deinit {
             // Ends the for-await loop, which triggers the stream's onTermination
-            // and unsubscribes from the hub.
+            // and unsubscribes from the notifications dispatcher.
             notificationsObserverTask?.cancel()
         }
 
