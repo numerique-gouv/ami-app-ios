@@ -284,8 +284,9 @@ extension HomeView {
             if case .userResponse = event.source, // Did user tap the notification?
                let notificationPageUrl = URL(string: "https://\(Secrets.baseDomainString)/#/notifications") {
                 Task { @MainActor in
-                    // Dosmiss any Service view.
-                    destinationLinkViewDismissed()
+                    // Dismiss any Service view.
+                    // Don't reset to Home else the reset to Home will occur after navigation to Notifications page.
+                    destinationLinkViewDismissed(resetToHome: false)
                     // Go to Notifications screen.
                     webViewViewModel.webView?.load(URLRequest(url: notificationPageUrl))
                 }
@@ -306,10 +307,12 @@ extension HomeView {
             }
         }
 
-        private func destinationLinkViewDismissed() {
+        private func destinationLinkViewDismissed(resetToHome: Bool) {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) called")
             selectedDestination = nil
-            sendCommand(command: .resetViewToHome)
+            if resetToHome {
+                sendCommand(command: .resetViewToHome)
+            }
         }
 
         // MARK: - Commands Stream
@@ -413,7 +416,8 @@ extension HomeView.ViewModel: WebViewDelegate {
                                                        dataStore: webViewViewModel.configuration.websiteDataStore,
                                                        sourceUrl: webViewViewModel.webView?.url,
                                                        specialLinkHandler: webViewViewModel.specialLinkHandler) { [weak self] in
-                self?.destinationLinkViewDismissed()
+                // When dismissing Service view, reset Home view to Home.
+                self?.destinationLinkViewDismissed(resetToHome: true)
             }
             // Go back to previous page in originating webview.
             Task { @MainActor in
