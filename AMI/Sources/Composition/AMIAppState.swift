@@ -13,24 +13,15 @@ import WebKit
 @Observable
 @MainActor
 class AMIAppState: NSObject {
-    static let notificationManager = NotificationManager()
-
-    // This common website DataStore will be injected n root views to be shared with all child webviews.
-    private static let commonWebsiteDataStore: WKWebsiteDataStore = .default()
-
-    static let notificationManager = NotificationManager()
     var bannerManager = InformationBannerManager.shared
     private var offlineBannerId: UUID?
 
     private let networkMonitor = NetworkMonitor()
 
     #if IS_AMI_STAGING
-        let reviewAppViewModel = ReviewAppView.ViewModel(websiteDataStore: commonWebsiteDataStore,
-                                                         notificationManager: AMIAppState.notificationManager)
+        let reviewAppViewModel = DependencyContainer.makePreviewReviewAppViewModel()
     #else
-        let mainViewModel = HomeView.ViewModel(rootUrl: Config.shared.BASE_URL,
-                                               websiteDataStore: AMIAppState.commonWebsiteDataStore,
-                                               notificationManager: AMIAppState.notificationManager)
+        let mainViewModel = DependencyContainer.makeHomeViewModel()
     #endif
 
     override init() {

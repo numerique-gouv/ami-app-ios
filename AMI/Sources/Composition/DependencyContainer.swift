@@ -66,17 +66,17 @@ enum DependencyContainer {
                                     specialLinkHandler: specialLinkHandler,
                                     notificationManager: notificationManager)
         }
+
+        static func makeReviewAppHomeViewModel(rootUrl: URL) -> HomeView.ViewModel {
+            HomeView.ViewModel(rootUrl: rootUrl,
+                               websiteDataStore: commonWebsiteDataStore,
+                               specialLinkHandler: specialLinkHandler,
+                               notificationManager: notificationManager)
+        }
     #endif
 
     static func makeHomeViewModel() -> HomeView.ViewModel {
         HomeView.ViewModel(rootUrl: Config.shared.BASE_URL,
-                           websiteDataStore: commonWebsiteDataStore,
-                           specialLinkHandler: specialLinkHandler,
-                           notificationManager: notificationManager)
-    }
-
-    static func makeReviewAppHomeViewModel(rootUrl: URL) -> HomeView.ViewModel {
-        HomeView.ViewModel(rootUrl: rootUrl,
                            websiteDataStore: commonWebsiteDataStore,
                            specialLinkHandler: specialLinkHandler,
                            notificationManager: notificationManager)

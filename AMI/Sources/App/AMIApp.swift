@@ -36,10 +36,9 @@ struct AMIApp: App {
                     HomeView(viewModel: appState.mainViewModel)
                 #elseif IS_AMI_PREPRODUCTION
                     HomeView(viewModel: appState.mainViewModel)
-               #elseif IS_AMI_STAGING
+                #elseif IS_AMI_STAGING
                     // In Staging, main view is a list of Review apps.
                     ReviewAppView(viewModel: appState.reviewAppViewModel)
-
                 #else
                     EmptyView()
                 #endif

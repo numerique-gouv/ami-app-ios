@@ -17,8 +17,6 @@ extension ServiceView {
 
         let webViewViewModel: SwiftUIWebView.ViewModel
 
-        private var checkNotificationStatusDone = false
-
         var backToHomeAction: BackToHomeAction?
 
         var selectedDestination: ServiceLinkViewModel?
@@ -35,7 +33,6 @@ extension ServiceView {
                                                             specialLinkHandler: specialLinkHandler,
                                                             refererUrl: refererUrl,
                                                             initialUserScripts: userScripts)
-            self.notificationManager = notificationManager
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
             super.init()

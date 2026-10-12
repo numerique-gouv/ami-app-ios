@@ -129,12 +129,6 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         /// Handle different action types
         if response.actionIdentifier == UNNotificationDefaultActionIdentifier {
             AppLog.service.notice("\(AppLog.logHeader(self)) User tapped the notification banner, navigating to the notifications page")
-
-            /// Handle reception of notification (review app for instance)
-//            if let appUrlString = userInfo["app_url"] as? String,
-//               let targetApplicationUrl = URL(string: appUrlString) {
-//                handleIncomingNotificationUrl(url: targetApplicationUrl)
-//            }
         } else if response.actionIdentifier == UNNotificationDismissActionIdentifier {
             AppLog.service.notice("\(AppLog.logHeader(self)) User dismissed the notification")
         }
