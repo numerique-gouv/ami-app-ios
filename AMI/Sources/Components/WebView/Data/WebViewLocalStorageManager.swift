@@ -110,9 +110,9 @@ struct WebViewLocalStorageManager {
 
             cookiesStore.getAllCookies { cookies in
                 DispatchQueue.main.async {
-                    print("Found \(cookies.count) cookies")
+                    AppLog.viewModel.info("\(AppLog.logHeader(self)) getAllCookies called: \(cookies.count) found")
                     for cookie in cookies {
-                        print("name: \(cookie.name) domain: \(cookie.domain)")
+                        AppLog.viewModel.info("\tname: \(cookie.name) domain: \(cookie.domain)")
                     }
                 }
             }
