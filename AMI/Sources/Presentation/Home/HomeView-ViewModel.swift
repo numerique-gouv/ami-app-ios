@@ -67,6 +67,9 @@ extension HomeView {
 
         let eventsStream = PassthroughSubject<Event, Never>()
 
+        @ObservationIgnored
+        private var notificationsObserverTask: Task<Void, Never>?
+
         @Sendable
         private func handleUrlChange(webViewViewModel: SwiftUIWebView.ViewModel, url: URL?) {
             let shoudlShowNotificationsSettings = SpecialWebPageUrl.notificationsSettings.match(url)
@@ -127,6 +130,13 @@ extension HomeView {
             // Set NotificationManager base URL to register the device to AMI backend to allow Push Notifications.
             setNotificationManagerBaseUrl(rootUrl)
 
+            // Created in a @MainActor init, so the task inherits MainActor isolation.
+            // `weak self`: the task does not keep the model alive.
+            notificationsObserverTask = Task { [weak self] in
+                guard let self else { return }
+                await observeNotifications()
+            }
+
             Task { @MainActor in
                 let nativeInfosScript = await HomeNativeInfosScripts()
                 webViewViewModel.addUserScripts(userScripts: nativeInfosScript)
@@ -137,6 +147,12 @@ extension HomeView {
                     webViewViewModel.loadInitialPage()
                 }
             }
+        }
+
+        deinit {
+            // Ends the for-await loop, which triggers the stream's onTermination
+            // and unsubscribes from the notifications dispatcher.
+            notificationsObserverTask?.cancel()
         }
 
         private func userLoginActions() {
@@ -157,6 +173,22 @@ extension HomeView {
                 await checkNotificationStatus()
             }
         }
+
+        private func userLogoutActions() {
+            // Reset NotificationManager `userAuthenticationToken`.
+            resetNotificationManagerUserAuthentificationToken()
+
+            // Reset Notification status check when on logout to recheck it on next login.
+            resetLastOnboardingPresentationTime()
+
+            Task { @MainActor in
+                // Remove all session data to avoid reusing automatically them on next connection.
+                await webViewViewModel.localStorageManager?.deleteSessionLocalData()
+                webViewViewModel.goBackToRootUrl()
+            }
+        }
+
+        // MARK: - Onboarding and Notifications methods
 
         private func lastOnboardingPresentationTimeIsExpired() -> Bool {
             Date.now.timeIntervalSince(lastCheckNotificationTime) > Self.MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION
@@ -215,19 +247,53 @@ extension HomeView {
             notificationManager.setUserAuthenticationToken(nil)
         }
 
-        private func userLogoutActions() {
-            // Reset NotificationManager `userAuthenticationToken`.
-            resetNotificationManagerUserAuthentificationToken()
-
-            // Reset Notification status check when on logout to recheck it on next login.
-            resetLastOnboardingPresentationTime()
-
-            Task { @MainActor in
-                // Remove all session data to avoid reusing automatically them on next connection.
-                await webViewViewModel.localStorageManager?.deleteSessionLocalData()
-                webViewViewModel.goBackToRootUrl()
+        /// Runs until the calling task is cancelled (e.g. the view's `.task` ends).
+        private func observeNotifications() async {
+            for await event in notificationManager.dispatcher.events() {
+                handleIncomingNotification(event)
             }
         }
+
+        private func handleIncomingNotification(_ event: NotificationEvent) {
+            switch event.source {
+            case .foreground:
+                break // e.g. refresh data
+            case let .userResponse(action):
+                _ = action // e.g. deep link / navigate
+            case .silent:
+                break // e.g. sync in background
+            }
+
+            let payloadString = if let jsonData = event.payloadJSON,
+                                   let payloadString = String(data: jsonData, encoding: .utf8) {
+                payloadString
+            } else {
+                "<no payload>"
+            }
+
+            AppLog.viewModel.notice(
+                """
+                        \(AppLog.logHeader(self)) ViewModel received notification:
+                        \tNotification title: \(event.title)")
+                        \tNotification body: \(event.body)")
+                        \tNotification data: \(payloadString)")
+                        \tSource: \(event.source)
+                """
+            )
+
+            if case .userResponse = event.source, // Did user tap the notification?
+               let notificationPageUrl = URL(string: "https://\(Secrets.baseDomainString)/#/notifications") {
+                Task { @MainActor in
+                    // Dismiss any Service view.
+                    // Don't reset to Home else the reset to Home will occur after navigation to Notifications page.
+                    destinationLinkViewDismissed(resetHomeView: false)
+                    // Go to Notifications screen.
+                    webViewViewModel.webView?.load(URLRequest(url: notificationPageUrl))
+                }
+            }
+        }
+
+        // MARK: -
 
         // Get the auth token from cookie store.
         // Return nil if no token is found.
@@ -241,10 +307,12 @@ extension HomeView {
             }
         }
 
-        private func destinationLinkViewDismissed() {
-            AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
+        private func destinationLinkViewDismissed(resetHomeView: Bool) {
+            AppLog.viewModel.log("\(AppLog.logHeader(self)) called")
             selectedDestination = nil
-            sendCommand(command: .resetViewToHome)
+            if resetHomeView {
+                sendCommand(command: .resetViewToHome)
+            }
         }
 
         // MARK: - Commands Stream
@@ -348,7 +416,8 @@ extension HomeView.ViewModel: WebViewDelegate {
                                                        dataStore: webViewViewModel.configuration.websiteDataStore,
                                                        sourceUrl: webViewViewModel.webView?.url,
                                                        specialLinkHandler: webViewViewModel.specialLinkHandler) { [weak self] in
-                self?.destinationLinkViewDismissed()
+                // When dismissing Service view, reset Home view to Home.
+                self?.destinationLinkViewDismissed(resetHomeView: true)
             }
             // Go back to previous page in originating webview.
             Task { @MainActor in

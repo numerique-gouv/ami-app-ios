@@ -18,15 +18,13 @@ class AMIAppState: NSObject {
 
     private let networkMonitor = NetworkMonitor()
 
-    var notificationTriggeredHomeViewModel: HomeView.ViewModel!
-    // State to force refresh view when a notification is tapped by the user.
-    var notificationActivatedHomeViewModelId: UUID?
-
-    let defaultHomeViewModel = DependencyContainer.makeHomeViewModel()
+    #if IS_AMI_STAGING
+        let reviewAppViewModel = DependencyContainer.makePreviewReviewAppViewModel()
+    #else
+        let mainViewModel = DependencyContainer.makeHomeViewModel()
+    #endif
 
     override init() {
-        notificationTriggeredHomeViewModel = DependencyContainer.makeHomeViewModel()
-
         super.init()
 
         networkMonitor.eventReceiver = { connectionState in
@@ -57,19 +55,5 @@ class AMIAppState: NSObject {
                 hasCloseIcon: false
             )
         }
-    }
-
-    func notificationReceived(notification: Notification) {
-        guard let appReviewUrl = notification.userInfo?[Notification.Name.pendingUrl] as? URL else {
-            notificationTriggeredHomeViewModel = DependencyContainer.makeHomeViewModel()
-            notificationActivatedHomeViewModelId = nil
-            return
-        }
-        AppLog.app.notice("\(AppLog.logHeader(self)) Notification Received: \(appReviewUrl)")
-
-        notificationTriggeredHomeViewModel = DependencyContainer.makeReviewAppHomeViewModel(rootUrl: appReviewUrl)
-
-        // Change view ID to force refresh.
-        notificationActivatedHomeViewModelId = UUID()
     }
 }

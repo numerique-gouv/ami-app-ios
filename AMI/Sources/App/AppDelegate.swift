@@ -9,10 +9,6 @@ import FirebaseCore
 import FirebaseMessaging
 import SwiftUI
 
-extension Notification.Name {
-    static let pendingUrl = Notification.Name("pendingUrl")
-}
-
 class AppDelegate: NSObject, UIApplicationDelegate {
     // The notificationManager is set by AMIApp.
     var notificationManager: NotificationManager? {
@@ -75,5 +71,13 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         AppLog.app.notice("\(AppLog.logHeader(self)) Failed to register for remote notifications: \(error)")
         AppLog.app.notice("\(AppLog.logHeader(self)) This is normal in the simulator - FCM will still work for testing")
+    }
+
+    // Silent pushes (content-available: 1). Requires Background Modes > Remote notifications.
+    func application(_ application: UIApplication,
+                     didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+                     fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        notificationManager?.dispatcher.publishSilentPush(userInfo: userInfo)
+        completionHandler(.newData)
     }
 }
