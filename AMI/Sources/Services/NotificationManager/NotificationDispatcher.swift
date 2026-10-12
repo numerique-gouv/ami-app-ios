@@ -74,7 +74,7 @@ extension NotificationEvent {
     }
 }
 
-// MARK: - Hub
+// MARK: - Notification Dispatcher
 
 /// Receives notifications from the system and broadcasts them to any number of
 /// AsyncStream subscribers. Each call to `events()` returns an independent stream.
