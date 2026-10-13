@@ -240,7 +240,7 @@ extension HomeView {
                 // Execute javaScript script
                 guard let urlAliasesString = try await webView.evaluateJavaScript(script) as? String,
                       let urlAliasesData = urlAliasesString.data(using: .utf8) else {
-                    throw AliasedUrlsError.pageNotReady
+                    throw AliasedUrlsError.invalidPayload
                 }
 
                 let urlAliasesDto = try JSONDecoder().decode([AliasedUrlDTO].self, from: urlAliasesData)
