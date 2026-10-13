@@ -15,7 +15,7 @@ import Foundation
 /// URL's native destination); the app's router (when built) maps
 /// routes to concrete screens. This type knows nothing about screens.
 enum AppRoute: Hashable, Sendable {
-    case franceConnect
+    case franceConnect // Not used for the moment because FranceConnect view is not promoted.
     case amiApplication
     case amiNotificationsSettings
     case allowNotifications
