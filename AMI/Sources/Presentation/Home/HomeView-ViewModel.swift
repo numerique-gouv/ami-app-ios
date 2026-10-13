@@ -216,7 +216,7 @@ extension HomeView {
                 // PromotedUrls Feature
                 //
                 // Prepare the PromotedUrls Feature viewModel when the web app is ready.
-                // This will load the alaised URLs catalog using `loadUrlAliasedUrls` method.
+                // This will load the aliased URLs catalog using `loadUrlAliasedUrls` method.
                 await promotedUrls?.viewModel.prepare()
             }
         }
