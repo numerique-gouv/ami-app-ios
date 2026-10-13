@@ -21,11 +21,11 @@ actor CachingAliasedUrlsRepository: AliasedUrlsRepository {
         self.dataSource = dataSource
     }
 
-    func fetchAliasedUrls() async throws -> [AliasedUrl] {
+    func fetchAliasedUrls() async throws(AliasedUrlsError) -> [AliasedUrl] {
         try await ensureCatalogIsLoaded()
     }
 
-    func aliasedUrl(for url: URL) async throws -> AliasedUrl? {
+    func aliasedUrl(for url: URL) async throws(AliasedUrlsError) -> AliasedUrl? {
         try await ensureCatalogIsLoaded().first {
             url.absoluteString.hasSuffix($0.pattern)
         }
@@ -35,7 +35,7 @@ actor CachingAliasedUrlsRepository: AliasedUrlsRepository {
 
     /// Fetch the aliased url catalog if needed.
     /// An empty catalog is a valid loaded value if host provided an empty aliased urls list.
-    private func ensureCatalogIsLoaded() async throws -> [AliasedUrl] {
+    private func ensureCatalogIsLoaded() async throws(AliasedUrlsError) -> [AliasedUrl] {
         if let catalog {
             return catalog
         }

@@ -18,7 +18,7 @@ struct GetAliasedUrlsUseCase: Sendable {
     }
 
     /// Fetches the current catalog of aliased URLs.
-    func fetch() async throws -> [AliasedUrl] {
+    func fetch() async throws(AliasedUrlsError) -> [AliasedUrl] {
         try await repository.fetchAliasedUrls()
     }
 }

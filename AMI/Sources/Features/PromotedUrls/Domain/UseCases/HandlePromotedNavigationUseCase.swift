@@ -25,7 +25,7 @@ struct HandlePromotedNavigationUseCase: Sendable {
     /// - Returns: the route to open if the URL is a promoted destination
     ///   eligible for promotion; otherwise `nil` — the caller must not
     ///   intercept and the web page should navigate normally.
-    func handle(url: URL) async throws -> AppRoute? {
+    func handle(url: URL) async throws(AliasedUrlsError) -> AppRoute? {
         guard let promoted = try await repository.aliasedUrl(for: url) else {
             return nil
         }

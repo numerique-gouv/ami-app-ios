@@ -19,12 +19,12 @@ nonisolated protocol AliasedUrlsRepository: Sendable {
     /// Pairs whose alias is not locally known are dropped. Each entity's
     /// `destination` is derived from the alias's route: `.native(route)`
     /// when eligible, `.webPage` otherwise.
-    func fetchAliasedUrls() async throws -> [AliasedUrl]
+    func fetchAliasedUrls() async throws(AliasedUrlsError) -> [AliasedUrl]
 
     /// Resolves a navigation URL to an aliased URL if one matches.
     ///
     /// - Parameter url: the url the web page reported for the navigation.
     /// - Returns: the matching aliased URL, or `nil` if the alias is
     ///   unknown to the app.
-    func aliasedUrl(for url: URL) async throws -> AliasedUrl?
+    func aliasedUrl(for url: URL) async throws(AliasedUrlsError) -> AliasedUrl?
 }
