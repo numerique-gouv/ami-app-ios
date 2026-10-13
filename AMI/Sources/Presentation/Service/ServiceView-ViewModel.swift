@@ -11,6 +11,7 @@ import UIKit
 import WebKit
 
 extension ServiceView {
+    @MainActor
     @Observable
     class ViewModel: NSObject {
         typealias BackToHomeAction = () -> Void
@@ -57,8 +58,8 @@ extension ServiceView {
     }
 }
 
-extension ServiceView.ViewModel: WebViewDelegate {
-    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
+extension ServiceView.ViewModel: @MainActor WebViewDelegate {
+    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool {
         true
     }
 
@@ -79,7 +80,7 @@ extension ServiceView.ViewModel: WebViewDelegate {
     }
 }
 
-extension ServiceView.ViewModel: WebViewNavigateToNewWindowProtocol {
+extension ServiceView.ViewModel: @MainActor WebViewNavigateToNewWindowProtocol {
     /// Default behavior: open all links in new webview.
     func destinationForNewWindow(sourceWebView: WKWebView,
                                  configuration: WKWebViewConfiguration,

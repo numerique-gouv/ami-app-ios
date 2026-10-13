@@ -29,7 +29,7 @@ options:
     mkdir -p targets/production/Sources
     mkdir -p targets/preproduction/Sources
     mkdir -p targets/staging/Sources
-    mkdir -p targets/unitTest/Sources
+    mkdir -p targets/unitTests/Sources
     
     echo "Creating empty generated files if needed for xcodegen to use them at project generation…"
     mkdir -p AMI/Sources/Generated

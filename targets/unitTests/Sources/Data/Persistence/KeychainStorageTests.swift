@@ -9,11 +9,12 @@
 // swiftlint:disable all
 // swiftformat:disable all
 
-@testable import AMI_Staging
 import Foundation
 import KeychainAccess
 import LocalAuthentication
 import Testing
+
+@testable import AMI_Staging
 
 @Suite("KeychainStorage - Secure storage operations")
 struct KeychainStorageTests {

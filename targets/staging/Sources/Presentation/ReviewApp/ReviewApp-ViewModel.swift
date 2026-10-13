@@ -10,6 +10,7 @@ import Foundation
 import WebKit
 
 extension ReviewAppView {
+    @MainActor
     @Observable
     class ViewModel: NSObject {
         let rootUrl = Config.shared.BASE_URL // This root URL is always the same. No need to make it a parameter.

@@ -10,7 +10,7 @@ import Foundation
 import WebKit
 
 protocol WebViewDelegate: AnyObject {
-    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool
+    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool
 
     func navigationWillStart(navigationAction: WKNavigationAction)
 
@@ -23,16 +23,18 @@ protocol WebViewDelegate: AnyObject {
 
 extension WebViewDelegate {
     // These default empty implementation makes the above methods optional to implement.
-    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool { true }
+    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool { true }
     func navigationWillStart(navigationAction: WKNavigationAction) {}
     func navigationDidStart() {}
     func navigationDidFinish() {}
     func navigationDidFailed(withError error: Error) {}
 }
 
-class WebViewDelegateSimulatorImplementation: WebViewDelegate {
-    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
-        AppLog.view.notice("\(AppLog.logHeader(self)) Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
+@MainActor
+class WebViewDelegateSimulatorImplementation: @MainActor WebViewDelegate {
+    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool {
+        let destination = navigationAction.request.url?.absoluteString ?? "<no destination URL found>"
+        AppLog.view.notice("\(AppLog.logHeader(self)) Check if navigation is allowed to \(destination)")
         return true
     }
 

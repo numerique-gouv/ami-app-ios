@@ -10,10 +10,10 @@ import Foundation
 import WebKit
 
 extension SwiftUIWebView {
+    @MainActor
     @Observable
     class ViewModel: NSObject {
-        typealias UrlChangeAction = @Sendable (SwiftUIWebView.ViewModel, URL?) -> Void
-        typealias WebviewWasReplacedAction = @Sendable (WKWebView?) -> Void
+        typealias WebviewWasReplacedAction = (WKWebView?) -> Void
 
         weak var webView: WKWebView? {
             didSet {
@@ -23,12 +23,6 @@ extension SwiftUIWebView {
         }
 
         var webViewReplacedAction: WebviewWasReplacedAction?
-
-        var urlChangeAction: UrlChangeAction? {
-            didSet {
-                configureWebView()
-            }
-        }
 
         let rootUrl: URL
         let configuration = WKWebViewConfiguration()
@@ -48,12 +42,9 @@ extension SwiftUIWebView {
 
         private(set) var isLoading = false
         private(set) var estimatedProgress = CGFloat(0.0)
-        private(set) var canGoBack = false
 
         private var loadingStateObserver: NSKeyValueObservation?
         private var loadingProgressObserver: NSKeyValueObservation?
-        private var canGoBackObserver: NSKeyValueObservation?
-        private var urlChangeObserver: NSKeyValueObservation?
 
         var localStorageManager: WebViewLocalStorageManager?
 
@@ -71,7 +62,6 @@ extension SwiftUIWebView {
              refererUrl: URL? = nil,
              initialUserScripts: WebViewUserScriptsProtocol? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
-             urlChangeAction: UrlChangeAction? = nil,
              webviewReplacedAction: WebviewWasReplacedAction? = nil) {
             self.rootUrl = rootUrl
             configuration.websiteDataStore = websiteDataStore
@@ -80,7 +70,6 @@ extension SwiftUIWebView {
 
             userScripts = initialUserScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
-            self.urlChangeAction = urlChangeAction
             webViewReplacedAction = webviewReplacedAction
 
             super.init()
@@ -115,11 +104,13 @@ extension SwiftUIWebView {
             }
         }
 
-        private func removeAllUserScripts() {
+        private nonisolated func removeAllUserScripts() {
             // WKUserContentController holds a strong reference to every registered
             // WKScriptMessageHandler, which would create a retain cycle because
             // `configuration` is also strongly held by this view model.
-            configuration.userContentController.removeAllScriptMessageHandlers()
+            Task { @MainActor in
+                configuration.userContentController.removeAllScriptMessageHandlers()
+            }
         }
 
         // Called by the webView:
@@ -129,31 +120,22 @@ extension SwiftUIWebView {
             guard let webView else {
                 loadingStateObserver = nil
                 loadingProgressObserver = nil
-                canGoBackObserver = nil
-                urlChangeObserver = nil
                 localStorageManager = nil
                 return
             }
             webView.navigationDelegate = self
             webView.uiDelegate = self
 
-            loadingStateObserver = webView.observe(\.isLoading) { [weak self] webView, _ in
-                self?.isLoading = webView.isLoading
-            }
-
-            loadingProgressObserver = webView.observe(\.estimatedProgress) { [weak self] webView, _ in
-                self?.estimatedProgress = webView.estimatedProgress
-            }
-
-            canGoBackObserver = webView.observe(\.canGoBack) { [weak self] webView, _ in
-                self?.canGoBack = webView.canGoBack
-            }
-
-            urlChangeObserver = webView.observe(\.url) { [weak self] webView, _ in
-                guard let self else {
-                    return
+            loadingStateObserver = webView.observe(\.isLoading) { webView, _ in
+                Task { @MainActor [weak self] in
+                    self?.isLoading = webView.isLoading
                 }
-                urlChangeAction?(self, webView.url)
+            }
+
+            loadingProgressObserver = webView.observe(\.estimatedProgress) { webView, _ in
+                Task { @MainActor [weak self] in
+                    self?.estimatedProgress = webView.estimatedProgress
+                }
             }
 
             localStorageManager = WebViewLocalStorageManager(webView: webView)
@@ -163,6 +145,10 @@ extension SwiftUIWebView {
             // Remove all user scripts to be sure to not keep a reference
             // to a message handler that could cause a retain cycle.
             removeAllUserScripts()
+        }
+
+        var canGoBack: Bool {
+            webView?.canGoBack ?? false
         }
 
         func goBack() {
@@ -236,8 +222,8 @@ extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
 
 // MARK: - WebViewDelegate
 
-extension SwiftUIWebView.ViewModel: WebViewDelegate {
-    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) -> Bool {
+extension SwiftUIWebView.ViewModel: @MainActor WebViewDelegate {
+    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
         return true
     }
@@ -281,7 +267,7 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
                 } else {
                     // Check with delegate if navigation to destination is allowed.
                     if let delegate,
-                       !delegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
+                       await !delegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
                         return (.cancel, preferences)
                     } else {
                         delegate?.navigationWillStart(navigationAction: navigationAction)
@@ -373,7 +359,7 @@ extension SwiftUIWebView.ViewModel: WKUIDelegate {
     }
 }
 
-extension SwiftUIWebView.ViewModel: WebViewNavigateToNewWindowProtocol {
+extension SwiftUIWebView.ViewModel: @MainActor WebViewNavigateToNewWindowProtocol {
     /// Default behavior: open all links in current webview.
     func destinationForNewWindow(sourceWebView: WKWebView,
                                  configuration: WKWebViewConfiguration,
