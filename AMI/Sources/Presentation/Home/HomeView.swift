@@ -86,8 +86,9 @@ struct HomeView: View {
                 await handleCommands()
             }
         #if IS_AMI_STAGING
+            // ForceExpireAuthentication Feature
             .onShake {
-                viewModel.expireFranceConnectSession()
+                viewModel.alertForceExpireAuthentication()
             }
         #endif
     }

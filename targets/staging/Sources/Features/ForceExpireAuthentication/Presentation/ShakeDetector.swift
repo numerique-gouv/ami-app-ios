@@ -40,7 +40,7 @@ struct DeviceShakeViewModifier: ViewModifier {
 
 extension View {
     // Define helper to DeviceShakeViewModifier.
-    func onShake(perform action: @escaping () -> Void) -> some View {
+    func onShake(perform action: @MainActor @escaping () -> Void) -> some View {
         modifier(DeviceShakeViewModifier(action: action))
     }
 }

@@ -45,6 +45,11 @@ extension HomeView {
 
         // MARK: - Init
 
+        #if IS_AMI_STAGING
+            // ForceExpireAuthentication Feature
+            let forceExpireAuthenticationUseCase: ForceExpireAuthenticationUseCase
+        #endif
+
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
              specialLinkHandler: any SpecialLinkProtocol,
@@ -59,6 +64,12 @@ extension HomeView {
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.notificationManager = notificationManager
+
+            #if IS_AMI_STAGING
+                // ForceExpireAuthentication Feature
+                forceExpireAuthenticationUseCase = ForceExpireAuthenticationUseCase(cookiesStore: websiteDataStore.httpCookieStore,
+                                                                                    oidcDomainsStringsList: Secrets.oidcDomainsStrings)
+            #endif
 
             super.init()
 
@@ -353,10 +364,19 @@ extension HomeView {
 
 #if IS_AMI_STAGING
     extension HomeView.ViewModel {
-        func expireFranceConnectSession() {
-            Task {
-                await webViewViewModel.localStorageManager?.expireFranceConnectSession()
-            }
+        func alertForceExpireAuthentication() {
+            webViewViewModel.alertModel = AlertModel(title: AMIL10n.Staging.forceExpireFranceConnexionTitle,
+                                                     message: AMIL10n.Staging.forceExpireFranceConnexionMessage,
+                                                     okButtonTitle: AMIL10n.Staging.forceExpireFranceConnexionOkButtonTitle,
+                                                     okButtonAction: { [weak self] in
+                                                         guard let self else {
+                                                             return
+                                                         }
+                                                         Task { @MainActor in
+                                                             await self.forceExpireAuthenticationUseCase.execute()
+                                                         }
+                                                     },
+                                                     cancelButtonTitle: AMIL10n.Main.commonCancel)
         }
     }
 #endif
