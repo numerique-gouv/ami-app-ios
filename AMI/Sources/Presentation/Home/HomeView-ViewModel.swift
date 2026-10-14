@@ -251,6 +251,8 @@ extension HomeView {
         private func destinationLinkViewDismissed() {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
             selectedDestination = nil
+            // Tell HomeView to go back to last visited page.
+            webViewViewModel.goBackToLastVisitedPage()
         }
 
         // MARK: -
