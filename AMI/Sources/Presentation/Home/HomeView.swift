@@ -23,7 +23,7 @@ struct HomeView: View {
             Button {
                 handleBackAction()
             } label: {
-                Label(AMIL10n.commonBack, systemImage: "chevron.left")
+                Label(AMIL10n.Main.commonBack, systemImage: "chevron.left")
                     .labelStyle(.titleAndIcon) // needed for title to be displayed when located in toolbar.
                     .fixedSize() // needed for title to be fully displayed.
             }
@@ -52,7 +52,7 @@ struct HomeView: View {
         Button {
             viewModel.webViewViewModel.goBackToRootUrl()
         } label: {
-            Label(AMIL10n.amiTitle, systemImage: "arrowtriangle.left.fill")
+            Label(AMIL10n.Main.amiTitle, systemImage: "arrowtriangle.left.fill")
                 .bold()
         }
     }
@@ -76,7 +76,7 @@ struct HomeView: View {
             .sheet(isPresented: $viewModel.isPresentingOnboardingView) {
                 OnboardingView(viewModel: viewModel.onboardingViewViewModel)
             }
-            .navigationTitle(AMIL10n.amiTitle)
+            .navigationTitle(AMIL10n.Main.amiTitle)
             .navigationBarHidden(true)
             .navigationDestination(item: $viewModel.selectedDestination) { destination in
                 ServiceView(viewModel: destination.model)
@@ -85,6 +85,12 @@ struct HomeView: View {
                 // Attach to webview the loop awaiting for commands emitted by model.
                 await handleCommands()
             }
+        #if IS_AMI_STAGING
+            // ForceExpireAuthentication Feature
+            .onShake {
+                viewModel.alertForceExpireAuthentication()
+            }
+        #endif
     }
 
     private func handleBackAction() {

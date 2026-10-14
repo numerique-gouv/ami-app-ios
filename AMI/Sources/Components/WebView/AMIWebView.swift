@@ -30,7 +30,7 @@ struct AMIWebView: View {
 //            Button {
 //                action?()
 //            } label: {
-//                Label(AMIL10n.commonBack, systemImage: "arrowtriangle.left.fill")
+//                Label(AMIL10n.Main.commonBack, systemImage: "arrowtriangle.left.fill")
 //                    .labelStyle(.titleAndIcon) // needed for title to be displayed when located in toolbar.
 //                    .fixedSize() // needed for title to be fully displayed.
 //            }
@@ -48,9 +48,17 @@ struct AMIWebView: View {
         }
         .navigationBarBackButtonHidden()
         .alert(item: $viewModel.alertModel) { alert in
-            Alert(title: Text(alert.title),
-                  message: Text(alert.message),
-                  dismissButton: .default(Text(alert.closeButtonTitle)))
+            if let okTitle = alert.okButtonTitle,
+               let okAction = alert.okButtonAction {
+                Alert(title: Text(alert.title),
+                      message: Text(alert.message),
+                      primaryButton: .default(Text(okTitle), action: okAction),
+                      secondaryButton: .default(Text(alert.cancelButtonTitle)))
+            } else {
+                Alert(title: Text(alert.title),
+                      message: Text(alert.message),
+                      dismissButton: .default(Text(alert.cancelButtonTitle)))
+            }
         }
         .fileMover(isPresented: $viewModel.showFileToSaveUI,
                    file: viewModel.fileToSaveSourceURL,
