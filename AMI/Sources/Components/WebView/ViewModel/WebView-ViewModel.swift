@@ -13,16 +13,11 @@ extension SwiftUIWebView {
     @MainActor
     @Observable
     class ViewModel: NSObject {
-        typealias WebviewWasReplacedAction = (WKWebView?) -> Void
-
         weak var webView: WKWebView? {
             didSet {
                 configureWebView()
-                webViewReplacedAction?(webView)
             }
         }
-
-        var webViewReplacedAction: WebviewWasReplacedAction?
 
         let rootUrl: URL
         let configuration = WKWebViewConfiguration()
@@ -61,8 +56,7 @@ extension SwiftUIWebView {
              specialLinkHandler: SpecialLinkHandler,
              refererUrl: URL? = nil,
              initialUserScripts: WebViewUserScriptsProtocol? = nil,
-             allowsBackForwardNavigationGestures: Bool = true,
-             webviewReplacedAction: WebviewWasReplacedAction? = nil) {
+             allowsBackForwardNavigationGestures: Bool = true) {
             self.rootUrl = rootUrl
             configuration.websiteDataStore = websiteDataStore
             self.specialLinkHandler = specialLinkHandler
@@ -70,7 +64,6 @@ extension SwiftUIWebView {
 
             userScripts = initialUserScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
-            webViewReplacedAction = webviewReplacedAction
 
             super.init()
 
@@ -156,12 +149,26 @@ extension SwiftUIWebView {
         }
 
         @MainActor
-        func loadInitialPage() {
-            var request = URLRequest(url: rootUrl)
+        private func loadUrl(url: URL) {
+            var request = URLRequest(url: url)
             if let refererUrl {
                 request.setValue(refererUrl.absoluteString, forHTTPHeaderField: "Referer")
             }
             webView?.load(request)
+        }
+
+        @MainActor
+        func loadInitialPage() {
+            loadUrl(url: rootUrl)
+        }
+
+        @MainActor
+        func goBackToLastVisitedPage() {
+            guard let targetUrl = URL(string: "/#/back", relativeTo: rootUrl) else {
+                AppLog.viewModel.warning("\(AppLog.logHeader(self)) Error: unable to build last visited page url.")
+                return
+            }
+            loadUrl(url: targetUrl)
         }
 
         // The `goBackToRootUrl()` method doesn't seem to work reliably with Single Page Application in WKWebView.
