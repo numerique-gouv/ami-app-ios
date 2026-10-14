@@ -57,9 +57,6 @@ extension HomeView {
 
         private var lastCheckNotificationTime = Date.distantPast
 
-        // Flag to know if we can load initial page when coming back to webview, to reset initial state.
-        private var modelIsFullyConfigured = false
-
         var selectedDestination: ServiceLinkViewModel?
 
         enum Event {
@@ -90,18 +87,6 @@ extension HomeView {
             promotedUrls = PromotedUrlsFeature(catalogProvider: loadUrlAliasedUrls)
 
             self.webViewViewModel.delegate = self
-
-            webViewViewModel.webViewReplacedAction = { [weak self] _ in
-                guard let self,
-                      modelIsFullyConfigured else {
-                    return
-                }
-
-                Task { @MainActor in
-                    self.webViewViewModel.loadInitialPage()
-                }
-            }
-
             userScripts.userLoggedInAction = userLoginActions
             userScripts.userLoggedOutAction = userLogoutActions
             userScripts.webappIsReadyAction = webappIsReadyAction
@@ -112,7 +97,6 @@ extension HomeView {
             Task { @MainActor in
                 let nativeInfosScript = await HomeNativeInfosScripts()
                 webViewViewModel.addUserScripts(userScripts: nativeInfosScript)
-                modelIsFullyConfigured = true
 
                 // Load initial page now that viewModel is fully ready.
                 Task { @MainActor in
