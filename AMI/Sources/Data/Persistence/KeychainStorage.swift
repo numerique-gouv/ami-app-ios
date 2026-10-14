@@ -299,7 +299,7 @@ struct KeychainStorage {
         await Task.detached(priority: .userInitiated) {
             do {
                 if let storedValue = try store(requireAuthentication)
-                    .authenticationPrompt(AMIL10n.localStorageAuthenticationPrompt)
+                    .authenticationPrompt(AMIL10n.Main.localStorageAuthenticationPrompt)
                     .getData(key, ignoringAttributeSynchronizable: false) {
                     return .success(storedValue)
                 } else {

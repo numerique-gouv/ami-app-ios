@@ -20,7 +20,7 @@ struct SettingsView: View {
             Button {
                 dismiss()
             } label: {
-                Text(AMIL10n.commonClose)
+                Text(AMIL10n.Main.commonClose)
             }
         }
     }
@@ -28,7 +28,7 @@ struct SettingsView: View {
     @ViewBuilder
     private var notificationToggle: some View {
         Toggle(isOn: $viewModel.isNotificationsActive) {
-            Text(AMIL10n.settingsNotificationsAllowTitle)
+            Text(AMIL10n.Main.settingsNotificationsAllowTitle)
         }
         .toggleStyle(SwitchToggleStyle(tint: .accentColor)) // needed for Toggle widget.
         // Use deprecated version of `onChange` to handle iOS back to iOS 15.
@@ -45,7 +45,7 @@ struct SettingsView: View {
             .toolbar {
                 toolbar
             }
-            .navigationTitle(AMIL10n.settingsTitle)
+            .navigationTitle(AMIL10n.Main.settingsTitle)
             .navigationBarTitleDisplayMode(.inline)
             // Use deprecated version of `onChange` to handle iOS back to iOS 15.
             .onChange(of: scenePhase) { _, newPhase in

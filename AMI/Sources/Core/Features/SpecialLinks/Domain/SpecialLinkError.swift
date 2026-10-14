@@ -21,7 +21,7 @@ extension SpecialLinkError: LocalizedError {
     /// A human-readable description, such as `System is unable to handle link "tel:0123456789"`.
     var errorDescription: String? {
         switch self {
-        case let .systemIsUnableToHandleLink(_, url): AMIL10n.errorSystemIsUnableToHandleLink(url.absoluteString)
+        case let .systemIsUnableToHandleLink(_, url): AMIL10n.Main.errorSystemIsUnableToHandleLink(url.absoluteString)
         }
     }
 }
