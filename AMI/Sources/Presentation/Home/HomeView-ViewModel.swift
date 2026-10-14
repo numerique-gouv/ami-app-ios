@@ -70,15 +70,6 @@ extension HomeView {
             navigationHandler.promotedUrls = promotedUrls
             navigationHandler.viewModel = self
 
-            webViewViewModel.webViewReplacedAction = { [weak self] _ in
-                guard let self,
-                      modelIsFullyConfigured else {
-                    return
-                }
-
-                loadInitialPage()
-            }
-
             userScripts.userLoggedInAction = userLoginActions
             userScripts.userLoggedOutAction = userLogoutActions
             userScripts.webappIsReadyAction = webappIsReadyAction
@@ -89,7 +80,6 @@ extension HomeView {
             Task { @MainActor in
                 let nativeInfosScript = await HomeNativeInfosScripts()
                 webViewViewModel.addUserScripts(userScripts: nativeInfosScript)
-                modelIsFullyConfigured = true
 
                 // Load initial page now that viewModel is fully ready.
                 loadInitialPage()

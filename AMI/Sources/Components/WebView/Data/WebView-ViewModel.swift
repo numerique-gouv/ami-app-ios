@@ -13,16 +13,11 @@ extension SwiftUIWebView {
     @MainActor
     @Observable
     class ViewModel: NSObject {
-        typealias WebviewWasReplacedAction = (WKWebView?) -> Void
-
         weak var webView: WKWebView? {
             didSet {
                 configureWebView()
-                webViewReplacedAction?(webView)
             }
         }
-
-        var webViewReplacedAction: WebviewWasReplacedAction?
 
         let rootUrl: URL
         let configuration = WKWebViewConfiguration()
@@ -62,8 +57,7 @@ extension SwiftUIWebView {
              navigationState: any WebViewNavigationState,
              refererUrl: URL? = nil,
              initialUserScripts: WebViewUserScripts? = nil,
-             allowsBackForwardNavigationGestures: Bool = true,
-             webviewReplacedAction: WebviewWasReplacedAction? = nil) {
+             allowsBackForwardNavigationGestures: Bool = true) {
             self.rootUrl = rootUrl
             configuration.websiteDataStore = websiteDataStore
             self.navigationHandler = navigationHandler
@@ -72,7 +66,6 @@ extension SwiftUIWebView {
 
             userScripts = initialUserScripts
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
-            webViewReplacedAction = webviewReplacedAction
 
             // These properties are weak properties: use static shared instances by default
             // to avoid immediate release.
