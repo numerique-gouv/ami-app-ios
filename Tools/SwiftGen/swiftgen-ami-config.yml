@@ -57,12 +57,12 @@
 ## For more info, use `swiftgen config doc` to open the full documentation on GitHub.
 ## https://github.com/SwiftGen/SwiftGen/tree/6.6.3/Documentation/
 
-input_dir: ../../AMI/
+input_dir: ../../
 output_dir: ../../AMI/Sources/Generated/
 
 strings:
-  inputs: Resources/Localizations/fr.lproj
-  filter: Localizable*
+  inputs: [AMI, targets]
+  filter: Resources/Localizations/fr\.lproj/[^/]+.(strings|stringsdict)$
   outputs:
     - templateName: structured-swift5
       output: Strings-Generated.swift
@@ -70,9 +70,8 @@ strings:
         enumName: AMIL10n
               
 xcassets:
-  inputs:
-    - Resources/Colors.xcassets
-    - Resources/Images.xcassets
+  inputs: [AMI]
+  filter: Resources/[^/]+\.xcassets
   outputs:
     - templatePath: templates/swift5-mainActor.stencil # from: https://github.com/SwiftGen/SwiftGen/issues/1110#issuecomment-3476619280
       params:
