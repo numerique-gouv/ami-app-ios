@@ -57,7 +57,7 @@ struct OnboardingView: View {
                 viewModel.processAction(.close)
                 dismiss()
             } label: {
-                Text(AMIL10n.commonClose)
+                Text(AMIL10n.Main.commonClose)
             }
         }
     }

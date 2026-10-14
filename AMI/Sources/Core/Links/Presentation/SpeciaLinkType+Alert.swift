@@ -12,12 +12,12 @@ import Foundation
 extension SpecialLinkType {
     var unableToHandleAlert: AlertModel {
         switch self {
-        case .email: AlertModel(title: AMIL10n.commonError,
-                                message: AMIL10n.alertCantHandleEmailLink,
-                                closeButtonTitle: AMIL10n.commonOk)
-        case .phone: AlertModel(title: AMIL10n.commonError,
-                                message: AMIL10n.alertCantHandlePhoneLink,
-                                closeButtonTitle: AMIL10n.commonOk)
+        case .email: AlertModel(title: AMIL10n.Main.commonError,
+                                message: AMIL10n.Main.alertCantHandleEmailLink,
+                                cancelButtonTitle: AMIL10n.Main.commonOk)
+        case .phone: AlertModel(title: AMIL10n.Main.commonError,
+                                message: AMIL10n.Main.alertCantHandlePhoneLink,
+                                cancelButtonTitle: AMIL10n.Main.commonOk)
         }
     }
 }

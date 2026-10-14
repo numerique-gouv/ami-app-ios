@@ -30,7 +30,7 @@ struct AMIWebView: View {
 //            Button {
 //                action?()
 //            } label: {
-//                Label(AMIL10n.commonBack, systemImage: "arrowtriangle.left.fill")
+//                Label(AMIL10n.Main.commonBack, systemImage: "arrowtriangle.left.fill")
 //                    .labelStyle(.titleAndIcon) // needed for title to be displayed when located in toolbar.
 //                    .fixedSize() // needed for title to be fully displayed.
 //            }

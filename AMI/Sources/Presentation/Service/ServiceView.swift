@@ -25,7 +25,7 @@ struct ServiceView: View {
         Button {
             viewModel.backToHomeAction?()
         } label: {
-            Label(AMIL10n.amiTitle, systemImage: "arrowtriangle.left.fill")
+            Label(AMIL10n.Main.amiTitle, systemImage: "arrowtriangle.left.fill")
                 .bold()
         }
     }
