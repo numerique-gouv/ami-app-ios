@@ -76,11 +76,6 @@ extension HomeView {
             let forceExpireAuthenticationUseCase: ForceExpireAuthenticationUseCase
         #endif
 
-        #if IS_AMI_STAGING
-            // ForceExpireAuthentication Feature
-            let forceExpireAuthenticationUseCase: ForceExpireAuthenticationUseCase
-        #endif
-
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
              specialLinkHandler: SpecialLinkHandler,
