@@ -22,8 +22,9 @@ extension HomeView {
         private let notificationManager: NotificationManager
         let webViewViewModel: SwiftUIWebView.ViewModel
 
-        // Make `settingsViewViewModel` a computed property initialized on demand with available environment.
-        var settingsViewViewModel: SettingsView.ViewModel {
+        // TODO: move this method into a DI module.
+        // Make `makeSettingsViewViewModel` a computed property initialized on demand with available environment.
+        func makeSettingsViewViewModel() -> SettingsView.ViewModel {
             SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
                 AppLog.viewModel.notice("\(AppLog.logHeader(self)) notificationsSettingDidChangeAction")
                 Task { @MainActor in

@@ -71,7 +71,7 @@ struct HomeView: View {
                 toolbarBackButton
             }
             .sheet(isPresented: $viewModel.showSettings) {
-                SettingsView(viewModel: viewModel.settingsViewViewModel)
+                SettingsView(viewModel: viewModel.makeSettingsViewViewModel())
             }
             .sheet(isPresented: $viewModel.isPresentingOnboardingView) {
                 OnboardingView(viewModel: viewModel.onboardingViewViewModel)
