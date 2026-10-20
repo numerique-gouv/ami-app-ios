@@ -40,7 +40,7 @@ extension ServiceView {
             self.backToHomeAction = backToHomeAction
             super.init()
 
-            self.webViewViewModel.delegate = self
+            self.webViewViewModel.navigationDelegate = self
 
             self.webViewViewModel.navigateToNewWindowManager = self
 

@@ -27,7 +27,7 @@ enum DependencyContainer {
                                              websiteDataStore: .nonPersistent(),
                                              specialLinkHandler: Self.specialLinkHandler,
                                              initialUserScripts: HomeUserScripts())
-        model.delegate = Self.webViewDelegateSimulatorImplementation
+        model.navigationDelegate = Self.webViewNavigationDelegateSimulatorImplementation
 
         #if DEBUG
             model.acceptSelfSignedCertificate = true

@@ -89,7 +89,7 @@ extension HomeView {
             //
             promotedUrls = PromotedUrlsFeature(catalogProvider: loadUrlAliasedUrls)
 
-            self.webViewViewModel.delegate = self
+            self.webViewViewModel.navigationDelegate = self
 
             webViewViewModel.webViewReplacedAction = { [weak self] _ in
                 guard let self,

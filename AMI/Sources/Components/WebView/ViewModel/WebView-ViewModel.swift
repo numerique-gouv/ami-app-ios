@@ -28,7 +28,7 @@ extension SwiftUIWebView {
         let configuration = WKWebViewConfiguration()
         let specialLinkHandler: SpecialLinkHandler
         let refererUrl: URL?
-        weak var delegate: WebViewDelegate?
+        weak var navigationDelegate: WebViewNavigationDelegate?
         private let userScripts: WebViewUserScriptsProtocol?
         let allowsBackForwardNavigationGestures: Bool
         #if DEBUG
@@ -75,7 +75,7 @@ extension SwiftUIWebView {
             super.init()
 
             // Default delegate to self.
-            delegate = self
+            navigationDelegate = self
 
             // Initialize Downloader start and completion handlers,
             downloader.onDownloadStarted = downloadDidStart(_:)
@@ -266,11 +266,11 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
                     return (.cancel, preferences)
                 } else {
                     // Check with delegate if navigation to destination is allowed.
-                    if let delegate,
-                       await !delegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
+                    if let navigationDelegate,
+                       await !navigationDelegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
                         return (.cancel, preferences)
                     } else {
-                        delegate?.navigationWillStart(navigationAction: navigationAction)
+                        navigationDelegate?.navigationWillStart(navigationAction: navigationAction)
                         return (.allow, preferences)
                     }
                 }
@@ -296,19 +296,19 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        delegate?.navigationDidStart()
+        navigationDelegate?.navigationDidStart()
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        delegate?.navigationDidFailed(withError: error)
+        navigationDelegate?.navigationDidFailed(withError: error)
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: any Error) {
-        delegate?.navigationDidFailed(withError: error)
+        navigationDelegate?.navigationDidFailed(withError: error)
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        delegate?.navigationDidFinish()
+        navigationDelegate?.navigationDidFinish()
     }
 
     // Response the web view can't render itself (.zip, .xlsx, Content-Disposition: attachment…)
