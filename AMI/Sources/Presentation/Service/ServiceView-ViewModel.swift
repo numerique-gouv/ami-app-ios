@@ -40,61 +40,18 @@ extension ServiceView {
             self.backToHomeAction = backToHomeAction
             super.init()
 
-            self.webViewViewModel.navigationDelegate = self
-
             self.webViewViewModel.navigateToNewWindowManager = self
 
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) init")
         }
 
-        private func destinationLinkViewDismissed() {
+        func destinationLinkViewDismissed() {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
             selectedDestination = nil
         }
 
         deinit {
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) deinit")
-        }
-    }
-}
-
-extension ServiceView.ViewModel: @MainActor WebViewNavigationDelegate {
-    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool {
-        true
-    }
-
-    func navigationWillStart(navigationAction: WKNavigationAction) {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationWillStart")
-    }
-
-    func navigationDidStart() {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidStart")
-    }
-
-    func navigationDidFinish() {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFinish")
-    }
-
-    func navigationDidFailed(withError error: Error) {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFailed] failed with error \(error)")
-    }
-}
-
-extension ServiceView.ViewModel: @MainActor WebViewNavigateToNewWindowProtocol {
-    /// Default behavior: open all links in new webview.
-    func destinationForNewWindow(sourceWebView: WKWebView,
-                                 configuration: WKWebViewConfiguration,
-                                 navigationAction: WKNavigationAction,
-                                 windowFeatures: WKWindowFeatures) -> WebViewNavigateToNewWindowDestination {
-        .newWebView
-    }
-
-    func loadInNewWebView(url: URL) {
-        selectedDestination = ServiceLinkViewModel(destinationUrl: url,
-                                                   dataStore: webViewViewModel.configuration.websiteDataStore,
-                                                   sourceUrl: nil,
-                                                   specialLinkHandler: webViewViewModel.specialLinkHandler) { [weak self] in
-            self?.destinationLinkViewDismissed()
         }
     }
 }
