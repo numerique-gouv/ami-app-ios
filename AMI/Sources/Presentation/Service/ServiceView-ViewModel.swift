@@ -58,7 +58,7 @@ extension ServiceView {
     }
 }
 
-extension ServiceView.ViewModel: @MainActor WebViewDelegate {
+extension ServiceView.ViewModel: @MainActor WebViewNavigationDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool {
         true
     }

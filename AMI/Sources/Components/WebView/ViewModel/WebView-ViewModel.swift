@@ -220,9 +220,9 @@ extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
     }
 }
 
-// MARK: - WebViewDelegate
+// MARK: - WebViewNavigationDelegate
 
-extension SwiftUIWebView.ViewModel: @MainActor WebViewDelegate {
+extension SwiftUIWebView.ViewModel: @MainActor WebViewNavigationDelegate {
     func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
         return true

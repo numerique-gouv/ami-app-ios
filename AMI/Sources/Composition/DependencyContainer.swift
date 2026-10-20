@@ -19,7 +19,7 @@ enum DependencyContainer {
     // This common website DataStore will be injected n root views to be shared with all child webviews.
     private static let commonWebsiteDataStore: WKWebsiteDataStore = .default()
 
-    private static let webViewDelegateSimulatorImplementation = WebViewDelegateSimulatorImplementation()
+    private static let webViewNavigationDelegateSimulatorImplementation = WebViewNavigationDelegateSimulator()
 
     /// ViewModel used by `SwiftUIWebView` preview in Xcode.
     static func makeSimulatorPreviewSwiftUIWebViewModel() -> SwiftUIWebView.ViewModel {
