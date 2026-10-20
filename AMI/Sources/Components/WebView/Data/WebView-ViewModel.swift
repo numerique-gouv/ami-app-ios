@@ -28,8 +28,9 @@ extension SwiftUIWebView {
         let configuration = WKWebViewConfiguration()
         let specialLinkHandler: SpecialLinkHandler
         let refererUrl: URL?
-        weak var navigationDelegate: WebViewNavigationDelegate?
-        private let userScripts: WebViewUserScriptsProtocol?
+        weak var navigationStateDelegate: WebViewNavigationStateDelegate?
+        weak var navigationPolicyDelelgate: WebViewNavigationPolicyDelegate?
+        private let userScripts: WebViewUserScripts?
         let allowsBackForwardNavigationGestures: Bool
         #if DEBUG
             // Property `acceptSelfSignedCertificate` that can be set to TRUE
@@ -38,7 +39,7 @@ extension SwiftUIWebView {
         #endif
         /// Protocol used to decide how to handle web links to new window ("target=_blank")
         /// By default, links open in current webview.
-        weak var navigateToNewWindowManager: WebViewNavigateToNewWindowProtocol?
+        weak var navigateToNewWindowManager: WebViewNavigateToNewWindow?
 
         private(set) var isLoading = false
         private(set) var estimatedProgress = CGFloat(0.0)
@@ -60,7 +61,7 @@ extension SwiftUIWebView {
              websiteDataStore: WKWebsiteDataStore,
              specialLinkHandler: SpecialLinkHandler,
              refererUrl: URL? = nil,
-             initialUserScripts: WebViewUserScriptsProtocol? = nil,
+             initialUserScripts: WebViewUserScripts? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
              webviewReplacedAction: WebviewWasReplacedAction? = nil) {
             self.rootUrl = rootUrl
@@ -72,10 +73,12 @@ extension SwiftUIWebView {
             self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
             webViewReplacedAction = webviewReplacedAction
 
-            super.init()
+            // These properties are weak properties: use static shared instances by default
+            // to avoid immediate release.
+            navigationPolicyDelelgate = DefaultWebViewNavigationPolicy.shared
+            navigationStateDelegate = DefaultWebViewNavigationDelegate.shared
 
-            // Default delegate to self.
-            navigationDelegate = self
+            super.init()
 
             // Initialize Downloader start and completion handlers,
             downloader.onDownloadStarted = downloadDidStart(_:)
@@ -89,7 +92,7 @@ extension SwiftUIWebView {
         }
 
         // Set `addUserScripts` method public because it can be used later than at `init` call if a script needs async values.
-        func addUserScripts(userScripts: WebViewUserScriptsProtocol?) {
+        func addUserScripts(userScripts: WebViewUserScripts?) {
             guard let scripts = userScripts?.scripts else {
                 return
             }
@@ -220,34 +223,13 @@ extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
     }
 }
 
-// MARK: - WebViewNavigationDelegate
-
-extension SwiftUIWebView.ViewModel: @MainActor WebViewNavigationDelegate {
-    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) Check if navigation is allowed to \(navigationAction.request.url?.absoluteString ?? "<no destination URL found>")")
-        return true
-    }
-
-    func navigationWillStart(navigationAction: WKNavigationAction) {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation will start")
-    }
-
-    func navigationDidStart() {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation did start")
-    }
-
-    func navigationDidFinish() {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation did finish")
-    }
-
-    func navigationDidFailed(withError error: Error) {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation did failed with error: \(error)")
-    }
-}
-
 // MARK: - WKNavigationDelegate
 
 extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        loadInitialPage()
+    }
+
     func webView(_ webView: WKWebView,
                  decidePolicyFor navigationAction: WKNavigationAction,
                  preferences: WKWebpagePreferences) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
@@ -266,11 +248,10 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
                     return (.cancel, preferences)
                 } else {
                     // Check with delegate if navigation to destination is allowed.
-                    if let navigationDelegate,
-                       await !navigationDelegate.checkIfNavigationIsAllowed(navigationAction: navigationAction) {
+                    if await !(navigationPolicyDelelgate?.isNavigationAllowed(navigationAction: navigationAction) ?? false) {
                         return (.cancel, preferences)
                     } else {
-                        navigationDelegate?.navigationWillStart(navigationAction: navigationAction)
+                        navigationStateDelegate?.navigationWillStart(navigationAction: navigationAction)
                         return (.allow, preferences)
                     }
                 }
@@ -296,19 +277,19 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        navigationDelegate?.navigationDidStart()
+        navigationStateDelegate?.navigationDidStart()
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        navigationDelegate?.navigationDidFailed(withError: error)
+        navigationStateDelegate?.navigationDidFailed(withError: error)
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: any Error) {
-        navigationDelegate?.navigationDidFailed(withError: error)
+        navigationStateDelegate?.navigationDidFailed(withError: error)
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        navigationDelegate?.navigationDidFinish()
+        navigationStateDelegate?.navigationDidFinish()
     }
 
     // Response the web view can't render itself (.zip, .xlsx, Content-Disposition: attachment…)
@@ -356,19 +337,5 @@ extension SwiftUIWebView.ViewModel: WKUIDelegate {
 
         // Always return nil. The destination is already handled by one of the switch case.
         return nil
-    }
-}
-
-extension SwiftUIWebView.ViewModel: @MainActor WebViewNavigateToNewWindowProtocol {
-    /// Default behavior: open all links in current webview.
-    func destinationForNewWindow(sourceWebView: WKWebView,
-                                 configuration: WKWebViewConfiguration,
-                                 navigationAction: WKNavigationAction,
-                                 windowFeatures: WKWindowFeatures) -> WebViewNavigateToNewWindowDestination {
-        .currentWebView
-    }
-
-    func loadInNewWebView(url: URL) {
-        fatalError("Should never happen on base WebView-ViewModel.")
     }
 }
