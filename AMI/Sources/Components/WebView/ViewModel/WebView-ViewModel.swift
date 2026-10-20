@@ -228,7 +228,7 @@ extension SwiftUIWebView.ViewModel: @MainActor WebViewNavigationDelegate {
         return true
     }
 
-    func navigationWillStart() {
+    func navigationWillStart(navigationAction: WKNavigationAction) {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation will start")
     }
 
