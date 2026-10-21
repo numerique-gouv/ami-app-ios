@@ -16,14 +16,14 @@ struct ServiceLinkViewModel {
     private let destinationUrl: URL
     private let dataStore: WKWebsiteDataStore
     private let sourceUrl: URL?
-    private let specialLinkHandler: SpecialLinkHandler
+    private let specialLinkHandler: any SpecialLinkProtocol
 
     let model: ServiceView.ViewModel
 
     init(destinationUrl: URL,
          dataStore: WKWebsiteDataStore,
          sourceUrl: URL? = nil,
-         specialLinkHandler: SpecialLinkHandler,
+         specialLinkHandler: any SpecialLinkProtocol,
          destinationViewDismissedAction: DismissedAction?) {
         self.destinationUrl = destinationUrl
         self.dataStore = dataStore
