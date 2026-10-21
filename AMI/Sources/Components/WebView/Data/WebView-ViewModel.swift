@@ -231,33 +231,22 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  decidePolicyFor navigationAction: WKNavigationAction,
                  preferences: WKWebpagePreferences) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
-        guard let linkUrl = navigationAction.request.url else {
-            return (.cancel, preferences)
-        }
+        let navigationType = await navigationHandler.navigationType(for: navigationAction)
 
-        // Check if link is explicitly marked as a download (e.g. <a download>) or is a downlodable destination for the application.
-        if navigationAction.shouldPerformDownload || WebViewDownloadCoordinator.destinationUrlIsDownloadableFile(navigationAction.request.url) {
-            return (.download, preferences)
-        } else {
+        navigationHandler.prepareNavigation(to: navigationType)
+
+        if navigationType.navigationPoliciy == .allow {
+            navigationStateDelegate?.navigationWillStart(navigationAction: navigationAction)
+        } else if case let .specialLink(specialLink) = navigationType {
             do {
-                // Check if it is a special link to intercept.
-                if try await specialLinkHandler.handleLink(link: linkUrl) {
-                    // The special link is intercepted. Cancel navigation.
-                    return (.cancel, preferences)
-                } else {
-                    // Check with delegate if navigation to destination is allowed.
-                    if await !(navigationPolicyDelelgate?.isNavigationAllowed(navigationAction: navigationAction) ?? false) {
-                        return (.cancel, preferences)
-                    } else {
-                        navigationStateDelegate?.navigationWillStart(navigationAction: navigationAction)
-                        return (.allow, preferences)
-                    }
-                }
+                // Navigation type is `specialLink`. Try to activate the link via the system.
+                try await navigationHandler.specialLinkHandler.handleLink(link: specialLink)
             } catch {
                 alertModel = error.alert
-                return (.cancel, preferences)
             }
         }
+
+        return (navigationType.navigationPoliciy, preferences)
     }
 
     func webView(_ webView: WKWebView,
