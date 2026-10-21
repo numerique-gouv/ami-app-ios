@@ -21,9 +21,10 @@ enum DependencyContainer {
 
     /// ViewModel used by `SwiftUIWebView` preview in Xcode.
     static func makeSimulatorPreviewSwiftUIWebViewModel() -> SwiftUIWebView.ViewModel {
-        let model = SwiftUIWebView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
+        let rootUrl = URL(string: "https://numerique.gouv.fr")!
+        let model = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                              websiteDataStore: .nonPersistent(),
-                                             specialLinkHandler: Self.specialLinkHandler,
+                                             navigationHandler: DefaultWebViewNavigationHandler(rootUrl: rootUrl, specialLinkHandler: specialLinkHandler),
                                              initialUserScripts: HomeUserScripts())
 
         #if DEBUG

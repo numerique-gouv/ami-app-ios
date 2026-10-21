@@ -26,10 +26,9 @@ extension SwiftUIWebView {
 
         let rootUrl: URL
         let configuration = WKWebViewConfiguration()
-        let specialLinkHandler: SpecialLinkHandler
-        let refererUrl: URL?
+        let navigationHandler: any WebViewNavigationHandler
         weak var navigationStateDelegate: WebViewNavigationStateDelegate?
-        weak var navigationPolicyDelelgate: WebViewNavigationPolicyDelegate?
+        let refererUrl: URL?
         private let userScripts: WebViewUserScripts?
         let allowsBackForwardNavigationGestures: Bool
         #if DEBUG
@@ -59,14 +58,14 @@ extension SwiftUIWebView {
 
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
-             specialLinkHandler: SpecialLinkHandler,
+             navigationHandler: any WebViewNavigationHandler,
              refererUrl: URL? = nil,
              initialUserScripts: WebViewUserScripts? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
              webviewReplacedAction: WebviewWasReplacedAction? = nil) {
             self.rootUrl = rootUrl
             configuration.websiteDataStore = websiteDataStore
-            self.specialLinkHandler = specialLinkHandler
+            self.navigationHandler = navigationHandler
             self.refererUrl = refererUrl
 
             userScripts = initialUserScripts
@@ -75,7 +74,6 @@ extension SwiftUIWebView {
 
             // These properties are weak properties: use static shared instances by default
             // to avoid immediate release.
-            navigationPolicyDelelgate = DefaultWebViewNavigationPolicy.shared
             navigationStateDelegate = DefaultWebViewNavigationDelegate.shared
 
             super.init()

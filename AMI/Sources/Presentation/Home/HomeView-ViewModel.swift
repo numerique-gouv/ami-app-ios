@@ -74,23 +74,27 @@ extension HomeView {
 
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
-             specialLinkHandler: SpecialLinkHandler,
+             specialLinkHandler: any SpecialLinkProtocol,
              notificationManager: NotificationManager) {
+            let navigationHandler = HomeViewNavigationHandler(rootUrl: rootUrl,
+                                                              specialLinkHandler: specialLinkHandler)
             let userScripts = HomeUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                                             websiteDataStore: websiteDataStore,
-                                                            specialLinkHandler: specialLinkHandler,
+                                                            navigationHandler: navigationHandler,
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.notificationManager = notificationManager
 
             super.init()
 
-            self.webViewViewModel.navigationPolicyDelelgate = self
-
             // PromotedUrls Feature
             //
             promotedUrls = PromotedUrlsFeature(catalogProvider: loadUrlAliasedUrls)
+
+            // Inject HomeViewModel and PromotedUrlsFeature into HomeViewNavigationHandler now that `self` is initialized.
+            navigationHandler.promotedUrls = promotedUrls
+            navigationHandler.viewModel = self
 
             webViewViewModel.webViewReplacedAction = { [weak self] _ in
                 guard let self,
