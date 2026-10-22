@@ -63,12 +63,6 @@ extension HomeView {
 
         var selectedDestination: ServiceLinkViewModel?
 
-        enum Event {
-            case navigateToRootUrl
-        }
-
-        let eventsStream = PassthroughSubject<Event, Never>()
-
         // PromotedUrls Feature
         var promotedUrls: PromotedUrlsFeature?
 

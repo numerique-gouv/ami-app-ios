@@ -27,7 +27,6 @@ extension OnboardingView {
 
         private let eventsStream = PassthroughSubject<Event, Never>()
 
-        let applicationRootUrl: URL
         let notificationManager: NotificationManager
         var eventReceiver: EventReceiverType? {
             didSet {
@@ -38,8 +37,7 @@ extension OnboardingView {
             }
         }
 
-        init(applicationRootUrl: URL, notificationManager: NotificationManager) {
-            self.applicationRootUrl = applicationRootUrl
+        init(notificationManager: NotificationManager) {
             self.notificationManager = notificationManager
         }
 
