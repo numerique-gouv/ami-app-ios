@@ -22,34 +22,6 @@ extension HomeView {
         private let notificationManager: NotificationManager
         let webViewViewModel: SwiftUIWebView.ViewModel
 
-        // TODO: move this method into a DI module.
-        // Make `makeSettingsViewViewModel` a computed property initialized on demand with available environment.
-        func makeSettingsViewViewModel() -> SettingsView.ViewModel {
-            SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
-                AppLog.viewModel.notice("\(AppLog.logHeader(self)) notificationsSettingDidChangeAction")
-                Task { @MainActor in
-                    await self.webViewViewModel.localStorageManager?.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
-                }
-            })
-        }
-
-        // Make `onboardingViewViewModel` a computed property initialized on demand with available environment.
-        var onboardingViewViewModel: OnboardingView.ViewModel {
-            let onboardingViewViewModel = OnboardingView.ViewModel(applicationRootUrl: webViewViewModel.rootUrl,
-                                                                   notificationManager: notificationManager)
-            onboardingViewViewModel.eventReceiver = { event in
-                switch event {
-                case .isDismissed:
-                    // Go back to root URL (to leave web page)
-                    Task { @MainActor in
-                        self.webViewViewModel.goBackToRootUrl()
-                        self.isPresentingOnboardingView = false
-                    }
-                }
-            }
-
-            return onboardingViewViewModel
-        }
 
         var showSettings = false
         var isPresentingOnboardingView = false
@@ -218,6 +190,16 @@ extension HomeView {
                 // This will load the aliased URLs catalog using `loadUrlAliasedUrls` method.
                 await promotedUrls?.viewModel.prepare()
             }
+        // TODO: move this method into a DI module.
+        /// View model built on-demand when the View need it.
+        /// - makeSettingsViewViewModel : the view model needed when accessing the Notifications settings panel.
+        func makeNotificationsSettingsViewViewModel() -> SettingsView.ViewModel {
+            SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) notificationsSettingDidChangeAction")
+                Task { @MainActor in
+                    await self.webViewViewModel.localStorageManager?.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
+                }
+            })
         }
 
         /// PromotedUrls Feature
@@ -240,6 +222,19 @@ extension HomeView {
                 guard let urlAliasesString = try await webView.evaluateJavaScript(script) as? String,
                       let urlAliasesData = urlAliasesString.data(using: .utf8) else {
                     throw AliasedUrlsError.invalidPayload
+        // TODO: move this method into a DI module.
+        /// View model built on-demand when the View need it.
+        /// - makeOnboardingViewViewModel : the view model needed when asking the user if receiving push notifications is allowed.
+        func makeOnboardingViewViewModel() -> OnboardingView.ViewModel {
+            let onboardingViewViewModel = OnboardingView.ViewModel(notificationManager: notificationManager)
+            onboardingViewViewModel.eventReceiver = { event in
+                switch event {
+                case .isDismissed:
+                    // Go back to root URL (to leave web page)
+                    Task { @MainActor in
+                        self.webViewViewModel.goBackToRootUrl()
+                        self.isPresentingOnboardingView = false
+                    }
                 }
 
                 let urlAliasesDto = try JSONDecoder().decode([AliasedUrlDTO].self, from: urlAliasesData)
@@ -263,7 +258,9 @@ extension HomeView {
             }
         }
 
-        func destinationLinkViewDismissed() {
+        /// The action to execute when the user comes back to this view.
+        /// Used by WebViewNavigationhandler as action to call when dismissing the pushed view.
+        func backToHomeViewAction() {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
             selectedDestination = nil
             sendCommand(command: .resetViewToHome)

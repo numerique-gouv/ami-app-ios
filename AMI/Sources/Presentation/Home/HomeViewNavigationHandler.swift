@@ -115,7 +115,7 @@ final class HomeViewNavigationHandler: WebViewNavigationHandler {
                                                                  dataStore: webViewViewModel.configuration.websiteDataStore,
                                                                  sourceUrl: webViewViewModel.webView?.url,
                                                                  specialLinkHandler: specialLinkHandler) { [weak viewModel] in
-                viewModel?.destinationLinkViewDismissed()
+                viewModel?.backToHomeViewAction()
             }
             // Go back to previous page in originating webview.
             Task { @MainActor in
