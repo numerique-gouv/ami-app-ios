@@ -59,7 +59,7 @@ final class WebViewArchiverWebArchive: WebViewArchiver, Sendable {
 
     private nonisolated static func archiveUrl() -> URL {
         let archiveFolder = "webArchives"
-        let name = "toto"
+        let name = "amiWebApplication"
         return FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
             .appendingPathComponent(archiveFolder)
             .appendingPathComponent(name, conformingTo: .webArchive)
