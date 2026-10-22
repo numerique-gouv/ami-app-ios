@@ -76,9 +76,7 @@ extension HomeView {
                     return
                 }
 
-                Task { @MainActor in
-                    self.webViewViewModel.loadInitialPage()
-                }
+                loadInitialPage()
             }
 
             userScripts.userLoggedInAction = userLoginActions
@@ -94,10 +92,13 @@ extension HomeView {
                 modelIsFullyConfigured = true
 
                 // Load initial page now that viewModel is fully ready.
-                Task { @MainActor in
-                    webViewViewModel.loadInitialPage()
-                }
+                loadInitialPage()
             }
+        }
+
+        @MainActor
+        private func loadInitialPage() {
+            webViewViewModel.loadInitialPage()
         }
 
         /// PromotedUrls Feature
