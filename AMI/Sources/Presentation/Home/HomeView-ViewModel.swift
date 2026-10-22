@@ -98,6 +98,8 @@ extension HomeView {
 
         @MainActor
         private func loadInitialPage() {
+            // Pass attached webView to `navigationState` to handle web page archiving.
+            (webViewViewModel.navigationState as? HomeViewNavigationState)?.webView = webViewViewModel.webView
             webViewViewModel.loadInitialPage()
         }
 

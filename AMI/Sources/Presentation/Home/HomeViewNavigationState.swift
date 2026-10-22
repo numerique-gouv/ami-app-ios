@@ -30,9 +30,31 @@ final class HomeViewNavigationState: WebViewNavigationState {
 
     func navigationDidFinish() {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation did finish")
+
+        if let webView {
+            Task {
+                do {
+                    try await WebViewArchiverWebArchive().archive(webView)
+                    AppLog.viewModel.info("\(AppLog.logHeader(self)) Home webView archived successfully")
+                } catch {
+                    AppLog.viewModel.info("\(AppLog.logHeader(self)) Error archiving Home webView: \(error)")
+                }
+            }
+        }
     }
 
     func navigationDidFailed(withError error: Error) {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation did failed with error: \(error)")
+
+        if let webView {
+            Task {
+                do {
+                    try await WebViewArchiverWebArchive().restore(webView, baseURL: baseUrl)
+                    AppLog.viewModel.info("\(AppLog.logHeader(self)) Home webView restored successfully")
+                } catch {
+                    AppLog.viewModel.info("\(AppLog.logHeader(self)) Error restoring Home webView: \(error)")
+                }
+            }
+        }
     }
 }
