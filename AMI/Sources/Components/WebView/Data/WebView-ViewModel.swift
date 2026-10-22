@@ -27,7 +27,7 @@ extension SwiftUIWebView {
         let rootUrl: URL
         let configuration = WKWebViewConfiguration()
         let navigationHandler: any WebViewNavigationHandler
-        weak var navigationStateDelegate: WebViewNavigationStateDelegate?
+        let navigationState: any WebViewNavigationState
         let refererUrl: URL?
         private let userScripts: WebViewUserScripts?
         let allowsBackForwardNavigationGestures: Bool
@@ -59,6 +59,7 @@ extension SwiftUIWebView {
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
              navigationHandler: any WebViewNavigationHandler,
+             navigationState: any WebViewNavigationState,
              refererUrl: URL? = nil,
              initialUserScripts: WebViewUserScripts? = nil,
              allowsBackForwardNavigationGestures: Bool = true,
@@ -66,6 +67,7 @@ extension SwiftUIWebView {
             self.rootUrl = rootUrl
             configuration.websiteDataStore = websiteDataStore
             self.navigationHandler = navigationHandler
+            self.navigationState = navigationState
             self.refererUrl = refererUrl
 
             userScripts = initialUserScripts
@@ -74,7 +76,6 @@ extension SwiftUIWebView {
 
             // These properties are weak properties: use static shared instances by default
             // to avoid immediate release.
-            navigationStateDelegate = DefaultWebViewNavigationDelegate.shared
 
             super.init()
 
@@ -236,7 +237,7 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
         navigationHandler.prepareNavigation(to: navigationType)
 
         if navigationType.navigationPoliciy == .allow {
-            navigationStateDelegate?.navigationWillStart(navigationAction: navigationAction)
+            await navigationState.navigationWillStart(navigationAction: navigationAction)
         } else if case let .specialLink(specialLink) = navigationType {
             do {
                 // Navigation type is `specialLink`. Try to activate the link via the system.
@@ -264,19 +265,19 @@ extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        navigationStateDelegate?.navigationDidStart()
+        navigationState.navigationDidStart()
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        navigationStateDelegate?.navigationDidFailed(withError: error)
+        navigationState.navigationDidFailed(withError: error)
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: any Error) {
-        navigationStateDelegate?.navigationDidFailed(withError: error)
+        navigationState.navigationDidFailed(withError: error)
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        navigationStateDelegate?.navigationDidFinish()
+        navigationState.navigationDidFinish()
     }
 
     // Response the web view can't render itself (.zip, .xlsx, Content-Disposition: attachment…)

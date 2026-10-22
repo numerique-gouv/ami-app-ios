@@ -1,5 +1,5 @@
 //
-//  WebViewNavigationStateDelegate.swift
+//  WebViewNavigationState.swift
 //  AMI-xcodegen
 //
 //  Created by Nicolas Buquet on 19/02/2026.
@@ -9,7 +9,8 @@
 import Foundation
 import WebKit
 
-nonisolated protocol WebViewNavigationStateDelegate: AnyObject {
+@MainActor
+protocol WebViewNavigationState: AnyObject {
     func navigationWillStart(navigationAction: WKNavigationAction)
 
     func navigationDidStart()

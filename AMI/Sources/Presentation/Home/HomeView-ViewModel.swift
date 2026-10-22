@@ -55,6 +55,7 @@ extension HomeView {
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                                             websiteDataStore: websiteDataStore,
                                                             navigationHandler: navigationHandler,
+                                                            navigationState: HomeViewNavigationState(baseUrl: rootUrl),
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.notificationManager = notificationManager

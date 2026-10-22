@@ -36,6 +36,7 @@ extension ServiceView {
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                                             websiteDataStore: websiteDataStore,
                                                             navigationHandler: navigationHandler,
+                                                            navigationState: DefaultWebViewNavigationState(),
                                                             refererUrl: refererUrl,
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel

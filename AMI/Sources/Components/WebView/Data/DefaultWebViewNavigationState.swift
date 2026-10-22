@@ -1,5 +1,5 @@
 //
-//  DefaultWebViewNavigationDelegate.swift
+//  DefaultWebViewNavigationState.swift
 //  AMI-xcodegen
 //
 //  Created by Nicolas Buquet on 20/10/2026.
@@ -9,12 +9,10 @@
 import Foundation
 import WebKit
 
-/// DefaultWebViewNavigationDelegate only log navigation events.
+/// DefaultWebViewNavigationState only log navigation events.
 /// No logic is processed on any navigation event.
 @MainActor
-final class DefaultWebViewNavigationDelegate: WebViewNavigationStateDelegate {
-    static let shared = DefaultWebViewNavigationDelegate()
-
+final class DefaultWebViewNavigationState: WebViewNavigationState {
     func navigationWillStart(navigationAction: WKNavigationAction) {
         AppLog.viewModel.notice("\(AppLog.logHeader(self)) Navigation will start")
     }

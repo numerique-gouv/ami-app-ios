@@ -25,6 +25,7 @@ enum DependencyContainer {
         let model = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                              websiteDataStore: .nonPersistent(),
                                              navigationHandler: DefaultWebViewNavigationHandler(rootUrl: rootUrl, specialLinkHandler: specialLinkHandler),
+                                             navigationState: DefaultWebViewNavigationState(),
                                              initialUserScripts: HomeUserScripts())
 
         #if DEBUG
