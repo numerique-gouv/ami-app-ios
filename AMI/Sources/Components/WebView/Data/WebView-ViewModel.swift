@@ -224,7 +224,7 @@ extension SwiftUIWebView.ViewModel: WKScriptMessageHandler {
 
 // MARK: - WKNavigationDelegate
 
-extension SwiftUIWebView.ViewModel: WKNavigationDelegate {
+extension SwiftUIWebView.ViewModel: @MainActor WKNavigationDelegate {
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         loadInitialPage()
     }
