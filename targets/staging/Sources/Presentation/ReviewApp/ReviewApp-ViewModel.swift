@@ -15,14 +15,14 @@ extension ReviewAppView {
     class ViewModel: NSObject {
         let rootUrl = Config.shared.BASE_URL // This root URL is always the same. No need to make it a parameter.
         let websiteDataStore: WKWebsiteDataStore
-        let specialLinkHandler: SpecialLinkHandler
+        let specialLinkHandler: any SpecialLinkProtocol
         let notificationManager: NotificationManager
         var reviewApps: [ReviewApp] = []
 
         var selectedReviewAppViewModel: HomeView.ViewModel?
 
         init(websiteDataStore: WKWebsiteDataStore,
-             specialLinkHandler: SpecialLinkHandler,
+             specialLinkHandler: any SpecialLinkProtocol,
              notificationManager: NotificationManager) {
             self.websiteDataStore = websiteDataStore
             self.specialLinkHandler = specialLinkHandler
