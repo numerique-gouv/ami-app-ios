@@ -24,6 +24,9 @@ extension ServiceView {
 
         var selectedDestination: ServiceLinkViewModel?
 
+        // UrlInterception Feature
+        private var urlInterception: UrlInterceptionFeature
+
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
              refererUrl: URL? = nil,
@@ -38,6 +41,11 @@ extension ServiceView {
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
+
+            // UrlInterception Feature
+            //
+            urlInterception = UrlInterceptionFeature()
+
             super.init()
 
             self.webViewViewModel.delegate = self
@@ -59,8 +67,17 @@ extension ServiceView {
 }
 
 extension ServiceView.ViewModel: @MainActor WebViewDelegate {
-    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool {
-        true
+    func checkIfNavigationIsAllowed(webView: WKWebView, navigationAction: WKNavigationAction) async -> Bool {
+        // UrlInterception Feature
+        //
+        if let originalUrl = navigationAction.request.url,
+           [WKNavigationType.linkActivated, WKNavigationType.other].contains(navigationAction.navigationType),
+           let rewrittenUrl = urlInterception.rewriteUrl.rewrite(url: originalUrl) {
+            webView.load(URLRequest(url: rewrittenUrl))
+            return false
+        }
+
+        return true
     }
 
     func navigationWillStart(navigationAction: WKNavigationAction) {
