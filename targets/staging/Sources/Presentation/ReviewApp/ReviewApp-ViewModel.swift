@@ -55,5 +55,22 @@ extension ReviewAppView {
             let body = try decoder.decode([ReviewApp].self, from: data)
             reviewApps = body
         }
+
+        func notificationReceived(notification: Notification) {
+            guard let appReviewUrl = notification.userInfo?[Notification.Name.pendingUrl] as? URL,
+                  let reviewApp = reviewApps.first(where: { URL(string: $0.url)?.host() == appReviewUrl.host() }) else {
+                selectedReviewAppViewModel = nil
+                return
+            }
+
+            AppLog.app.notice("\(AppLog.logHeader(self)) Notification Received for review app: \(reviewApp)")
+
+            selectedReviewAppViewModel = nil
+            Task { @MainActor in
+                // Wait for the ReviewApp list to display.
+                try? await Task.sleep(for: .seconds(0.5))
+                selectReviewApp(reviewApp: reviewApp)
+            }
+        }
     }
 }
