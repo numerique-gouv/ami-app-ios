@@ -13,8 +13,11 @@ import SwiftUI
 struct AMIApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @Bindable var appState = DependencyContainer.appState
+    @State var rootView: RootView
 
     init() {
+        rootView = RootView(viewModel: RootView.ViewModel())
+
         // Set default accent color for UIKit components.
         Color.setUIKitAccentColor()
 
@@ -32,22 +35,7 @@ struct AMIApp: App {
     private var mainContent: some View {
         ZStack(alignment: .top) {
             NavigationStack {
-                #if IS_AMI_PRODUCTION
-                    HomeView(viewModel: appState.defaultHomeViewModel)
-                        .id(appState.notificationActivatedHomeViewModelId ?? UUID())
-                #elseif IS_AMI_PREPRODUCTION
-                    HomeView(viewModel: appState.defaultHomeViewModel)
-                        .id(appState.notificationActivatedHomeViewModelId ?? UUID())
-                #elseif IS_AMI_STAGING
-                    if let notificationActivatedHomeViewModelId = appState.notificationActivatedHomeViewModelId {
-                        HomeView(viewModel: appState.notificationTriggeredHomeViewModel)
-                            .id(notificationActivatedHomeViewModelId)
-                    } else {
-                        ReviewAppView(viewModel: DependencyContainer.makeReviewAppViewModel())
-                    }
-                #else
-                    EmptyView()
-                #endif
+                rootView
             }
             // On SwiftUI, removing the defaut Navigation Back button disable the Swipe Back gesture.
             // We reactivate it via the underlying UIKit UINavigationController.
