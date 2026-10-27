@@ -237,7 +237,7 @@ extension SwiftUIWebView.ViewModel: @MainActor WKNavigationDelegate {
         navigationHandler.prepareNavigation(to: navigationType)
 
         if navigationType.navigationPoliciy == .allow {
-            await navigationState.navigationWillStart(navigationAction: navigationAction)
+            navigationState.navigationWillStart(navigationAction: navigationAction)
         } else if case let .specialLink(specialLink) = navigationType {
             do {
                 // Navigation type is `specialLink`. Try to activate the link via the system.
