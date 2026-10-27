@@ -26,7 +26,7 @@ struct ReviewAppView: View {
                         viewModel.selectReviewApp(reviewApp: reviewApp)
                     } label: {
                         TileView(title: reviewApp.title,
-                                 content: reviewApp.description ?? "")
+                                 content: reviewApp.reviewAppDescription ?? "")
                     }
                 }
             }

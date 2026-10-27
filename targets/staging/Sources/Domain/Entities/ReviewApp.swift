@@ -12,12 +12,23 @@ struct ReviewApp: Decodable, Identifiable, Hashable {
     let url: String
     let title: String
     let number: Int
-    let description: String?
+    let reviewAppDescription: String?
 
     enum CodingKeys: String, CodingKey {
         case url
         case title
         case number
-        case description
+        case reviewAppDescription = "description"
+    }
+}
+
+extension ReviewApp: CustomStringConvertible {
+    var description: String {
+        """
+            ReviewApp \(url)
+            \tNumber: \(number)
+            \tTitle: \(title)
+            \tDescription: \(reviewAppDescription ?? "<no description>")
+        """
     }
 }
