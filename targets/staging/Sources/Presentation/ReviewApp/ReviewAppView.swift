@@ -18,7 +18,8 @@ struct ReviewAppView: View {
 
     var body: some View {
         Text("Choix de la review")
-            .font(.title)
+            .font(DsfrFont.h1.font)
+            .foregroundStyle(AmiDesignSystem.Colors.Text.Active.blueFrance.swiftUIColor)
         ScrollView {
             ForEach(viewModel.reviewApps) { reviewApp in
                 if URL(string: reviewApp.url) != nil {
