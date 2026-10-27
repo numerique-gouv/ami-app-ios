@@ -24,6 +24,9 @@ extension ServiceView {
 
         var selectedDestination: ServiceLinkViewModel?
 
+        // UrlInterception Feature
+        private var urlInterception: UrlInterceptionFeature
+
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
              refererUrl: URL? = nil,
@@ -43,6 +46,10 @@ extension ServiceView {
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
+
+            // UrlInterception Feature
+            //
+            urlInterception = UrlInterceptionFeature()
 
             super.init()
 
