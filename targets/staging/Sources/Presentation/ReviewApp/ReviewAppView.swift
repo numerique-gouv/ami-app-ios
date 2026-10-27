@@ -39,6 +39,10 @@ struct ReviewAppView: View {
             viewModel.notificationReceived(notification: notification)
         }
         .refreshable {
+            Task {
+                try? await viewModel.fetchReviewApps()
+            }
+        }
     }
 }
 
