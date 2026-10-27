@@ -326,7 +326,7 @@ extension HomeView {
 }
 
 extension HomeView.ViewModel: @MainActor WebViewDelegate {
-    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool {
+    func checkIfNavigationIsAllowed(webView: WKWebView, navigationAction: WKNavigationAction) async -> Bool {
         guard let targetUrl = navigationAction.request.url else {
             // No special restriction. Return TRUE.
             return true
