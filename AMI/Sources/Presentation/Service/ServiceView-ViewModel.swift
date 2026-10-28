@@ -32,11 +32,13 @@ extension ServiceView {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let navigationHandler = ServiceViewNavigationHandler(rootUrl: rootUrl,
                                                                  specialLinkHandler: specialLinkHandler)
+            let defaultNavigationState = DefaultWebViewNavigationState()
+
             let userScripts = ServiceViewUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                                             websiteDataStore: websiteDataStore,
                                                             navigationHandler: navigationHandler,
-                                                            navigationState: DefaultWebViewNavigationState(),
+                                                            navigationState: defaultNavigationState,
                                                             refererUrl: refererUrl,
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
