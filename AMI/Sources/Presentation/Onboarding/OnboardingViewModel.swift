@@ -23,12 +23,11 @@ extension OnboardingView {
             case isDismissed
         }
 
-        typealias EventReceiverType = (Event) -> Void
-
-        private let eventsStream = PassthroughSubject<Event, Never>()
-
-        let applicationRootUrl: URL
         let notificationManager: NotificationManager
+
+        // TODO: use an `AsyncStream` rather than a Combine `PassthroughSubject`.
+        typealias EventReceiverType = (Event) -> Void
+        private let eventsStream = PassthroughSubject<Event, Never>()
         var eventReceiver: EventReceiverType? {
             didSet {
                 if let eventReceiver {
@@ -38,8 +37,7 @@ extension OnboardingView {
             }
         }
 
-        init(applicationRootUrl: URL, notificationManager: NotificationManager) {
-            self.applicationRootUrl = applicationRootUrl
+        init(notificationManager: NotificationManager) {
             self.notificationManager = notificationManager
         }
 

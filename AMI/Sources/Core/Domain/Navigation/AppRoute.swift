@@ -21,3 +21,15 @@ enum AppRoute: Hashable, Sendable {
     case allowNotifications
     case service(ServiceProvider)
 }
+
+extension AppRoute: CustomStringConvertible {
+    var description: String {
+        switch self {
+        case .franceConnect: "franceConnect"
+        case .amiApplication: "amiApplication"
+        case .amiNotificationsSettings: "amiNotificationsSettings"
+        case .allowNotifications: "allowNotifications"
+        case let .service(serviceProvider): "service(\(serviceProvider)"
+        }
+    }
+}

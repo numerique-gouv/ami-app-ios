@@ -1,5 +1,5 @@
 //
-//  WebViewUserScriptsProtocol.swift
+//  WebViewUserScripts.swift
 //  AMI-Production
 //
 //  Created by Nicolas Buquet on 13/02/2026.
@@ -14,7 +14,7 @@ struct UserScript {
     let script: WKUserScript
 }
 
-protocol WebViewUserScriptsProtocol {
+protocol WebViewUserScripts {
     var scripts: [UserScript] { get }
 
     func userScriptEmittedMessage(_ message: WKScriptMessage, for viewModel: SwiftUIWebView.ViewModel)

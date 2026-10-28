@@ -11,6 +11,7 @@ class NetworkMonitor {
         case notConnected
     }
 
+    // TODO: use an `AsyncStream` rather than a Combine `PassthroughSubject`.
     typealias EventReceiverType = (EventType) -> Void
     private let eventsStream = PassthroughSubject<EventType, Never>()
     private var cancellables = Set<AnyCancellable>() // For auto cancelation
