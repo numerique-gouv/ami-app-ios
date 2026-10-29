@@ -1,5 +1,6 @@
 //
 //  PromotedUrlsFeatureTests.swift
+//  AMI-UnitTests
 //
 //  In-memory end-to-end tests through `PromotedUrlsFeature`, plus the
 //  view model readiness states.

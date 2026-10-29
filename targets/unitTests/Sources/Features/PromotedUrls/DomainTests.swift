@@ -1,5 +1,6 @@
 //
 //  DomainTests.swift
+//  AMI-UnitTests
 //
 //  Domain-layer tests: aliases, entity, DTO, and the two use cases.
 //
