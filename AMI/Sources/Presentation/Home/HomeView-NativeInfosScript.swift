@@ -20,7 +20,7 @@ class HomeNativeInfosScripts {
 
     @MainActor
     required init() async {
-        let deviceID = await DeviceID.getOrCreateDeviceID()
+        let deviceID = await DeviceID.shared.getOrCreateDeviceID()
 
         scripts = [
             UserScript(name: Script.getNativeInfos.rawValue,
