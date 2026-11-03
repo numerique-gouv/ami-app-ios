@@ -45,7 +45,8 @@ enum DependencyContainer {
     static func makePreviewServiceViewModel() -> ServiceView.ViewModel {
         ServiceView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
                               websiteDataStore: .nonPersistent(),
-                              specialLinkHandler: specialLinkHandler) {
+                              specialLinkHandler: specialLinkHandler,
+                              notificationManager: notificationManager) {
             AppLog.viewModel.log("\(AppLog.logHeader()) Back to home called")
         }
     }

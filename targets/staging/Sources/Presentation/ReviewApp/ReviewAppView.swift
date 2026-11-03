@@ -35,9 +35,6 @@ struct ReviewAppView: View {
                 HomeView(viewModel: viewModel)
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: .pendingUrl)) { notification in
-            viewModel.notificationReceived(notification: notification)
-        }
         .refreshable {
             Task {
                 try? await viewModel.fetchReviewApps()

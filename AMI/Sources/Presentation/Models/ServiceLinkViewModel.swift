@@ -37,7 +37,7 @@ struct ServiceLinkViewModel {
                                       websiteDataStore: dataStore,
                                       refererUrl: sourceUrl,
                                       specialLinkHandler: specialLinkHandler,
-                                      notificationManager = notificationManager,
+                                      notificationManager: notificationManager,
                                       backToHomeAction: destinationViewDismissedAction)
     }
 }

@@ -18,7 +18,7 @@ extension ServiceView {
 
         let webViewViewModel: SwiftUIWebView.ViewModel
 
-        private let notificationManager: NotificationManager
+        let notificationManager: NotificationManager
 
         var backToHomeAction: BackToHomeAction?
 
@@ -56,7 +56,7 @@ extension ServiceView {
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) init")
         }
 
-        func destinationLinkViewDismissed() {
+        func backToHomeViewAction() {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
             selectedDestination = nil
         }

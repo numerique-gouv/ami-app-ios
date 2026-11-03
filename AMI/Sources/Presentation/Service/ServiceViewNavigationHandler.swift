@@ -65,8 +65,9 @@ final class ServiceViewNavigationHandler: WebViewNavigationHandler {
             viewModel.selectedDestination = ServiceLinkViewModel(destinationUrl: domainUrl,
                                                                  dataStore: webViewViewModel.configuration.websiteDataStore,
                                                                  sourceUrl: webViewViewModel.webView?.url,
-                                                                 specialLinkHandler: specialLinkHandler) { [weak viewModel] in
-                viewModel?.destinationLinkViewDismissed()
+                                                                 specialLinkHandler: specialLinkHandler,
+                                                                 notificationManager: viewModel.notificationManager) { [weak viewModel] in
+                viewModel?.backToHomeViewAction()
             }
             // Go back to previous page in originating webview.
             Task { @MainActor in

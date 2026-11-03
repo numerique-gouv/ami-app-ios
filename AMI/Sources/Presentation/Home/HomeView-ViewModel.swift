@@ -23,7 +23,7 @@ extension HomeView {
         // MARK: - Dependencies
 
         /// Dependencies received as parameters or built during initialisation.
-        private let notificationManager: NotificationManager
+        let notificationManager: NotificationManager
         let webViewViewModel: SwiftUIWebView.ViewModel
         // PromotedUrls Feature
         var promotedUrls: PromotedUrlsFeature?
@@ -47,9 +47,6 @@ extension HomeView {
         private var notificationsObserverTask: Task<Void, Never>?
 
         // MARK: - Init
-
-        @ObservationIgnored
-        private var notificationsObserverTask: Task<Void, Never>?
 
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
@@ -356,7 +353,5 @@ extension HomeView {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
             selectedDestination = nil
         }
-    }
-}
     }
 }
