@@ -15,7 +15,8 @@ enum DependencyContainer {
     private static let specialLinkHandler = SpecialLinkHandler()
 
     static let appState = AMIAppState()
-    static let notificationManager = NotificationManager()
+    static let deviceIdProvider = LocalStorageDeviceIDProvider()
+    static let notificationManager = NotificationManager(deviceIdProvider: deviceIdProvider)
     // This common website DataStore will be injected n root views to be shared with all child webviews.
     private static let commonWebsiteDataStore: WKWebsiteDataStore = .default()
 
@@ -39,7 +40,15 @@ enum DependencyContainer {
         HomeView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
                            websiteDataStore: .nonPersistent(),
                            specialLinkHandler: specialLinkHandler,
-                           notificationManager: notificationManager)
+                           notificationManager: notificationManager,
+                           deviceIdProvider: deviceIdProvider)
+    }
+
+    static func makePreviewOnboardingViewModel() -> OnboardingView.ViewModel {
+        OnboardingView.ViewModel(
+            applicationRootUrl: URL(string: "https://google.com")!,
+            notificationManager: notificationManager
+        )
     }
 
     static func makePreviewServiceViewModel() -> ServiceView.ViewModel {
@@ -48,6 +57,10 @@ enum DependencyContainer {
                               specialLinkHandler: specialLinkHandler) {
             AppLog.viewModel.log("\(AppLog.logHeader()) Back to home called")
         }
+    }
+
+    static func makePreviewSettingsViewModel() -> SettingsView.ViewModel {
+        SettingsView.ViewModel(notificationManager: NotificationManager(deviceIdProvider: deviceIdProvider))
     }
 
     #if IS_AMI_PRODUCTION || IS_AMI_PREPRODUCTION
@@ -81,4 +94,20 @@ enum DependencyContainer {
         }
 
     #endif
+
+    static func makeHomeViewModel() -> HomeView.ViewModel {
+        HomeView.ViewModel(rootUrl: Config.shared.BASE_URL,
+                           websiteDataStore: commonWebsiteDataStore,
+                           specialLinkHandler: specialLinkHandler,
+                           notificationManager: notificationManager,
+                           deviceIdProvider: deviceIdProvider)
+    }
+
+    static func makeReviewAppHomeViewModel(rootUrl: URL) -> HomeView.ViewModel {
+        HomeView.ViewModel(rootUrl: rootUrl,
+                           websiteDataStore: commonWebsiteDataStore,
+                           specialLinkHandler: specialLinkHandler,
+                           notificationManager: notificationManager,
+                           deviceIdProvider: deviceIdProvider)
+    }
 }

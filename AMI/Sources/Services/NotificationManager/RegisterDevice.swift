@@ -26,8 +26,14 @@ private struct RegisterDeviceRequestInput: Encodable {
 }
 
 final actor RegisterDevice {
+    private let deviceIdProvider: any DeviceIDProvider
+
+    init(deviceIdProvider: any DeviceIDProvider) {
+        self.deviceIdProvider = deviceIdProvider
+    }
+
     func registerDevice(baseUrl: URL, apnsToken: String, userAuthenticationToken: String) async {
-        let deviceId = await DeviceID.shared.getOrCreateDeviceID()
+        let deviceId = await deviceIdProvider.getOrCreateDeviceID()
         let deviceModel = await UIDevice.current.model
         let appVersion = AppBundle.version
 
