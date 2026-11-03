@@ -30,6 +30,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // Setup application
         setupFirebase()
 
+        // Check if some cleanup is needed because of first start after (re-)install.
+        checkFirstStart()
+
         return true
     }
 
@@ -54,6 +57,16 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
         // Set Messaging Delegate to receive FCM token updates
         Messaging.messaging().delegate = notificationManager
+    }
+
+    private func checkFirstStart() {
+        // `cleanUpAtFirstLaunch` can be called in an async task because
+        // if it is a first launch (that need cleanup), no automatic login
+        // will happen. So no device registration will happen because it is
+        // called after successful login.
+        Task {
+            await DependencyContainer.deviceIdProvider.cleanUpAtFirstLaunch()
+        }
     }
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
