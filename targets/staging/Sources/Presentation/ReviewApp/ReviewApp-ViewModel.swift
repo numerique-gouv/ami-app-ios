@@ -39,10 +39,7 @@ extension ReviewAppView {
                 selectedReviewAppViewModel = nil
                 return
             }
-            selectedReviewAppViewModel = HomeView.ViewModel(rootUrl: url,
-                                                            websiteDataStore: websiteDataStore,
-                                                            specialLinkHandler: specialLinkHandler,
-                                                            notificationManager: notificationManager)
+            selectedReviewAppViewModel = DependencyContainer.makeReviewAppHomeViewModel(rootUrl: url)
         }
 
         func fetchReviewApps() async throws {

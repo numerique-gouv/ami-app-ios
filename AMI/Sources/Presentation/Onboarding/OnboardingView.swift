@@ -90,11 +90,5 @@ struct OnboardingView: View {
 }
 
 #Preview {
-    OnboardingView(
-        viewModel: OnboardingView.ViewModel(
-            applicationRootUrl: URL(
-                string: "https://google.com"
-            )!,
-            notificationManager: NotificationManager()
-        ))
+    OnboardingView(viewModel: DependencyContainer.makePreviewOnboardingViewModel())
 }
