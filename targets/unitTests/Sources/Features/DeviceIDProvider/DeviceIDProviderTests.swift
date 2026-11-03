@@ -1,5 +1,5 @@
 //
-//  DeviceIDTests.swift
+//  DeviceIDProviderTests.swift
 //  AMI-UnitTests
 //
 //  Created by Nicolas Buquet on 29/10/2026.
@@ -14,22 +14,28 @@ import Testing
 
 @testable import AMI_Staging
 
-@Suite("DeviceID - Device identifier management")
-struct DeviceIDTests {
+@Suite("DeviceIDProvider - Device identifier management")
+struct DeviceIDProviderTests {
 
     // MARK: - Test Configuration
 
-    /// The key used by `DeviceID` to persist the ID.
-    /// Must stay in sync with `DeviceID.DEVICE_ID_KEY`.
+    /// The key used by `LocalStorageDeviceIDProvider` to persist the ID.
+    /// Must stay in sync with `LocalStorageDeviceIDProvider.DEVICE_ID_KEY`.
     private static let deviceIDKey = "deviceID"
 
     // MARK: - Helpers
 
     /// Builds a system under test backed by an in-memory storage fake.
-    private func makeSUT(storeName: String = "test") -> (DeviceID, FakeLocalStorage) {
+    private func makeSUT(storeName: String = "test") -> (any DeviceIDProvider, FakeLocalStorage) {
+        let (sut, storage) = makeConcreteSUT(storeName: storeName)
+        return (sut, storage)   // upcast toward the port
+    }
+
+    /// Builds the concrete provider, for APIs that are not part of the
+    /// `DeviceIDProvider` port (e.g. `cleanUpAtFirstLaunch`).
+    private func makeConcreteSUT(storeName: String = "test") -> (LocalStorageDeviceIDProvider, FakeLocalStorage) {
         let storage = FakeLocalStorage(for: storeName)
-        let sut = DeviceID(localStorageName: storeName) { _ in storage }
-        return (sut, storage)
+        return (LocalStorageDeviceIDProvider(localStorageName: storeName) { _ in storage }, storage)
     }
 
     /// Reads the value currently persisted in the fake storage.
@@ -142,8 +148,8 @@ struct DeviceIDTests {
     @Test("a fresh instance with the same storage serves the stored ID")
     func getOrCreate_persistedAcrossInstances() async {
         let storage = FakeLocalStorage(for: "test")
-        let sut1 = DeviceID(localStorageName: "test") { _ in storage }
-        let sut2 = DeviceID(localStorageName: "test") { _ in storage }
+        let sut1 = LocalStorageDeviceIDProvider(localStorageName: "test") { _ in storage }
+        let sut2 = LocalStorageDeviceIDProvider(localStorageName: "test") { _ in storage }
 
         let fromFirst = await sut1.getOrCreateDeviceID()
 
@@ -168,7 +174,10 @@ struct DeviceIDTests {
         await storage.seed(originalID, forKey: Self.deviceIDKey)
         let calls = CallCounter()
 
-        await sut.resetDeviceID { calls.increment() }
+        await sut.resetDeviceID {
+            await Task.yield() // Force suspension during action
+            calls.increment()
+        }
         let newID = await sut.getOrCreateDeviceID()
 
         #expect(newID != originalID)
@@ -185,7 +194,10 @@ struct DeviceIDTests {
         let (sut, storage) = makeSUT()
         let calls = CallCounter()
 
-        await sut.resetDeviceID { calls.increment() }
+        await sut.resetDeviceID {
+            await Task.yield() // Force suspension during action
+            calls.increment()
+        }
         let deviceID = await sut.getOrCreateDeviceID()
 
         #expect(UUID(uuidString: deviceID) != nil)
@@ -201,7 +213,10 @@ struct DeviceIDTests {
         await storage.setWriteError(.deviceIsLocked)
         let calls = CallCounter()
 
-        await sut.resetDeviceID { calls.increment() }
+        await sut.resetDeviceID {
+            await Task.yield() // Force suspension during action
+            calls.increment()
+        }
 
         // While writes fail: a fresh cached ID is served — stable across calls,
         // never the stale stored one — and the completion is not fired.
@@ -244,8 +259,14 @@ struct DeviceIDTests {
         let firstCalls = CallCounter()
         let secondCalls = CallCounter()
 
-        await sut.resetDeviceID { firstCalls.increment() }
-        await sut.resetDeviceID { secondCalls.increment() }
+        await sut.resetDeviceID {
+            await Task.yield() // Force suspension during action
+            firstCalls.increment()
+        }
+        await sut.resetDeviceID {
+            await Task.yield() // Force suspension during action
+            secondCalls.increment()
+        }
         let newID = await sut.getOrCreateDeviceID()
 
         #expect(UUID(uuidString: newID) != nil)
@@ -259,11 +280,17 @@ struct DeviceIDTests {
         let idA = await sut.getOrCreateDeviceID()
 
         let cycle1 = CallCounter()
-        await sut.resetDeviceID { cycle1.increment() }
+        await sut.resetDeviceID {
+            await Task.yield() // Force suspension during action
+            cycle1.increment()
+        }
         let idB = await sut.getOrCreateDeviceID()
 
         let cycle2 = CallCounter()
-        await sut.resetDeviceID { cycle2.increment() }
+        await sut.resetDeviceID {
+            await Task.yield() // Force suspension during action
+            cycle2.increment()
+        }
         let idC = await sut.getOrCreateDeviceID()
 
         #expect(idB != idA)
@@ -281,7 +308,10 @@ struct DeviceIDTests {
         await storage.setWriteSuspension(.milliseconds(50))
         let calls = CallCounter()
 
-        await sut.resetDeviceID { calls.increment() }
+        await sut.resetDeviceID {
+            await Task.yield() // Force suspension during action
+            calls.increment()
+        }
 
         async let id1 = sut.getOrCreateDeviceID()
         async let id2 = sut.getOrCreateDeviceID()
@@ -293,6 +323,60 @@ struct DeviceIDTests {
         #expect(calls.value == 1)
         #expect(await storedValueRaw(in: storage) == ids[0])
     }
+
+    // MARK: - cleanUp at first launch
+
+    /// Must stay in sync with `LocalStorageDeviceIDProvider.APPLICATION_HAS_LAUNCHED_BEFORE_KEY`.
+    private static let hasLaunchedKey = "applicationHasLaunchedBefore"
+
+    @Test("first launch (flag absent) requests a reset and writes the flag on completion")
+    func cleanUp_firstLaunchRequestsResetAndWritesFlag() async {
+        let (sut, storage) = makeConcreteSUT()
+        let originalID = UUID().uuidString
+        await storage.seed(originalID, forKey: Self.deviceIDKey)
+
+        await sut.cleanUpAtFirstLaunch()
+
+        // The reset is deferred: the flag is only written once the new ID is persisted.
+        #expect(await storage.rawBool(forKey: Self.hasLaunchedKey) == nil)
+
+        let newID = await sut.getOrCreateDeviceID()
+
+        #expect(newID != originalID)
+        #expect(await storage.rawValue(forKey: Self.deviceIDKey) == newID)
+        #expect(await storage.rawBool(forKey: Self.hasLaunchedKey) == true)
+    }
+
+    @Test("regular launch (flag present) leaves the stored ID untouched")
+    func cleanUp_regularLaunchIsNoOp() async {
+        let (sut, storage) = makeConcreteSUT()
+        let storedID = UUID().uuidString
+        await storage.seed(storedID, forKey: Self.deviceIDKey)
+        await storage.seedBool(true, forKey: Self.hasLaunchedKey)
+
+        await sut.cleanUpAtFirstLaunch()
+        _ = await sut.getOrCreateDeviceID()
+
+        #expect(await storage.rawValue(forKey: Self.deviceIDKey) == storedID)
+        #expect(await storage.writeStringCalls == 0)
+    }
+
+    @Test("unexpected flag read error skips the reset rather than rotating the ID")
+    func cleanUp_unexpectedReadErrorSkipsReset() async {
+        let (sut, storage) = makeConcreteSUT()
+        let storedID = UUID().uuidString
+        await storage.seed(storedID, forKey: Self.deviceIDKey)
+        await storage.setReadError(.secureHardwareUnavailable)
+
+        await sut.cleanUpAtFirstLaunch()
+
+        await storage.setReadError(nil)
+        let deviceID = await sut.getOrCreateDeviceID()
+
+        #expect(deviceID == storedID)
+        #expect(await storage.rawBool(forKey: Self.hasLaunchedKey) == nil)
+    }
+
 }
 
 // MARK: - Test Doubles
@@ -313,8 +397,8 @@ private final class CallCounter: @unchecked Sendable {
 
 /// In-memory fake of `LocalStorageRepositoryProtocol` for hermetic testing.
 ///
-/// `DeviceID` only exercises `readString`/`writeString`; the other requirements
-/// are minimal stubs.
+/// `LocalStorageDeviceIDProvider` only exercises `readString`/`writeString`,
+/// `readBool`/`writeBool`; the other requirements are minimal stubs.
 private actor FakeLocalStorage: LocalStorageRepositoryProtocol {
 
     // MARK: Test hooks
@@ -367,18 +451,12 @@ private actor FakeLocalStorage: LocalStorageRepositoryProtocol {
         return .success(value)
     }
 
-    // MARK: Unused by DeviceID — minimal stubs
+    // MARK: Unused by LocalStorageDeviceIDProvider — minimal stubs
 
-    func writeBool(key: String, value: Bool, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
-        .success(true)
-    }
+    private var boolStore: [String: Bool] = [:]
 
     func writeInt(key: String, value: Int, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         .success(true)
-    }
-
-    func readBool(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
-        .failure(.keyNotFound)
     }
 
     func readInt(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Int, LocalStorageErrorType> {
@@ -393,6 +471,26 @@ private actor FakeLocalStorage: LocalStorageRepositoryProtocol {
     func deleteAll(secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
         store.removeAll()
         return .success(true)
+    }
+
+    func writeBool(key: String, value: Bool, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
+        lastWriteSecureLevel = secureLevel
+        if let writeError {
+            return .failure(writeError)
+        }
+        boolStore[key] = value
+        return .success(true)
+    }
+
+    func readBool(key: String, secureLevel: LocalStorageSecureLevelType) async -> Result<Bool, LocalStorageErrorType> {
+        lastReadSecureLevel = secureLevel
+        if let readError {
+            return .failure(readError)
+        }
+        guard let value = boolStore[key] else {
+            return .failure(.keyNotFound)
+        }
+        return .success(value)
     }
 
     // MARK: Test helpers
@@ -418,6 +516,14 @@ private actor FakeLocalStorage: LocalStorageRepositoryProtocol {
 
     func setWriteSuspension(_ duration: Duration) {
         writeSuspension = duration
+    }
+
+    func seedBool(_ value: Bool, forKey key: String) {
+        boolStore[key] = value
+    }
+
+    func rawBool(forKey key: String) -> Bool? {
+        boolStore[key]
     }
 }
 
