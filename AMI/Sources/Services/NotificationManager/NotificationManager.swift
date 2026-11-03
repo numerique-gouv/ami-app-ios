@@ -20,9 +20,11 @@ class NotificationManager: NSObject {
     private var userAuthenticationToken: String?
     // apnsToken will be set after allowing Push Notifications or Push Notification token renewal.
     private var apnsToken: String?
+    // The interface to get a stable Device ID for registration.
+    private let deviceIdProvider: any DeviceIDProvider
 
-    override init() {
-        super.init()
+    required init(deviceIdProvider: LocalStorageDeviceIDProvider) {
+        self.deviceIdProvider = deviceIdProvider
     }
 
     func setBaseUrl(_ url: URL) {
@@ -73,9 +75,9 @@ class NotificationManager: NSObject {
 
         // Execute `registerDevice` task in background job.
         Task(priority: .background) {
-            await RegisterDevice().registerDevice(baseUrl: baseUrl,
-                                                  apnsToken: apnsToken,
-                                                  userAuthenticationToken: userAuthenticationToken)
+            await RegisterDevice(deviceIdProvider: deviceIdProvider).registerDevice(baseUrl: baseUrl,
+                                                                                    apnsToken: apnsToken,
+                                                                                    userAuthenticationToken: userAuthenticationToken)
         }
     }
 }

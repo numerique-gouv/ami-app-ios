@@ -19,9 +19,7 @@ class HomeNativeInfosScripts {
     var scripts: [UserScript]
 
     @MainActor
-    required init() async {
-        let deviceID = await DeviceID.shared.getOrCreateDeviceID()
-
+    required init(deviceID: DeviceID) async {
         scripts = [
             UserScript(name: Script.getNativeInfos.rawValue,
                        script: WKUserScript(source: Self.getNativeInfosScript(deviceID: deviceID),
@@ -47,7 +45,7 @@ class HomeNativeInfosScripts {
     #endif
 
     // This creates window.NativeBridge.getNativeVersion() HS function.
-    private static func getNativeInfosScript(deviceID: DeviceID.DeviceIdType) -> String {
+    private static func getNativeInfosScript(deviceID: DeviceID) -> String {
         // Private structure containing strucutured data passed to web page.
         struct NativeInfos: Encodable {
             let platform: String
