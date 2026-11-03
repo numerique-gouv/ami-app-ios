@@ -90,8 +90,5 @@ struct OnboardingView: View {
 }
 
 #Preview {
-    OnboardingView(
-        viewModel: OnboardingView.ViewModel(
-            notificationManager: NotificationManager()
-        ))
+    OnboardingView(viewModel: DependencyContainer.makePreviewOnboardingViewModel())
 }
