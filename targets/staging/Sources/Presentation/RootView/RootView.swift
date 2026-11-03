@@ -14,10 +14,6 @@ struct RootView: View {
 
     @ViewBuilder
     var body: some View {
-        if let notificationTriggeredViewModel = viewModel.notificationTriggeredViewModel {
-            HomeView(viewModel: notificationTriggeredViewModel)
-        } else {
-            ReviewAppView(viewModel: DependencyContainer.makeReviewAppsListViewModel())
-        }
+        ReviewAppView(viewModel: DependencyContainer.makeReviewAppsListViewModel())
     }
 }

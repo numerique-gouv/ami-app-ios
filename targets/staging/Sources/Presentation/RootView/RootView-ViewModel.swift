@@ -11,7 +11,11 @@ import SwiftUI
 extension RootView {
     @MainActor
     @Observable
-    class ViewModel: NSObject {
-        var notificationTriggeredViewModel: HomeView.ViewModel?
+    class ViewModel: NSObject {}
+}
+
+extension RootView.ViewModel: NotificationEventReceiver {
+    func handle(notificationEvent: NotificationEvent) async {
+        print("Notification received")
     }
 }
