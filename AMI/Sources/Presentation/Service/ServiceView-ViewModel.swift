@@ -27,74 +27,40 @@ extension ServiceView {
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
              refererUrl: URL? = nil,
-             specialLinkHandler: SpecialLinkHandler,
+             specialLinkHandler: any SpecialLinkProtocol,
              backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
+            let navigationHandler = ServiceViewNavigationHandler(rootUrl: rootUrl,
+                                                                 specialLinkHandler: specialLinkHandler)
+            let defaultNavigationState = DefaultWebViewNavigationState()
+
             let userScripts = ServiceViewUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                                             websiteDataStore: websiteDataStore,
-                                                            specialLinkHandler: specialLinkHandler,
+                                                            navigationHandler: navigationHandler,
+                                                            navigationState: defaultNavigationState,
                                                             refererUrl: refererUrl,
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
+
             super.init()
 
-            self.webViewViewModel.delegate = self
+            // Inject ServiceViewModel into ServiceViewNavigationHandler now that `self` is initialized.
+            navigationHandler.viewModel = self
 
             self.webViewViewModel.navigateToNewWindowManager = self
 
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) init")
         }
 
-        private func destinationLinkViewDismissed() {
+        func destinationLinkViewDismissed() {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
             selectedDestination = nil
         }
 
         deinit {
             AppLog.viewModel.debug("\(AppLog.logHeader(self)) deinit")
-        }
-    }
-}
-
-extension ServiceView.ViewModel: @MainActor WebViewDelegate {
-    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool {
-        true
-    }
-
-    func navigationWillStart(navigationAction: WKNavigationAction) {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationWillStart")
-    }
-
-    func navigationDidStart() {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidStart")
-    }
-
-    func navigationDidFinish() {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFinish")
-    }
-
-    func navigationDidFailed(withError error: Error) {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFailed] failed with error \(error)")
-    }
-}
-
-extension ServiceView.ViewModel: @MainActor WebViewNavigateToNewWindowProtocol {
-    /// Default behavior: open all links in new webview.
-    func destinationForNewWindow(sourceWebView: WKWebView,
-                                 configuration: WKWebViewConfiguration,
-                                 navigationAction: WKNavigationAction,
-                                 windowFeatures: WKWindowFeatures) -> WebViewNavigateToNewWindowDestination {
-        .newWebView
-    }
-
-    func loadInNewWebView(url: URL) {
-        selectedDestination = ServiceLinkViewModel(destinationUrl: url,
-                                                   dataStore: webViewViewModel.configuration.websiteDataStore,
-                                                   sourceUrl: nil,
-                                                   specialLinkHandler: webViewViewModel.specialLinkHandler) { [weak self] in
-            self?.destinationLinkViewDismissed()
         }
     }
 }

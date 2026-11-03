@@ -1,5 +1,5 @@
 //
-//  WebViewNavigateToNewWindowProtocol.swift
+//  WebViewNavigateToNewWindow.swift
 //  AMI-xcodegen
 //
 //  Created by Nicolas Buquet on 01/09/2026.
@@ -9,16 +9,7 @@
 import Foundation
 import WebKit
 
-public enum WebViewNavigateToNewWindowDestination {
-    /// Load the URL in the current web view.
-    case currentWebView
-    /// Load the URL in a new WKWebView.
-    case newWebView
-    /// Open the URL in the system browser (Safari).
-    case externalBrowser
-}
-
-protocol WebViewNavigateToNewWindowProtocol: AnyObject {
+protocol WebViewNavigateToNewWindow: AnyObject {
     /// Decide how to handle a new-window navigation request.
     ///
     /// - Returns: An action the coordinator should execute.

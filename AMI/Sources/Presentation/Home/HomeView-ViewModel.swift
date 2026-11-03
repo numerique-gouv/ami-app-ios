@@ -15,70 +15,47 @@ extension HomeView {
     @MainActor
     @Observable
     class ViewModel: NSObject {
-        // The name of the cookie containing the authentication token.
+        /// The name of the cookie containing the authentication token.
         private static let AUTHENTICATION_COOKIE_NAME = "token"
+        /// Don't present Onboarding panel more than once a day.
         private static let MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION = Double(24 * 60 * 60)
 
+        // MARK: - Dependencies
+
+        /// Dependencies received as parameters or built during initialisation.
         private let notificationManager: NotificationManager
         let webViewViewModel: SwiftUIWebView.ViewModel
+        // PromotedUrls Feature
+        var promotedUrls: PromotedUrlsFeature?
 
-        // Make `settingsViewViewModel` a computed property initialized on demand with available environment.
-        var settingsViewViewModel: SettingsView.ViewModel {
-            SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
-                AppLog.viewModel.notice("\(AppLog.logHeader(self)) notificationsSettingDidChangeAction")
-                Task { @MainActor in
-                    await self.webViewViewModel.localStorageManager?.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
-                }
-            })
-        }
+        // MARK: - States
 
-        // Make `onboardingViewViewModel` a computed property initialized on demand with available environment.
-        var onboardingViewViewModel: OnboardingView.ViewModel {
-            let onboardingViewViewModel = OnboardingView.ViewModel(applicationRootUrl: webViewViewModel.rootUrl,
-                                                                   notificationManager: notificationManager)
-            onboardingViewViewModel.eventReceiver = { event in
-                switch event {
-                case .isDismissed:
-                    // Go back to root URL (to leave web page)
-                    Task { @MainActor in
-                        self.webViewViewModel.goBackToRootUrl()
-                        self.isPresentingOnboardingView = false
-                    }
-                }
-            }
-
-            return onboardingViewViewModel
-        }
-
+        /// Flags observed by View to update its state
         var showSettings = false
         var isPresentingOnboardingView = false
+        var selectedDestination: ServiceLinkViewModel?
         // Temporarily display back button when on OIDC page.
         var showBackButton = false
 
-        private var lastCheckNotificationTime = Date.distantPast
+        private var lastOnboardingPresentationTime = Date.distantPast
 
-        // Flag to know if we can load initial page when coming back to webview, to reset initial state.
+        /// Flag to know if we can load initial page when coming back to webview, to reset initial state.
+        /// Only used in `webViewReplacedAction` when we reset its state to Home state.
         private var modelIsFullyConfigured = false
 
-        var selectedDestination: ServiceLinkViewModel?
-
-        enum Event {
-            case navigateToRootUrl
-        }
-
-        let eventsStream = PassthroughSubject<Event, Never>()
-
-        // PromotedUrls Feature
-        private var promotedUrls: PromotedUrlsFeature?
+        // MARK: - Init
 
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
-             specialLinkHandler: SpecialLinkHandler,
+             specialLinkHandler: any SpecialLinkProtocol,
              notificationManager: NotificationManager) {
+            let navigationHandler = HomeViewNavigationHandler(rootUrl: rootUrl,
+                                                              specialLinkHandler: specialLinkHandler)
             let userScripts = HomeUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                                             websiteDataStore: websiteDataStore,
-                                                            specialLinkHandler: specialLinkHandler,
+                                                            navigationHandler: navigationHandler,
+                                                            navigationState: HomeViewNavigationState(baseUrl: rootUrl),
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.notificationManager = notificationManager
@@ -89,7 +66,9 @@ extension HomeView {
             //
             promotedUrls = PromotedUrlsFeature(catalogProvider: loadUrlAliasedUrls)
 
-            self.webViewViewModel.delegate = self
+            // Now that `self` is initialized, inject HomeViewModel and PromotedUrlsFeature into HomeViewNavigationHandler.
+            navigationHandler.promotedUrls = promotedUrls
+            navigationHandler.viewModel = self
 
             webViewViewModel.webViewReplacedAction = { [weak self] _ in
                 guard let self,
@@ -97,9 +76,7 @@ extension HomeView {
                     return
                 }
 
-                Task { @MainActor in
-                    self.webViewViewModel.loadInitialPage()
-                }
+                loadInitialPage()
             }
 
             userScripts.userLoggedInAction = userLoginActions
@@ -115,110 +92,15 @@ extension HomeView {
                 modelIsFullyConfigured = true
 
                 // Load initial page now that viewModel is fully ready.
-                Task { @MainActor in
-                    webViewViewModel.loadInitialPage()
-                }
+                loadInitialPage()
             }
         }
 
-        private func userLoginActions() {
-            // Check if user made a choice about allowing Push notifications reception.
-            Task {
-                guard let userAuthenticationToken = await getUserAuthenticationToken else {
-                    // Unable to get user authentication token. Exit.
-                    AppLog.viewModel.notice("\(AppLog.logHeader(self)) Unable to get User Authentication token")
-                    return
-                }
-
-                // Set NotificationManager `userAuthenticationToken` now we have it
-                // because a token renew can happen anytime if user already allowed notifications.
-                setNotificationManagerUserAuthentificationToken(userAuthenticationToken)
-
-                // Now that user is logged and we have its authentication token, we can proceed to
-                // check its notification status and register to backebd if needed.
-                await checkNotificationStatus()
-            }
-        }
-
-        private func lastOnboardingPresentationTimeIsExpired() -> Bool {
-            Date.now.timeIntervalSince(lastCheckNotificationTime) > Self.MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION
-        }
-
-        private func setLastOnboardingPresentationTimeToNow() {
-            lastCheckNotificationTime = .now
-        }
-
-        private func resetLastOnboardingPresentationTime() {
-            lastCheckNotificationTime = .distantPast
-        }
-
-        private func checkNotificationStatus() async {
-            var shouldPresentOnboardingView = false
-
-            switch await NotificationStatus.notificationsAuthorizationStatus() {
-            case .notDetermined:
-                // User logged event is called too often.
-                // Only check Notifications Status once par session.
-                shouldPresentOnboardingView = lastOnboardingPresentationTimeIsExpired()
-            case .denied:
-                // No need to present Onboarding view: user already made its choice.
-                break
-            case .authorized, .provisional, .ephemeral:
-                // Always call `registerForRemoteNotifications` to refresh Apns token if necessary.
-                // Apple recommends it ("Each time your app launches, it must register with APNs")
-                //   https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/HandlingRemoteNotifications.html
-                await MainActor.run {
-                    UIApplication.shared.registerForRemoteNotifications()
-                }
-            @unknown default:
-                AppLog.viewModel.warning("\(AppLog.logHeader(self)) Unknown Notification Authorization Status")
-            }
-
-            // Only check Notifications Status once par session.
-            guard shouldPresentOnboardingView else {
-                return
-            }
-            setLastOnboardingPresentationTimeToNow()
-
-            Task { @MainActor in
-                isPresentingOnboardingView = true
-            }
-        }
-
-        private func setNotificationManagerBaseUrl(_ url: URL) {
-            notificationManager.setBaseUrl(url)
-        }
-
-        private func setNotificationManagerUserAuthentificationToken(_ token: String) {
-            notificationManager.setUserAuthenticationToken(token)
-        }
-
-        private func resetNotificationManagerUserAuthentificationToken() {
-            notificationManager.setUserAuthenticationToken(nil)
-        }
-
-        private func userLogoutActions() {
-            // Reset NotificationManager `userAuthenticationToken`.
-            resetNotificationManagerUserAuthentificationToken()
-
-            // Reset Notification status check when on logout to recheck it on next login.
-            resetLastOnboardingPresentationTime()
-
-            Task { @MainActor in
-                // Remove all session data to avoid reusing automatically them on next connection.
-                await webViewViewModel.localStorageManager?.deleteSessionLocalData()
-                webViewViewModel.goBackToRootUrl()
-            }
-        }
-
-        private func webappIsReadyAction() {
-            Task {
-                // PromotedUrls Feature
-                //
-                // Prepare the PromotedUrls Feature viewModel when the web app is ready.
-                // This will load the aliased URLs catalog using `loadUrlAliasedUrls` method.
-                await promotedUrls?.viewModel.prepare()
-            }
+        @MainActor
+        private func loadInitialPage() {
+            // Pass attached webView to `navigationState` to handle web page archiving.
+            (webViewViewModel.navigationState as? HomeViewNavigationState)?.webView = webViewViewModel.webView
+            webViewViewModel.loadInitialPage()
         }
 
         /// PromotedUrls Feature
@@ -252,8 +134,148 @@ extension HomeView {
             }
         }
 
-        // Get the auth token from cookie store.
-        // Return nil if no token is found.
+        // MARK: - Actions triggered by webview JS events.
+
+        private func userLoginActions() {
+            // Check if user made a choice about allowing Push notifications reception.
+            Task {
+                guard let userAuthenticationToken = await getUserAuthenticationToken else {
+                    // Unable to get user authentication token. Exit.
+                    AppLog.viewModel.notice("\(AppLog.logHeader(self)) Unable to get User Authentication token")
+                    return
+                }
+
+                // Set NotificationManager `userAuthenticationToken` now we have it
+                // because a token renew can happen anytime if user already allowed notifications.
+                setNotificationManagerUserAuthentificationToken(userAuthenticationToken)
+
+                // Now that user is logged and we have its authentication token, we can proceed to
+                // check its notification status and register to backend if needed.
+                await checkNotificationStatus()
+            }
+        }
+
+        private func userLogoutActions() {
+            // Reset NotificationManager `userAuthenticationToken`.
+            resetNotificationManagerUserAuthentificationToken()
+
+            // Reset Notification status check when on logout to recheck it on next login.
+            resetLastOnboardingPresentationTime()
+
+            Task { @MainActor in
+                // Remove all session data to avoid reusing automatically them on next connection.
+                await webViewViewModel.localStorageManager?.deleteSessionLocalData()
+                webViewViewModel.goBackToRootUrl()
+            }
+        }
+
+        private func webappIsReadyAction() {
+            Task {
+                // PromotedUrls Feature
+                //
+                // Prepare the PromotedUrls Feature viewModel when the web app is ready.
+                // This will load the aliased URLs catalog using `loadUrlAliasedUrls` method.
+                await promotedUrls?.viewModel.prepare()
+            }
+        }
+
+        // MARK: - Onboarding (allow push notifications) panel presentation management
+
+        /// Check if Push Notifications are allowed and present Onboarding panel if necessary.
+        /// Called by `userLoginAction`.
+        private func checkNotificationStatus() async {
+            var shouldPresentOnboardingView = false
+
+            switch await NotificationStatus.notificationsAuthorizationStatus() {
+            case .notDetermined:
+                // User logged event is called too often.
+                // Only check Notifications Status once par session.
+                shouldPresentOnboardingView = lastOnboardingPresentationTimeIsExpired()
+            case .denied:
+                // No need to present Onboarding view: user already made its choice.
+                break
+            case .authorized, .provisional, .ephemeral:
+                // Always call `registerForRemoteNotifications` to refresh Apns token if necessary.
+                // Apple recommends it ("Each time your app launches, it must register with APNs")
+                //   https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/HandlingRemoteNotifications.html
+                await MainActor.run {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            @unknown default:
+                AppLog.viewModel.warning("\(AppLog.logHeader(self)) Unknown Notification Authorization Status")
+            }
+
+            // Only check Notifications Status once par session.
+            guard shouldPresentOnboardingView else {
+                return
+            }
+            setLastOnboardingPresentationTimeToNow()
+
+            Task { @MainActor in
+                isPresentingOnboardingView = true
+            }
+        }
+
+        private func lastOnboardingPresentationTimeIsExpired() -> Bool {
+            Date.now.timeIntervalSince(lastOnboardingPresentationTime) > Self.MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION
+        }
+
+        private func setLastOnboardingPresentationTimeToNow() {
+            lastOnboardingPresentationTime = .now
+        }
+
+        private func resetLastOnboardingPresentationTime() {
+            lastOnboardingPresentationTime = .distantPast
+        }
+
+        private func setNotificationManagerBaseUrl(_ url: URL) {
+            notificationManager.setBaseUrl(url)
+        }
+
+        private func setNotificationManagerUserAuthentificationToken(_ token: String) {
+            notificationManager.setUserAuthenticationToken(token)
+        }
+
+        private func resetNotificationManagerUserAuthentificationToken() {
+            notificationManager.setUserAuthenticationToken(nil)
+        }
+
+        // MARK: - View models builders
+
+        // TODO: move this method into a DI module.
+        /// View model built on-demand when the View need it.
+        /// - makeSettingsViewViewModel : the view model needed when accessing the Notifications settings panel.
+        func makeNotificationsSettingsViewViewModel() -> SettingsView.ViewModel {
+            SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
+                AppLog.viewModel.notice("\(AppLog.logHeader(self)) notificationsSettingDidChangeAction")
+                Task { @MainActor in
+                    await self.webViewViewModel.localStorageManager?.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
+                }
+            })
+        }
+
+        // TODO: move this method into a DI module.
+        /// View model built on-demand when the View need it.
+        /// - makeOnboardingViewViewModel : the view model needed when asking the user if receiving push notifications is allowed.
+        func makeOnboardingViewViewModel() -> OnboardingView.ViewModel {
+            let onboardingViewViewModel = OnboardingView.ViewModel(notificationManager: notificationManager)
+            onboardingViewViewModel.eventReceiver = { event in
+                switch event {
+                case .isDismissed:
+                    // Go back to root URL (to leave web page)
+                    Task { @MainActor in
+                        self.webViewViewModel.goBackToRootUrl()
+                        self.isPresentingOnboardingView = false
+                    }
+                }
+            }
+            return onboardingViewViewModel
+        }
+
+        // MARK: - Helpers
+
+        /// Get the auth token from cookie store.
+        /// Return nil if no token is found.
         private var getUserAuthenticationToken: String? {
             get async {
                 await webViewViewModel.configuration
@@ -264,7 +286,9 @@ extension HomeView {
             }
         }
 
-        private func destinationLinkViewDismissed() {
+        /// The action to execute when the user comes back to this view.
+        /// Used by WebViewNavigationhandler as action to call when dismissing the pushed view.
+        func backToHomeViewAction() {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
             selectedDestination = nil
             sendCommand(command: .resetViewToHome)
@@ -275,7 +299,7 @@ extension HomeView {
         @ObservationIgnored private var commandContinuation = [UUID: AsyncStream<HomeViewCommand>.Continuation]()
         @ObservationIgnored private var commandPending: [HomeViewCommand] = []
 
-        // Generate new command stream when view regenerates.
+        /// Generate new command stream when view regenerates.
         func commandStream() -> AsyncStream<HomeViewCommand> {
             // Unique ID for this new command stream
             let id = UUID()
@@ -300,11 +324,15 @@ extension HomeView {
             return stream
         }
 
+        /// Send the command through every registered command streams.
+        /// If no command stream accepted the command, append the command to the pending list
+        /// to be dispatched on next initied command stream.
         private func sendCommand(command: HomeViewCommand) {
             var delivered = false
 
-            // Try to send command with existing continuation.
+            // With every command stream
             for (id, continuation) in commandContinuation {
+                // Try to send command with existing continuation.
                 // If the stream is already terminated, remove it from continuations.
                 if case .terminated = continuation.yield(command) {
                     commandContinuation[id] = nil
@@ -320,106 +348,5 @@ extension HomeView {
                 commandPending.append(command)
             }
         }
-
-        // MARK: -
-    }
-}
-
-extension HomeView.ViewModel: @MainActor WebViewDelegate {
-    func checkIfNavigationIsAllowed(navigationAction: WKNavigationAction) async -> Bool {
-        guard let targetUrl = navigationAction.request.url else {
-            // No special restriction. Return TRUE.
-            return true
-        }
-
-        // PromotedUrls Feature
-        //
-        // Intercept only tapped link or navigation triggered by the web app.
-        if [WKNavigationType.linkActivated, WKNavigationType.other].contains(navigationAction.navigationType),
-           let promotedUrl = try? await promotedUrls?.handleNavigationUseCase.handle(url: targetUrl) {
-            AppLog.viewModel.notice("\(AppLog.logHeader(self)) checkIfNavigationIsAllowed Promoted URL detected: \(targetUrl)")
-            switch promotedUrl {
-            case .amiNotificationsSettings:
-                showSettings = true
-                // Although a promoted page will be presented, the initial navigation still occurs (Single Page Application side-effect?)
-                // So, go back to the previous page.
-                Task {
-                    try? await Task.sleep(for: .seconds(0.5))
-                    webViewViewModel.goBack()
-                }
-                // Block initial navigation as a promoted page is presented.
-                return false
-            default:
-                break
-            }
-            // Allow initial navigation
-            return true
-        }
-
-        let targetUrlHost = targetUrl.host()
-
-        #if IS_AMI_PRODUCTION
-            // Special case of FranceIdentité application URL.
-            // Accessing this URL should launch France Identité application if installed
-            // or France Identité website in external Safari browser if the application is not present on the device.
-            if targetUrlHost == Secrets.franceidentiteHost {
-                await UIApplication.shared.open(targetUrl)
-                return false
-            }
-        #endif
-
-        // Special case of OIDC web page for HomeView
-        // Continue normal navigation inside the Home webView.
-        //
-        // Connection pages is special for now because we can be blocked
-        // on France Connect page when loging out without any way to exit the error page.
-        // So let's the back button be present.
-        //
-        if let targetUrlHost,
-           Config.shared.OIDC_HOSTS.contains(targetUrlHost) {
-            showBackButton = true
-            return true
-        } else {
-            showBackButton = false
-        }
-
-        // Special case of "about:blank" (used on FI impots.gouv.fr)
-        if targetUrlHost == nil {
-            return true
-        }
-
-        // Special process for destination Url
-        // If the destination url is outside the root domain, open as a Service in a dedicated webview.
-        if !targetUrl.absoluteString.hasPrefix(webViewViewModel.rootUrl.absoluteString) {
-            selectedDestination = ServiceLinkViewModel(destinationUrl: targetUrl,
-                                                       dataStore: webViewViewModel.configuration.websiteDataStore,
-                                                       sourceUrl: webViewViewModel.webView?.url,
-                                                       specialLinkHandler: webViewViewModel.specialLinkHandler) { [weak self] in
-                self?.destinationLinkViewDismissed()
-            }
-            // Go back to previous page in originating webview.
-            Task { @MainActor in
-                webViewViewModel.goBack()
-            }
-            return false
-        }
-
-        return true
-    }
-
-    func navigationWillStart(navigationAction: WKNavigationAction) {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationWillStart")
-    }
-
-    func navigationDidStart() {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidStart")
-    }
-
-    func navigationDidFinish() {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFinish")
-    }
-
-    func navigationDidFailed(withError error: Error) {
-        AppLog.viewModel.notice("\(AppLog.logHeader(self)) NavigationDidFailed] failed with error \(error)")
     }
 }

@@ -98,7 +98,7 @@ class HomeNativeInfosScripts {
 // Encodable capability is only used here.
 extension PromotedAliases: Encodable {}
 
-extension HomeNativeInfosScripts: WebViewUserScriptsProtocol {
+extension HomeNativeInfosScripts: WebViewUserScripts {
     func userScriptEmittedMessage(_ message: WKScriptMessage, for viewModel: SwiftUIWebView.ViewModel) {
         switch Script(rawValue: message.name) {
         case .getNativeInfos, .none:

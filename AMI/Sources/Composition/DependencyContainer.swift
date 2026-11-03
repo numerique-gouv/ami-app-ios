@@ -19,15 +19,14 @@ enum DependencyContainer {
     // This common website DataStore will be injected n root views to be shared with all child webviews.
     private static let commonWebsiteDataStore: WKWebsiteDataStore = .default()
 
-    private static let webViewDelegateSimulatorImplementation = WebViewDelegateSimulatorImplementation()
-
     /// ViewModel used by `SwiftUIWebView` preview in Xcode.
     static func makeSimulatorPreviewSwiftUIWebViewModel() -> SwiftUIWebView.ViewModel {
-        let model = SwiftUIWebView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
+        let rootUrl = URL(string: "https://numerique.gouv.fr")!
+        let model = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                              websiteDataStore: .nonPersistent(),
-                                             specialLinkHandler: Self.specialLinkHandler,
+                                             navigationHandler: DefaultWebViewNavigationHandler(rootUrl: rootUrl, specialLinkHandler: specialLinkHandler),
+                                             navigationState: DefaultWebViewNavigationState(),
                                              initialUserScripts: HomeUserScripts())
-        model.delegate = Self.webViewDelegateSimulatorImplementation
 
         #if DEBUG
             model.acceptSelfSignedCertificate = true
@@ -51,11 +50,28 @@ enum DependencyContainer {
         }
     }
 
-    #if IS_AMI_STAGING
-        static func makeReviewAppViewModel() -> ReviewAppView.ViewModel {
+    #if IS_AMI_PRODUCTION || IS_AMI_PREPRODUCTION
+
+        static func makeRootViewModel() -> HomeView.ViewModel {
+            HomeView.ViewModel(rootUrl: Config.shared.BASE_URL,
+                               websiteDataStore: commonWebsiteDataStore,
+                               specialLinkHandler: specialLinkHandler,
+                               notificationManager: notificationManager)
+        }
+
+    #elseif IS_AMI_STAGING
+
+        static func makeReviewAppsListViewModel() -> ReviewAppView.ViewModel {
             ReviewAppView.ViewModel(websiteDataStore: commonWebsiteDataStore,
                                     specialLinkHandler: specialLinkHandler,
                                     notificationManager: notificationManager)
+        }
+
+        static func makeReviewAppHomeViewModel(for rootUrl: URL) -> HomeView.ViewModel {
+            HomeView.ViewModel(rootUrl: rootUrl,
+                               websiteDataStore: commonWebsiteDataStore,
+                               specialLinkHandler: specialLinkHandler,
+                               notificationManager: notificationManager)
         }
 
         static func makePreviewReviewAppViewModel() -> ReviewAppView.ViewModel {
@@ -63,19 +79,6 @@ enum DependencyContainer {
                                     specialLinkHandler: specialLinkHandler,
                                     notificationManager: notificationManager)
         }
+
     #endif
-
-    static func makeHomeViewModel() -> HomeView.ViewModel {
-        HomeView.ViewModel(rootUrl: Config.shared.BASE_URL,
-                           websiteDataStore: commonWebsiteDataStore,
-                           specialLinkHandler: specialLinkHandler,
-                           notificationManager: notificationManager)
-    }
-
-    static func makeReviewAppHomeViewModel(rootUrl: URL) -> HomeView.ViewModel {
-        HomeView.ViewModel(rootUrl: rootUrl,
-                           websiteDataStore: commonWebsiteDataStore,
-                           specialLinkHandler: specialLinkHandler,
-                           notificationManager: notificationManager)
-    }
 }

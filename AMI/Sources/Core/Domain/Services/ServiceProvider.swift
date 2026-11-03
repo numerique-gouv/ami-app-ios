@@ -12,3 +12,12 @@ enum ServiceProvider: Hashable, Sendable {
     case servicePublic
     case demarchesNumeriques
 }
+
+extension ServiceProvider: CustomStringConvertible {
+    var description: String {
+        switch self {
+        case .servicePublic: "servicePublic"
+        case .demarchesNumeriques: "demarchesNumeriques"
+        }
+    }
+}

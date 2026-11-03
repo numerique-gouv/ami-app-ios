@@ -18,7 +18,8 @@ struct ReviewAppView: View {
 
     var body: some View {
         Text("Choix de la review")
-            .font(.title)
+            .font(DsfrFont.h1.font)
+            .foregroundStyle(AmiDesignSystem.Colors.Text.Active.blueFrance.swiftUIColor)
         ScrollView {
             ForEach(viewModel.reviewApps) { reviewApp in
                 if URL(string: reviewApp.url) != nil {
@@ -26,12 +27,20 @@ struct ReviewAppView: View {
                         viewModel.selectReviewApp(reviewApp: reviewApp)
                     } label: {
                         TileView(title: reviewApp.title,
-                                 content: reviewApp.description ?? "")
+                                 content: reviewApp.reviewAppDescription ?? "")
                     }
                 }
             }
             .navigationDestination(item: $viewModel.selectedReviewAppViewModel) { viewModel in
                 HomeView(viewModel: viewModel)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .pendingUrl)) { notification in
+            viewModel.notificationReceived(notification: notification)
+        }
+        .refreshable {
+            Task {
+                try? await viewModel.fetchReviewApps()
             }
         }
     }

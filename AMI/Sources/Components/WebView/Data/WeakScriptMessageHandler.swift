@@ -20,10 +20,8 @@ final class WeakScriptMessageHandler: NSObject, WKScriptMessageHandler {
         self.target = target
     }
 
-    func userContentController(
-        _ userContentController: WKUserContentController,
-        didReceive message: WKScriptMessage
-    ) {
+    func userContentController(_ userContentController: WKUserContentController,
+                               didReceive message: WKScriptMessage) {
         target?.userContentController(userContentController, didReceive: message)
     }
 }

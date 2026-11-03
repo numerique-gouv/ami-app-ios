@@ -8,14 +8,32 @@
 
 import Foundation
 
-/// A kind of link that the system can handle natively.
+/// A kind of link that the operating system can handle natively.
 ///
 /// Each case's raw value is the URL scheme used to recognize that link kind.
-enum SpecialLinkType: String {
+enum SpecialLinkType: Sendable {
     /// An email link (`mailto:`).
-    case email = "mailto"
+    case email(URL)
     /// A phone number link (`tel:`).
-    case phone = "tel"
+    case phone(URL)
+
+    init?(url: URL) {
+        guard let scheme = url.scheme else {
+            return nil
+        }
+        switch scheme {
+        case "mailto": self = .email(url)
+        case "tel": self = .phone(url)
+        default: return nil
+        }
+    }
+
+    var url: URL {
+        switch self {
+        case let .email(url): url
+        case let .phone(url): url
+        }
+    }
 
     /// Determines what kind of special link a URL represents, if any.
     ///
@@ -23,9 +41,6 @@ enum SpecialLinkType: String {
     /// - Returns: The `SpecialLinkType` matching the URL's scheme, or `nil`
     ///            if the URL has no scheme, or its scheme is not a recognized special link.
     static func linkType(_ forUrl: URL) -> SpecialLinkType? {
-        guard let urlScheme = forUrl.scheme else {
-            return nil
-        }
-        return SpecialLinkType(rawValue: urlScheme)
+        SpecialLinkType(url: forUrl)
     }
 }
