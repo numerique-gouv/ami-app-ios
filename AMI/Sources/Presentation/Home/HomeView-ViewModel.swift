@@ -70,15 +70,6 @@ extension HomeView {
             navigationHandler.promotedUrls = promotedUrls
             navigationHandler.viewModel = self
 
-            webViewViewModel.webViewReplacedAction = { [weak self] _ in
-                guard let self,
-                      modelIsFullyConfigured else {
-                    return
-                }
-
-                loadInitialPage()
-            }
-
             userScripts.userLoggedInAction = userLoginActions
             userScripts.userLoggedOutAction = userLogoutActions
             userScripts.webappIsReadyAction = webappIsReadyAction
@@ -89,7 +80,6 @@ extension HomeView {
             Task { @MainActor in
                 let nativeInfosScript = await HomeNativeInfosScripts()
                 webViewViewModel.addUserScripts(userScripts: nativeInfosScript)
-                modelIsFullyConfigured = true
 
                 // Load initial page now that viewModel is fully ready.
                 loadInitialPage()
@@ -291,62 +281,8 @@ extension HomeView {
         func backToHomeViewAction() {
             AppLog.viewModel.log("\(AppLog.logHeader(self)) call")
             selectedDestination = nil
-            sendCommand(command: .resetViewToHome)
-        }
-
-        // MARK: - Commands Stream
-
-        @ObservationIgnored private var commandContinuation = [UUID: AsyncStream<HomeViewCommand>.Continuation]()
-        @ObservationIgnored private var commandPending: [HomeViewCommand] = []
-
-        /// Generate new command stream when view regenerates.
-        func commandStream() -> AsyncStream<HomeViewCommand> {
-            // Unique ID for this new command stream
-            let id = UUID()
-
-            // Create the command stream.
-            let (stream, continuation) = AsyncStream.makeStream(
-                of: HomeViewCommand.self,
-                bufferingPolicy: .bufferingNewest(8)
-            )
-
-            // Store the AsyncStream.Continuation asssociated with this ID.
-            commandContinuation[id] = continuation
-
-            // Send any pending command.
-            for command in commandPending {
-                continuation.yield(command)
-            }
-
-            // Remove any pending command.
-            commandPending.removeAll()
-
-            return stream
-        }
-
-        /// Send the command through every registered command streams.
-        /// If no command stream accepted the command, append the command to the pending list
-        /// to be dispatched on next initied command stream.
-        private func sendCommand(command: HomeViewCommand) {
-            var delivered = false
-
-            // With every command stream
-            for (id, continuation) in commandContinuation {
-                // Try to send command with existing continuation.
-                // If the stream is already terminated, remove it from continuations.
-                if case .terminated = continuation.yield(command) {
-                    commandContinuation[id] = nil
-                } else {
-                    // Else, check the command as delivered.
-                    delivered = true
-                }
-            }
-
-            // If no stream was available to deliver the command, appends it to pending commands.
-            // The pending commands will be picked up next time an AsyncStream is needed by a regenerated view.
-            if !delivered {
-                commandPending.append(command)
-            }
+            // Tell HomeView to go back to last visited page.
+            webViewViewModel.goBackToLastVisitedPage()
         }
     }
 }
