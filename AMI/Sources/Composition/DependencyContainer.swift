@@ -21,7 +21,7 @@ enum DependencyContainer {
     private static let commonWebsiteDataStore: WKWebsiteDataStore = .default()
 
     /// ViewModel used by `SwiftUIWebView` preview in Xcode.
-    static func makeSimulatorPreviewSwiftUIWebViewModel() -> SwiftUIWebView.ViewModel {
+    static func makePreviewSwiftUIWebViewModel() -> SwiftUIWebView.ViewModel {
         let rootUrl = URL(string: "https://numerique.gouv.fr")!
         let model = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                              websiteDataStore: .nonPersistent(),
