@@ -222,6 +222,8 @@ targets:
       excludes:
         - "*.env" # excludes all files with the .env extension
         - ".env.*" # excludes all files with the .env prefix
+    # add target resources
+    - path: targets/production/Resources
 #--------------------------------------------------------------------------------
   AMI-Preproduction:
     templates: 
@@ -269,6 +271,8 @@ targets:
       excludes:
         - "*.env" # excludes all files with the .env extension
         - ".env.*" # excludes all files with the .env prefix
+    # add target resources
+    - path: targets/preproduction/Resources
 #--------------------------------------------------------------------------------
   AMI-Staging:
     templates: 
@@ -314,6 +318,8 @@ targets:
       excludes:
         - "*.env" # excludes all files with the .env extension
         - ".env.*" # excludes all files with the .env prefix
+    # add target resources
+    - path: targets/staging/Resources
 #--------------------------------------------------------------------------------
   AMI-UnitTests:
     templates: 

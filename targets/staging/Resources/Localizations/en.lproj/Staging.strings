@@ -1,0 +1,12 @@
+/* 
+  Localizable.strings
+  AMI-xcodegen
+
+  Created by Nicolas Buquet on 16/01/2026.
+  Copyright © 2026 DINUM. All rights reserved.
+*/
+
+// Force expire France Connexion feature
+force_expire_france_connexion_title = "Expire your FranceConnexion";
+force_expire_france_connexion_message = "Delete all authentication cookies?";
+force_expire_france_connexion_ok_button_title = "Delete";
