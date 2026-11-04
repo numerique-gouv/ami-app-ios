@@ -77,7 +77,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didReceiveRemoteNotification userInfo: [AnyHashable: Any],
                      fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
-        notificationManager?.dispatcher.publishSilentPush(userInfo: userInfo)
+        notificationManager?.publishSilentPush(userInfo: userInfo)
         completionHandler(.newData)
     }
 }

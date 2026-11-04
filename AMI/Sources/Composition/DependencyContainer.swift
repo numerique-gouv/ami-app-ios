@@ -15,6 +15,12 @@ enum DependencyContainer {
     private static let specialLinkHandler = SpecialLinkHandler()
 
     static let appState = AMIAppState()
+    /// A concrete Notification Dispatcher based on an AsyncStream.
+    /// It dispatches Notifications Events to the unique RootViewModel that handles it.
+    private static let notificationEventDispatcher = AsyncStreamNotificationEventDispatcher()
+    /// The notification manager that forward received notifications to a Notification Events Dispatcher.
+    private static let notificationManager = NotificationManager(eventsDispatcher: Self.notificationEventDispatcher)
+    /// This common website DataStore will be injected n root views to be shared with all child webviews.
     private static let commonWebsiteDataStore: WKWebsiteDataStore = .default()
 
     /// ViewModel used by `SwiftUIWebView` preview in Xcode.

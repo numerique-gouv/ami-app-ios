@@ -24,10 +24,10 @@ class NotificationManager: NSObject {
     /// How foreground notifications are displayed. Adjust as needed.
     private var foregroundPresentation: UNNotificationPresentationOptions = [.banner, .list, .sound]
 
-    let dispatcher = NotificationDispatcher()
+    let eventsDispatcher: any NotificationEventDispatcher
 
-    override init() {
-        super.init()
+    required init(eventsDispatcher: any NotificationEventDispatcher) {
+        self.eventsDispatcher = eventsDispatcher
     }
 
     func setBaseUrl(_ url: URL) {
@@ -102,9 +102,9 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         )
 
         /// Disaptch notification to subscribers.
-        dispatcher.publish(NotificationEvent(request: notification.request,
-                                             date: notification.date,
-                                             source: .foreground))
+        eventsDispatcher.publish(NotificationEvent(request: notification.request,
+                                                   date: notification.date,
+                                                   source: .foreground))
 
         /// Display notification banner, play sound, and update badge even when app is open
         completionHandler(foregroundPresentation)
@@ -134,9 +134,9 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         }
 
         /// Disaptch notification to subscribers.
-        dispatcher.publish(NotificationEvent(request: response.notification.request,
-                                             date: response.notification.date,
-                                             source: .userResponse(actionIdentifier: response.actionIdentifier)))
+        eventsDispatcher.publish(NotificationEvent(request: response.notification.request,
+                                                   date: response.notification.date,
+                                                   source: .userResponse(actionIdentifier: response.actionIdentifier)))
 
         /// Call completion handler.
         completionHandler()
@@ -144,7 +144,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
 
     /// Call from the AppDelegate's didReceiveRemoteNotification for silent pushes.
     func publishSilentPush(userInfo: [AnyHashable: Any]) {
-        dispatcher.publishSilentPush(userInfo: userInfo)
+        eventsDispatcher.publishSilentPush(userInfo: userInfo)
     }
 }
 
