@@ -1,5 +1,5 @@
 //
-//  NotificationEventImplementation.swift
+//  NotificationEventJson.swift
 //  AMI-xcodegen
 //
 //  Created by Nicolas Buquet on 03/11/2026.

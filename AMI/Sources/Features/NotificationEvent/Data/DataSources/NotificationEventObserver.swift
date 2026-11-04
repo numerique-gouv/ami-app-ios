@@ -1,5 +1,5 @@
 //
-//  NotificationObserver.swift
+//  NotificationEventObserver.swift
 //  AMI-xcodegen
 //
 //  Created by Nicolas Buquet on 03/11/2026.
@@ -8,15 +8,17 @@
 
 import Foundation
 
-struct NotificationObserver {
-    private let receiver: any NotificationEventReceiver
+struct NotificationEventObserver {
+    typealias EventsSource = AsyncStream<NotificationEvent>
 
-    init(receiver: any NotificationEventReceiver) {
-        self.receiver = receiver
+    private let notificationObserverAction: NotificationEventObserverAction
+
+    init(notificationObserverAction: @escaping NotificationEventObserverAction) {
+        self.notificationObserverAction = notificationObserverAction
     }
 
     /// Runs until the calling task is cancelled (e.g. the view's `.task` ends).
-    func observeNotifications(from eventsSource: AsyncStream<NotificationEvent>) async {
+    func observeNotifications(from eventsSource: EventsSource) async {
         for await event in eventsSource {
             await handleIncomingNotification(event)
         }
@@ -42,14 +44,7 @@ struct NotificationObserver {
             """
         )
 
-        await receiver.handle(notificationEvent: event)
-
-//        // Call action only if the host of the application URL of the notification payload matches the base domain.
-//        if case .userResponse = event.source, // Did user tap the notification?
-//           let targetApplicationUrl = try? event.decodePayload(as: NotificationEventPayload.self)?.applicationUrl,
-//           // Check if notification is targeted at current review application (no rootUrl == catch all)
-//           rootUrl == nil || targetApplicationUrl.host() == rootUrl?.host() {
-//            notificationReceivedAction(targetApplicationUrl)
-//        }
+        // Dispatch Notification event.
+        await notificationObserverAction(event)
     }
 }
