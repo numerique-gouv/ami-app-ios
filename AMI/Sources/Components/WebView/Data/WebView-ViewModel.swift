@@ -236,7 +236,7 @@ extension SwiftUIWebView.ViewModel: @MainActor WKNavigationDelegate {
 
         navigationHandler.prepareNavigation(to: navigationType)
 
-        if navigationType.navigationPoliciy == .allow {
+        if navigationType.navigationPolicy == .allow {
             navigationState.navigationWillStart(navigationAction: navigationAction)
         } else if case let .specialLink(specialLink) = navigationType {
             do {
@@ -245,9 +245,13 @@ extension SwiftUIWebView.ViewModel: @MainActor WKNavigationDelegate {
             } catch {
                 alertModel = error.alert
             }
+        } else if case let .interceptedLink(rewrittenUrl) = navigationType {
+            // Navigation type is `interceptedLink`. Navigate to rewritten URL.
+            // Current navigation action will be canceled by the navigation policy.
+            webView.load(URLRequest(url: rewrittenUrl))
         }
 
-        return (navigationType.navigationPoliciy, preferences)
+        return (navigationType.navigationPolicy, preferences)
     }
 
     func webView(_ webView: WKWebView,

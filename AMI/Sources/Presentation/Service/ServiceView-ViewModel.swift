@@ -31,7 +31,10 @@ extension ServiceView {
              backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let navigationHandler = ServiceViewNavigationHandler(rootUrl: rootUrl,
-                                                                 specialLinkHandler: specialLinkHandler)
+                                                                 specialLinkHandler: specialLinkHandler,
+                                                                 // UrlInterception Feature
+                                                                 //
+                                                                 urlInterception: UrlInterceptionFeature())
             let defaultNavigationState = DefaultWebViewNavigationState()
 
             let userScripts = ServiceViewUserScripts()
