@@ -15,8 +15,6 @@ enum DependencyContainer {
     private static let specialLinkHandler = SpecialLinkHandler()
 
     static let appState = AMIAppState()
-    static let notificationManager = NotificationManager()
-    // This common website DataStore will be injected n root views to be shared with all child webviews.
     private static let commonWebsiteDataStore: WKWebsiteDataStore = .default()
 
     /// ViewModel used by `SwiftUIWebView` preview in Xcode.
@@ -35,11 +33,8 @@ enum DependencyContainer {
         return model
     }
 
-    static func makePreviewHomeViewModel() -> HomeView.ViewModel {
-        HomeView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
-                           websiteDataStore: .nonPersistent(),
-                           specialLinkHandler: specialLinkHandler,
-                           notificationManager: notificationManager)
+    static func makeNotificationManager() -> NotificationManager {
+        notificationManager
     }
 
     static func makePreviewServiceViewModel() -> ServiceView.ViewModel {

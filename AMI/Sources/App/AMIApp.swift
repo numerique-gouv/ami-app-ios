@@ -24,11 +24,13 @@ struct AMIApp: App {
         // Load Marianne fonts embedded in AMI Design System
         FontLoader.registerFonts()
 
+        let notificationManager = DependencyContainer.makeNotificationManager()
+
         // Set the notificationManager to receive notification events.
-        UNUserNotificationCenter.current().delegate = DependencyContainer.notificationManager
+        UNUserNotificationCenter.current().delegate = notificationManager
 
         // Set AppDelegate notificationManager for Firebase configuration.
-        delegate.notificationManager = DependencyContainer.notificationManager
+        delegate.notificationManager = notificationManager
     }
 
     @ViewBuilder
