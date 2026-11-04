@@ -43,41 +43,45 @@ enum DependencyContainer {
         notificationManager
     }
 
-    static func makePreviewServiceViewModel() -> ServiceView.ViewModel {
-        ServiceView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
-                              websiteDataStore: .nonPersistent(),
-                              specialLinkHandler: specialLinkHandler,
-                              notificationManager: notificationManager) {
+    static func makePreviewHomeViewModel() -> HomeViewModel {
+        HomeViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
+                      websiteDataStore: .nonPersistent(),
+                      specialLinkHandler: specialLinkHandler,
+                      notificationManager: notificationManager)
+    }
+
+    static func makePreviewServiceViewModel() -> ServiceViewModel {
+        ServiceViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
+                         websiteDataStore: .nonPersistent(),
+                         specialLinkHandler: specialLinkHandler,
+                         notificationManager: notificationManager) {
             AppLog.viewModel.log("\(AppLog.logHeader()) Back to home called")
         }
     }
 
     #if IS_AMI_PRODUCTION || IS_AMI_PREPRODUCTION
 
-        static func makeRootViewModel() -> HomeView.ViewModel {
-            HomeView.ViewModel(rootUrl: Config.shared.BASE_URL,
-                               websiteDataStore: commonWebsiteDataStore,
-                               specialLinkHandler: specialLinkHandler,
-                               notificationManager: notificationManager)
+        static func makeRootViewModel() -> RootViewModel<HomeViewModel> {
+            let homeViewModel = HomeViewModel(rootUrl: Config.shared.BASE_URL,
+                                              websiteDataStore: commonWebsiteDataStore,
+                                              specialLinkHandler: specialLinkHandler,
+                                              notificationManager: notificationManager)
+            return RootViewModel(viewModel: homeViewModel,
+                                 eventsSource: notificationManager.eventsDispatcher.events())
         }
 
     #elseif IS_AMI_STAGING
 
-        static func makeReviewAppsListViewModel() -> ReviewAppView.ViewModel {
-            ReviewAppView.ViewModel(websiteDataStore: commonWebsiteDataStore,
-                                    specialLinkHandler: specialLinkHandler,
-                                    notificationManager: notificationManager)
+        static func makeRootViewModel() -> RootViewModel<ReviewAppsListViewModel> {
+            let reviewAppsListViewModel = ReviewAppsListViewModel(websiteDataStore: commonWebsiteDataStore,
+                                                                  specialLinkHandler: specialLinkHandler,
+                                                                  notificationManager: notificationManager)
+            return RootViewModel(viewModel: reviewAppsListViewModel,
+                                 eventsSource: notificationManager.eventsDispatcher.events())
         }
 
-        static func makeReviewAppHomeViewModel(for rootUrl: URL) -> HomeView.ViewModel {
-            HomeView.ViewModel(rootUrl: rootUrl,
-                               websiteDataStore: commonWebsiteDataStore,
-                               specialLinkHandler: specialLinkHandler,
-                               notificationManager: notificationManager)
-        }
-
-        static func makePreviewReviewAppViewModel() -> ReviewAppView.ViewModel {
-            ReviewAppView.ViewModel(websiteDataStore: .nonPersistent(),
+        static func makePreviewReviewAppsListViewModel() -> ReviewAppsListViewModel {
+            ReviewAppsListViewModel(websiteDataStore: .nonPersistent(),
                                     specialLinkHandler: specialLinkHandler,
                                     notificationManager: notificationManager)
         }

@@ -10,9 +10,9 @@ import Foundation
 import SwiftUI
 
 struct RootView: View {
-    @Bindable var viewModel: RootView.ViewModel
+    @Bindable var viewModel: RootViewModel<HomeViewModel>
 
     var body: some View {
-        HomeView(viewModel: viewModel.homeViewModel)
+        HomeView(viewModel: viewModel.presentedViewModel)
     }
 }

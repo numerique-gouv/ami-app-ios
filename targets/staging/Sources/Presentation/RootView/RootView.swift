@@ -10,10 +10,10 @@ import Foundation
 import SwiftUI
 
 struct RootView: View {
-    @Bindable var viewModel: ViewModel
+    @Bindable var viewModel: RootViewModel<ReviewAppsListViewModel>
 
     @ViewBuilder
     var body: some View {
-        ReviewAppView(viewModel: DependencyContainer.makeReviewAppsListViewModel())
+        ReviewAppsListView(viewModel: viewModel.presentedViewModel)
     }
 }

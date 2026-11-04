@@ -16,7 +16,15 @@ struct AMIApp: App {
     @State var rootView: RootView
 
     init() {
-        rootView = RootView(viewModel: RootView.ViewModel())
+        // Init the root view distinct by environment:
+        // - Staging:
+        //   a ReviewAppsListView using a ReviewAppsListViewModel that catches
+        //   all notification events and activates the corresponding review app
+        //   or forwards the notification event to the review app if it is already active.
+        // - PreProduction//Production:
+        //   a RootView using a RootViewModel that catches all notification events
+        //   but ignores any events not related to it (based on root Url).
+        rootView = RootView(viewModel: DependencyContainer.makeRootViewModel())
 
         // Set default accent color for UIKit components.
         Color.setUIKitAccentColor()
