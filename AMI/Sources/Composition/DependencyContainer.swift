@@ -45,10 +45,7 @@ enum DependencyContainer {
     }
 
     static func makePreviewOnboardingViewModel() -> OnboardingView.ViewModel {
-        OnboardingView.ViewModel(
-            applicationRootUrl: URL(string: "https://google.com")!,
-            notificationManager: notificationManager
-        )
+        OnboardingView.ViewModel(notificationManager: notificationManager)
     }
 
     static func makePreviewServiceViewModel() -> ServiceView.ViewModel {
@@ -69,7 +66,8 @@ enum DependencyContainer {
             HomeView.ViewModel(rootUrl: Config.shared.BASE_URL,
                                websiteDataStore: commonWebsiteDataStore,
                                specialLinkHandler: specialLinkHandler,
-                               notificationManager: notificationManager)
+                               notificationManager: notificationManager,
+                               deviceIdProvider: deviceIdProvider)
         }
 
     #elseif IS_AMI_STAGING
@@ -84,7 +82,8 @@ enum DependencyContainer {
             HomeView.ViewModel(rootUrl: rootUrl,
                                websiteDataStore: commonWebsiteDataStore,
                                specialLinkHandler: specialLinkHandler,
-                               notificationManager: notificationManager)
+                               notificationManager: notificationManager,
+                               deviceIdProvider: deviceIdProvider)
         }
 
         static func makePreviewReviewAppViewModel() -> ReviewAppView.ViewModel {
