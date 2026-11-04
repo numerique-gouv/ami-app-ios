@@ -9,7 +9,7 @@ import Foundation
 
 struct ReviewApp: Decodable, Identifiable, Hashable {
     var id: UUID = .init()
-    let url: String
+    let url: URL
     let title: String
     let number: Int
     let reviewAppDescription: String?
