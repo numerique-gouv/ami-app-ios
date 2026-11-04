@@ -48,7 +48,8 @@ extension HomeView {
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
              specialLinkHandler: any SpecialLinkProtocol,
-             notificationManager: NotificationManager) {
+             notificationManager: NotificationManager,
+             deviceIdProvider: any DeviceIDProvider) {
             let navigationHandler = HomeViewNavigationHandler(rootUrl: rootUrl,
                                                               specialLinkHandler: specialLinkHandler)
             let userScripts = HomeUserScripts()
@@ -87,7 +88,7 @@ extension HomeView {
             setNotificationManagerBaseUrl(rootUrl)
 
             Task { @MainActor in
-                let nativeInfosScript = await HomeNativeInfosScripts()
+                let nativeInfosScript = await HomeNativeInfosScripts(deviceID: deviceIdProvider.getOrCreateDeviceID())
                 webViewViewModel.addUserScripts(userScripts: nativeInfosScript)
                 modelIsFullyConfigured = true
 

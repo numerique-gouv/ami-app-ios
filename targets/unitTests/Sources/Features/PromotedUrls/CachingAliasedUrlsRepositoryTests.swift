@@ -1,5 +1,6 @@
 //
 //  CachingAliasedUrlsRepositoryTests.swift
+//  AMI-UnitTests
 //
 //  Tests the caching repository through its public API, using
 //  `ClosureAliasedUrlsDataSource` as the in-memory test double.
