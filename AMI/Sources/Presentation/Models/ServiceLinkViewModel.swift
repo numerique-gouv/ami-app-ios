@@ -19,7 +19,7 @@ struct ServiceLinkViewModel {
     private let specialLinkHandler: any SpecialLinkProtocol
     private let notificationManager: NotificationManager
 
-    let model: ServiceView.ViewModel
+    let model: ServiceViewModel
 
     init(destinationUrl: URL,
          dataStore: WKWebsiteDataStore,
@@ -33,12 +33,12 @@ struct ServiceLinkViewModel {
         self.specialLinkHandler = specialLinkHandler
         self.notificationManager = notificationManager
 
-        model = ServiceView.ViewModel(rootUrl: destinationUrl,
-                                      websiteDataStore: dataStore,
-                                      refererUrl: sourceUrl,
-                                      specialLinkHandler: specialLinkHandler,
-                                      notificationManager: notificationManager,
-                                      backToHomeAction: destinationViewDismissedAction)
+        model = ServiceViewModel(rootUrl: destinationUrl,
+                                 websiteDataStore: dataStore,
+                                 refererUrl: sourceUrl,
+                                 specialLinkHandler: specialLinkHandler,
+                                 notificationManager: notificationManager,
+                                 backToHomeAction: destinationViewDismissedAction)
     }
 }
 

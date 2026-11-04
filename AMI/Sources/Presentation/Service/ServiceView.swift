@@ -9,9 +9,9 @@ import SwiftUI
 import WebKit
 
 struct ServiceView: View {
-    @Bindable var viewModel: ViewModel
+    @Bindable var viewModel: ServiceViewModel
 
-    init(viewModel: ViewModel) {
+    init(viewModel: ServiceViewModel) {
         self.viewModel = viewModel
     }
 

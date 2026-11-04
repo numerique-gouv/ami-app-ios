@@ -11,9 +11,9 @@ import WebKit
 
 struct HomeView: View {
     @Environment(\.dismiss) var dismiss
-    @Bindable var viewModel: ViewModel
+    @Bindable var viewModel: HomeViewModel
 
-    init(viewModel: ViewModel) {
+    init(viewModel: HomeViewModel) {
         self.viewModel = viewModel
     }
 

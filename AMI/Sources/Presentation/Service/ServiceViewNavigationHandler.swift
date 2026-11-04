@@ -13,7 +13,7 @@ final class ServiceViewNavigationHandler: WebViewNavigationHandler {
     let rootUrl: URL
     let specialLinkHandler: any SpecialLinkProtocol
     weak var promotedUrls: PromotedUrlsFeature?
-    weak var viewModel: ServiceView.ViewModel?
+    weak var viewModel: ServiceViewModel?
 
     init(rootUrl: URL, specialLinkHandler: any SpecialLinkProtocol) {
         self.rootUrl = rootUrl
