@@ -24,9 +24,6 @@ extension ServiceView {
 
         var selectedDestination: ServiceLinkViewModel?
 
-        // UrlInterception Feature
-        private var urlInterception: UrlInterceptionFeature
-
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
              refererUrl: URL? = nil,
@@ -34,7 +31,10 @@ extension ServiceView {
              backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let navigationHandler = ServiceViewNavigationHandler(rootUrl: rootUrl,
-                                                                 specialLinkHandler: specialLinkHandler)
+                                                                 specialLinkHandler: specialLinkHandler,
+                                                                 // UrlInterception Feature
+                                                                 //
+                                                                 urlInterception: UrlInterceptionFeature())
             let defaultNavigationState = DefaultWebViewNavigationState()
 
             let userScripts = ServiceViewUserScripts()
@@ -46,10 +46,6 @@ extension ServiceView {
                                                             initialUserScripts: userScripts)
             self.webViewViewModel = webViewViewModel
             self.backToHomeAction = backToHomeAction
-
-            // UrlInterception Feature
-            //
-            urlInterception = UrlInterceptionFeature()
 
             super.init()
 

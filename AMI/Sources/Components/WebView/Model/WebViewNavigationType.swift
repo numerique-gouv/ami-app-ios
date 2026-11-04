@@ -31,7 +31,8 @@ enum WebViewNavigationType: Sendable {
     case downloadLink
     /// A special link as `mailto` or `tel` that should be intercepted and handled by the operating system.
     case specialLink(SpecialLinkType)
-
+    /// A link intercepted and modified (query parameter added for instance)
+    case interceptedLink(URL)
     /// The `WKNavigationActionPolicy` (.allow, .cancel, .download) associated to each navigation type.
     var navigationPoliciy: WKNavigationActionPolicy {
         switch self {
@@ -45,6 +46,7 @@ enum WebViewNavigationType: Sendable {
         case .otherDomain: .cancel
         case .downloadLink: .download
         case .specialLink: .cancel
+        case .interceptedLink: .cancel
         }
     }
 }

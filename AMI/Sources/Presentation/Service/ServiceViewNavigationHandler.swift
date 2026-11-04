@@ -12,12 +12,15 @@ import WebKit
 final class ServiceViewNavigationHandler: WebViewNavigationHandler {
     let rootUrl: URL
     let specialLinkHandler: any SpecialLinkProtocol
+    // UrlInterception Feature
+    private let urlInterception: UrlInterceptionFeature
     weak var promotedUrls: PromotedUrlsFeature?
     weak var viewModel: ServiceView.ViewModel?
 
-    init(rootUrl: URL, specialLinkHandler: any SpecialLinkProtocol) {
+    init(rootUrl: URL, specialLinkHandler: any SpecialLinkProtocol, urlInterception: UrlInterceptionFeature) {
         self.rootUrl = rootUrl
         self.specialLinkHandler = specialLinkHandler
+        self.urlInterception = urlInterception
     }
 
     /// Returns the navigation type decided from the navigation action.
@@ -38,6 +41,14 @@ final class ServiceViewNavigationHandler: WebViewNavigationHandler {
         // Check if it is a special link to intercept and dispatch to the operating system.
         if let specialLink = specialLinkHandler.specialLink(for: targetUrl) {
             return .specialLink(specialLink)
+        }
+
+        // UrlInterception Feature
+        //
+        // Check if the target link is a link to rewrite (like adding query parameter `view=mobile`).
+        if [WKNavigationType.linkActivated, WKNavigationType.other].contains(navigationAction.navigationType),
+           let rewrittenUrl = urlInterception.rewriteUrl.rewrite(url: targetUrl) {
+            return .interceptedLink(rewrittenUrl)
         }
 
         // Special process for destination Url
