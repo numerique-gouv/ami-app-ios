@@ -236,7 +236,7 @@ extension SwiftUIWebView.ViewModel: @MainActor WKNavigationDelegate {
 
         navigationHandler.prepareNavigation(to: navigationType)
 
-        if navigationType.navigationPoliciy == .allow {
+        if navigationType.navigationPolicy == .allow {
             navigationState.navigationWillStart(navigationAction: navigationAction)
         } else if case let .specialLink(specialLink) = navigationType {
             do {
@@ -251,7 +251,7 @@ extension SwiftUIWebView.ViewModel: @MainActor WKNavigationDelegate {
             webView.load(URLRequest(url: rewrittenUrl))
         }
 
-        return (navigationType.navigationPoliciy, preferences)
+        return (navigationType.navigationPolicy, preferences)
     }
 
     func webView(_ webView: WKWebView,

@@ -34,7 +34,7 @@ enum WebViewNavigationType: Sendable {
     /// A link intercepted and modified (query parameter added for instance)
     case interceptedLink(URL)
     /// The `WKNavigationActionPolicy` (.allow, .cancel, .download) associated to each navigation type.
-    var navigationPoliciy: WKNavigationActionPolicy {
+    var navigationPolicy: WKNavigationActionPolicy {
         switch self {
         case .sameWebview: .allow
         case .promotedUrl: .cancel
