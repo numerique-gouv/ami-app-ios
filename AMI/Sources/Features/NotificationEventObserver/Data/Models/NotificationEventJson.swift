@@ -44,9 +44,9 @@ extension NotificationEvent: CustomStringConvertible {
         }
 
         return """
-        \tNotification title: \(title)")
-        \tNotification body: \(body)")
-        \tNotification data: \(payloadString)")
+        \tNotification title: \(title)
+        \tNotification body: \(body)
+        \tNotification data: \(payloadString)
         \tSource: \(source)
         """
     }

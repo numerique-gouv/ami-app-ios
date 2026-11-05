@@ -21,7 +21,7 @@ extension NotificationEventSource: CustomStringConvertible {
     var description: String {
         switch self {
         case .foreground: "foreground"
-        case let .userResponse(actionIdentifier): "userResponse(\"\(actionIdentifier)\""
+        case let .userResponse(actionIdentifier): "userResponse(\"\(actionIdentifier)\")"
         case .silent: "silent"
         }
     }

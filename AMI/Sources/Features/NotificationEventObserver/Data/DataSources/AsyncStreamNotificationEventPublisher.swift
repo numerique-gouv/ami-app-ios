@@ -1,5 +1,5 @@
 //
-//  AsyncStreamNotificationEventDispatcher.swift
+//  AsyncStreamNotificationEventPublisher.swift
 //  AMI-xcodegen
 //
 //  Created by Nicolas Buquet on 24/09/2026.
@@ -8,17 +8,19 @@
 
 import Foundation
 import os
-import UserNotifications
 
-// MARK: - NotificationEvent Dispatcher
+// MARK: - NotificationEvent Publisher
 
 /// Receives notifications from the system and broadcasts them to any number of
 /// AsyncStream subscribers. Each call to `events()` returns an independent stream.
 ///
 /// Not MainActor-isolated on purpose: the system may call the delegate off the main thread.
 /// If your target uses "Default Actor Isolation = MainActor" (Xcode 26 default for new projects),
-/// declare this type `nonisolated final class NotificationEventDispatcher` (Swift 6.2+).
-final nonisolated class AsyncStreamNotificationEventDispatcher: NSObject, @unchecked Sendable {
+/// declare this type `final nonisolated class AsyncStreamNotificationEventPublisher` (Swift 6.2+).
+///
+/// - Note: the Sendable conformance is implemented using an `OSAllocatedUnfairLock`.
+///   That's why the Sendable conformance is flagged `@unchecked`.
+final nonisolated class AsyncStreamNotificationEventPublisher: NSObject, @unchecked Sendable {
     /// Internal State to handle multiple subscribers to Notifications.
     private struct State {
         var continuations: [UUID: AsyncStream<NotificationEvent>.Continuation] = [:]
@@ -33,7 +35,7 @@ final nonisolated class AsyncStreamNotificationEventDispatcher: NSObject, @unche
     private let maxPending = 20
 }
 
-extension AsyncStreamNotificationEventDispatcher: NotificationEventDispatcher {
+extension AsyncStreamNotificationEventPublisher: NotificationEventPublisher {
     // MARK: Subscribing
 
     func events() -> AsyncStream<NotificationEvent> {

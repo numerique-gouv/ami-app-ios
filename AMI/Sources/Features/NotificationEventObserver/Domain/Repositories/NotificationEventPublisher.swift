@@ -1,5 +1,5 @@
 //
-//  NotificationEventDispatcher.swift
+//  NotificationEventPublisher.swift
 //  AMI-xcodegen
 //
 //  Created by Nicolas Buquet on 04/11/2026.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-nonisolated protocol NotificationEventDispatcher {
+nonisolated protocol NotificationEventPublisher {
     // MARK: Subscribing
 
     func events() -> AsyncStream<NotificationEvent>
