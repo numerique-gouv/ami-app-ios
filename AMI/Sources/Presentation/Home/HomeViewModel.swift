@@ -239,7 +239,7 @@ class HomeViewModel: NSObject {
         notificationManager.setUserAuthenticationToken(nil)
     }
 
-    /// The action called by the Notification Disaptcher when a NotificationEvent is received.
+    /// Called by the NotificationEventHandler implementation if Url matches `rootUrl`.
     func handleIncomingUrl(url: URL) {
         guard let notificationPageUrl = URL(string: "/#/notifications", relativeTo: url) else {
             return
@@ -308,7 +308,7 @@ class HomeViewModel: NSObject {
 }
 
 extension HomeViewModel: NotificationEventHandler {
-    /// The action called by the Notification Disaptcher when a NotificationEvent is received.
+    /// The action called by the Notification Publisher when a NotificationEvent is received.
     func handleReceivedNotificationEvent(event: NotificationEvent) async {
         // Only handle user tapped notification.
         guard case .userResponse = event.source else {

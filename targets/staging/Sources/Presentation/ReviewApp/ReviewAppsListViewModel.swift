@@ -53,7 +53,7 @@ class ReviewAppsListViewModel: NSObject {
 }
 
 extension ReviewAppsListViewModel: NotificationEventHandler {
-    /// The action called by the Notification Disaptcher when a NotificationEvent is received.
+    /// The action called by the Notification Publisher when a NotificationEvent is received.
     func handleReceivedNotificationEvent(event: NotificationEvent) async {
         // Only handle user tapped notification.
         guard case .userResponse = event.source else {
