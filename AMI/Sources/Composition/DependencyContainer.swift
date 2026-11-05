@@ -15,12 +15,12 @@ enum DependencyContainer {
     private static let specialLinkHandler = SpecialLinkHandler()
 
     static let appState = AMIAppState()
-    /// A concrete Notification Dispatcher based on an AsyncStream.
-    /// It dispatches Notifications Events to the unique RootViewModel that handles it.
-    private static let notificationEventDispatcher = AsyncStreamNotificationEventDispatcher()
-    /// The notification manager that forward received notifications to a Notification Events Dispatcher.
-    private static let notificationManager = NotificationManager(eventsDispatcher: Self.notificationEventDispatcher)
-    /// This common website DataStore will be injected n root views to be shared with all child webviews.
+    /// A concrete Notification Event Publisher based on an AsyncStream.
+    /// It publishes notification events to the unique RootViewModel that handles them..
+    private static let notificationEventObserverFeature = NotificationEventObserverFeature(publisher: NotificationEventPublisherDataModule.makePublisher())
+    /// The notification manager that forwards received notifications to a Notification Events Publisher.
+    private static let notificationManager = NotificationManager(eventPublisher: notificationEventObserverFeature.publisher)
+    /// This common website DataStore will be injected in root views to be shared with all child webviews.
     private static let commonWebsiteDataStore: WKWebsiteDataStore = .default()
 
     /// ViewModel used by `SwiftUIWebView` preview in Xcode.
@@ -67,7 +67,7 @@ enum DependencyContainer {
                                               specialLinkHandler: specialLinkHandler,
                                               notificationManager: notificationManager)
             return RootViewModel(viewModel: homeViewModel,
-                                 eventsSource: notificationManager.eventsDispatcher.events())
+                                 eventsSource: notificationEventObserverFeature.makeEventsSource())
         }
 
     #elseif IS_AMI_STAGING
@@ -77,7 +77,7 @@ enum DependencyContainer {
                                                                   specialLinkHandler: specialLinkHandler,
                                                                   notificationManager: notificationManager)
             return RootViewModel(viewModel: reviewAppsListViewModel,
-                                 eventsSource: notificationManager.eventsDispatcher.events())
+                                 eventsSource: notificationEventObserverFeature.makeEventsSource())
         }
 
         static func makePreviewReviewAppsListViewModel() -> ReviewAppsListViewModel {

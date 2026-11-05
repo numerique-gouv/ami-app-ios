@@ -24,10 +24,10 @@ class NotificationManager: NSObject {
     /// How foreground notifications are displayed. Adjust as needed.
     private var foregroundPresentation: UNNotificationPresentationOptions = [.banner, .list, .sound]
 
-    let eventsDispatcher: any NotificationEventDispatcher
+    private let eventPublisher: any NotificationEventPublisher & Sendable
 
-    required init(eventsDispatcher: any NotificationEventDispatcher) {
-        self.eventsDispatcher = eventsDispatcher
+    required init(eventPublisher: any NotificationEventPublisher & Sendable) {
+        self.eventPublisher = eventPublisher
     }
 
     func setBaseUrl(_ url: URL) {
@@ -101,10 +101,10 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
             """
         )
 
-        /// Disaptch notification to subscribers.
-        eventsDispatcher.publish(NotificationEvent(request: notification.request,
-                                                   date: notification.date,
-                                                   source: .foreground))
+        /// Publish notification to subscribers.
+        eventPublisher.publish(NotificationEvent(request: notification.request,
+                                                 date: notification.date,
+                                                 source: .foreground))
 
         /// Display notification banner, play sound, and update badge even when app is open
         completionHandler(foregroundPresentation)
@@ -119,24 +119,24 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         AppLog.service.notice(
             """
                     \(AppLog.logHeader(self)) User tapped notification:
-                    \tNotification title: \(response.notification.request.content.title)")
-                    \tNotification body: \(response.notification.request.content.body)")
-                    \tNotification data: \(userInfo)")
+                    \tNotification title: \(response.notification.request.content.title)
+                    \tNotification body: \(response.notification.request.content.body)
+                    \tNotification data: \(userInfo)
                     \tAction identifier: \(response.actionIdentifier)
             """
         )
 
         /// Handle different action types
         if response.actionIdentifier == UNNotificationDefaultActionIdentifier {
-            AppLog.service.notice("\(AppLog.logHeader(self)) User tapped the notification banner, navigating to the notifications page")
+            AppLog.service.notice("\(AppLog.logHeader(self)) User tapped the notification banner. Navigating to the notifications page")
         } else if response.actionIdentifier == UNNotificationDismissActionIdentifier {
-            AppLog.service.notice("\(AppLog.logHeader(self)) User dismissed the notification")
+            AppLog.service.notice("\(AppLog.logHeader(self)) User dismissed the notification.")
         }
 
-        /// Disaptch notification to subscribers.
-        eventsDispatcher.publish(NotificationEvent(request: response.notification.request,
-                                                   date: response.notification.date,
-                                                   source: .userResponse(actionIdentifier: response.actionIdentifier)))
+        /// Publish notification to subscribers.
+        eventPublisher.publish(NotificationEvent(request: response.notification.request,
+                                                 date: response.notification.date,
+                                                 source: .userResponse(actionIdentifier: response.actionIdentifier)))
 
         /// Call completion handler.
         completionHandler()
@@ -144,7 +144,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
 
     /// Call from the AppDelegate's didReceiveRemoteNotification for silent pushes.
     func publishSilentPush(userInfo: [AnyHashable: Any]) {
-        eventsDispatcher.publishSilentPush(userInfo: userInfo)
+        eventPublisher.publishSilentPush(userInfo: userInfo)
     }
 }
 
