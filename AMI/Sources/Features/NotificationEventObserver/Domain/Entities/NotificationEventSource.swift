@@ -8,6 +8,8 @@
 
 import Foundation
 
+/// The delivery context of a `NotificationEvent`. Closed set: adding a case
+/// breaks every handler `switch` at compile time, by design.
 enum NotificationEventSource: Sendable, Equatable {
     /// Notification arrived while the app was in the foreground (willPresent).
     case foreground

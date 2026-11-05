@@ -8,11 +8,17 @@
 
 import Foundation
 
+/// The feature's unit of behavior: observes a notification event stream and
+/// forwards every event to the host's receive action.
+/// Stateless apart from the action — the stream is passed per call, so the
+/// instance owns no subscription.
 nonisolated struct ObserveNotificationEvents: Sendable {
+    /// A subscription to the shared publisher — one per root view model.
     typealias EventsSource = AsyncStream<NotificationEvent>
 
     private let onReceive: NotificationEventObserverAction
 
+    /// Binds the host's receive action.
     init(onReceive: @escaping NotificationEventObserverAction) {
         self.onReceive = onReceive
     }

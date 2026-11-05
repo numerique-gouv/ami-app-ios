@@ -27,6 +27,8 @@ final class NotificationEventObserverFeature {
     /// `NotificationManager(eventPublisher:)`.
     let publisher: any NotificationEventPublisher & Sendable
 
+    /// Injects the publisher: production passes `NotificationEventPublisherDataModule.makePublisher()`,
+    /// tests and previews may pass a fake.
     init(publisher: any NotificationEventPublisher & Sendable) {
         self.publisher = publisher
     }

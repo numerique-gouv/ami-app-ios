@@ -10,7 +10,9 @@ import Foundation
 import UserNotifications
 
 extension NotificationEvent {
-    /// Define helper `init` in extension to allow automatic `init` to be defined.
+    /// Maps a `UNNotificationRequest` to a `NotificationEvent`. Lives in Data — the only
+    /// layer allowed to import `UserNotifications` — and in an extension, so the
+    /// memberwise initializer stays available.
     init(request: UNNotificationRequest, date: Date, source: NotificationEventSource) {
         let content = request.content
         self.init(
@@ -24,6 +26,8 @@ extension NotificationEvent {
         )
     }
 
+    /// Serializes a `userInfo` dictionary to JSON, dropping non-string keys.
+    /// Returns `nil` when the result is not a valid JSON object — the event is then delivered without a payload.
     static func json(from userInfo: [AnyHashable: Any]) -> Data? {
         var dict: [String: Any] = [:]
         for (key, value) in userInfo {
@@ -35,6 +39,7 @@ extension NotificationEvent {
 }
 
 extension NotificationEvent: CustomStringConvertible {
+    /// A multi-line, log-ready description: title, body, payload, source.
     var description: String {
         let payloadString = if let jsonData = payloadJSON,
                                let payloadString = String(data: jsonData, encoding: .utf8) {

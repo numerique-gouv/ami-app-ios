@@ -8,6 +8,8 @@
 
 import Foundation
 
+/// The Data-layer factory for the notification event publisher — the only file
+/// in the feature that knows the concrete implementation.
 enum NotificationEventPublisherDataModule {
     /// Builds the AsyncStream-backed event publisher.
     static func makePublisher() -> any NotificationEventPublisher & Sendable {
