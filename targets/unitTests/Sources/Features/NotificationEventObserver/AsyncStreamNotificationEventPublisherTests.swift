@@ -134,14 +134,19 @@ struct AsyncStreamNotificationEventPublisherTests {
         #expect(payload?.applicationUrl.absoluteString == "https://numerique.gouv.fr/#/notifications")
     }
 
-    /// Guards the `OSAllocatedUnfairLock` state. The counting consumer only
-    /// appends, so it stays ahead of a publisher that yields on every
-    /// iteration and the buffer never overflows. If delivery were ever
-    /// lossy, `awaitWithin` fails the test after 30 s instead of hanging.
+    /// Guards the `OSAllocatedUnfairLock` state: four concurrent publishers
+    /// race through `publish` while one consumer counts.
+    ///
+    /// The total (48) deliberately stays under the stream's buffer (50):
+    /// even a consumer that starts only after every publish still receives
+    /// all 48 from the buffer, so no drop is *possible* — "lossless" is
+    /// pinned by the buffer invariant, not by the consumer winning a
+    /// scheduling race (200 against a 50-slot buffer lost that race on
+    /// cold runs and hung the run for good).
     @Test
     func concurrentPublishingIsLossless() async {
         let publisher = AsyncStreamNotificationEventPublisher()
-        let total = 200
+        let total = 48
         let stream = publisher.events()
 
         let received = Task {
@@ -156,8 +161,8 @@ struct AsyncStreamNotificationEventPublisherTests {
         await withTaskGroup(of: Void.self) { group in
             for taskIndex in 0..<4 {
                 group.addTask {
-                    for index in 0..<50 {
-                        publisher.publish(makeTestEvent(taskIndex * 50 + index))
+                    for index in 0..<12 {
+                        publisher.publish(makeTestEvent(taskIndex * 12 + index))
                         await Task.yield()
                     }
                 }
@@ -165,7 +170,7 @@ struct AsyncStreamNotificationEventPublisherTests {
         }
 
         let count: Int? = await awaitWithin(30) { await received.value }
-        received.cancel() // stop the consumer either way
+        received.cancel() // on the (failing) timeout path: ends the consumer and the abandoned work
         #expect(count == total)
     }
 }

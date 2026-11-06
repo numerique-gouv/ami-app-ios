@@ -16,7 +16,7 @@ enum DependencyContainer {
 
     static let appState = AMIAppState()
     /// A concrete Notification Event Publisher based on an AsyncStream.
-    /// It publishes notification events to the unique RootViewModel that handles them..
+    /// It publishes notification events to the unique RootViewModel that handles them.
     private static let notificationEventObserverFeature = NotificationEventObserverFeature(publisher: NotificationEventPublisherDataModule.makePublisher())
     /// The notification manager that forwards received notifications to a Notification Events Publisher.
     private static let notificationManager = NotificationManager(eventPublisher: notificationEventObserverFeature.publisher)
