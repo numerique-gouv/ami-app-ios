@@ -13,7 +13,7 @@ final class HomeViewNavigationHandler: WebViewNavigationHandler {
     let rootUrl: URL
     let specialLinkHandler: any SpecialLinkProtocol
     weak var promotedUrls: PromotedUrlsFeature?
-    weak var viewModel: HomeView.ViewModel?
+    weak var viewModel: HomeViewModel?
 
     init(rootUrl: URL, specialLinkHandler: any SpecialLinkProtocol) {
         self.rootUrl = rootUrl

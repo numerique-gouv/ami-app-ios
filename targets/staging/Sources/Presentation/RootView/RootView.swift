@@ -10,14 +10,10 @@ import Foundation
 import SwiftUI
 
 struct RootView: View {
-    @Bindable var viewModel: ViewModel
+    @Bindable var viewModel: RootViewModel<ReviewAppsListViewModel>
 
     @ViewBuilder
     var body: some View {
-        if let notificationTriggeredViewModel = viewModel.notificationTriggeredViewModel {
-            HomeView(viewModel: notificationTriggeredViewModel)
-        } else {
-            ReviewAppView(viewModel: DependencyContainer.makeReviewAppsListViewModel())
-        }
+        ReviewAppsListView(viewModel: viewModel.presentedViewModel)
     }
 }

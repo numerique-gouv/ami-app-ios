@@ -18,7 +18,7 @@ struct ServiceLinkViewModel {
     private let sourceUrl: URL?
     private let specialLinkHandler: any SpecialLinkProtocol
 
-    let model: ServiceView.ViewModel
+    let model: ServiceViewModel
 
     init(destinationUrl: URL,
          dataStore: WKWebsiteDataStore,
@@ -30,11 +30,11 @@ struct ServiceLinkViewModel {
         self.sourceUrl = sourceUrl
         self.specialLinkHandler = specialLinkHandler
 
-        model = ServiceView.ViewModel(rootUrl: destinationUrl,
-                                      websiteDataStore: dataStore,
-                                      refererUrl: sourceUrl,
-                                      specialLinkHandler: specialLinkHandler,
-                                      backToHomeAction: destinationViewDismissedAction)
+        model = ServiceViewModel(rootUrl: destinationUrl,
+                                 websiteDataStore: dataStore,
+                                 refererUrl: sourceUrl,
+                                 specialLinkHandler: specialLinkHandler,
+                                 backToHomeAction: destinationViewDismissedAction)
     }
 }
 

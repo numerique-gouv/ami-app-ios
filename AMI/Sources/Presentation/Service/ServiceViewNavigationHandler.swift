@@ -13,7 +13,7 @@ final class ServiceViewNavigationHandler: WebViewNavigationHandler {
     let rootUrl: URL
     let specialLinkHandler: any SpecialLinkProtocol
     weak var promotedUrls: PromotedUrlsFeature?
-    weak var viewModel: ServiceView.ViewModel?
+    weak var viewModel: ServiceViewModel?
 
     init(rootUrl: URL, specialLinkHandler: any SpecialLinkProtocol) {
         self.rootUrl = rootUrl
@@ -66,7 +66,7 @@ final class ServiceViewNavigationHandler: WebViewNavigationHandler {
                                                                  dataStore: webViewViewModel.configuration.websiteDataStore,
                                                                  sourceUrl: webViewViewModel.webView?.url,
                                                                  specialLinkHandler: specialLinkHandler) { [weak viewModel] in
-                viewModel?.destinationLinkViewDismissed()
+                viewModel?.backToHomeViewAction()
             }
             // Go back to previous page in originating webview.
             Task { @MainActor in
