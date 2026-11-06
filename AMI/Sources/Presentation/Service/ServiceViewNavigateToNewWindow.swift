@@ -22,8 +22,7 @@ extension ServiceViewModel: @MainActor WebViewNavigateToNewWindow {
         selectedDestination = ServiceLinkViewModel(destinationUrl: url,
                                                    dataStore: webViewViewModel.configuration.websiteDataStore,
                                                    sourceUrl: nil,
-                                                   specialLinkHandler: webViewViewModel.navigationHandler.specialLinkHandler,
-                                                   notificationManager: notificationManager) { [weak self] in
+                                                   specialLinkHandler: webViewViewModel.navigationHandler.specialLinkHandler) { [weak self] in
             self?.backToHomeViewAction()
         }
     }
