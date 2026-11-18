@@ -22,9 +22,11 @@ extension ReviewAppView {
         var selectedReviewAppViewModel: HomeView.ViewModel?
 
         init(websiteDataStore: WKWebsiteDataStore,
+             certificatePinning: CertificatePinningFeature?,
              specialLinkHandler: any SpecialLinkProtocol,
              notificationManager: NotificationManager) {
             self.websiteDataStore = websiteDataStore
+            self.certificatePinning = certificatePinning
             self.specialLinkHandler = specialLinkHandler
             self.notificationManager = notificationManager
             super.init()
@@ -41,6 +43,7 @@ extension ReviewAppView {
             }
             selectedReviewAppViewModel = HomeView.ViewModel(rootUrl: url,
                                                             websiteDataStore: websiteDataStore,
+                                                            certificatePinning: certificatePinning,
                                                             specialLinkHandler: specialLinkHandler,
                                                             notificationManager: notificationManager)
         }
