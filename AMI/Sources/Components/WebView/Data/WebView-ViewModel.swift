@@ -318,7 +318,7 @@ extension SwiftUIWebView.ViewModel: WKUIDelegate {
         case .currentWebView:
             webView.load(URLRequest(url: destinationUrl))
         case .newWebView:
-            navigateToNewWindowManager.loadInNewWebView(url: destinationUrl)
+            navigateToNewWindowManager.loadInNewWebView(url: destinationUrl, certificatePinning: nil)
         case .externalBrowser:
             UIApplication.shared.open(destinationUrl, options: [:], completionHandler: nil)
         }
