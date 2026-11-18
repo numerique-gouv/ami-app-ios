@@ -11,6 +11,7 @@ import WebKit
 
 final class ServiceViewNavigationHandler: WebViewNavigationHandler {
     let rootUrl: URL
+    /// The Certificate Pinning Feature of navigation handler
     let certificatePinning: CertificatePinningFeature?
     let specialLinkHandler: any SpecialLinkProtocol
     weak var promotedUrls: PromotedUrlsFeature?

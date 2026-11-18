@@ -15,6 +15,8 @@ extension ReviewAppView {
     class ViewModel: NSObject {
         let rootUrl = Config.shared.BASE_URL // This root URL is always the same. No need to make it a parameter.
         let websiteDataStore: WKWebsiteDataStore
+        /// The Certificate Pinning Feature for inited HomeView
+        let certificatePinning: CertificatePinningFeature?
         let specialLinkHandler: any SpecialLinkProtocol
         let notificationManager: NotificationManager
         var reviewApps: [ReviewApp] = []

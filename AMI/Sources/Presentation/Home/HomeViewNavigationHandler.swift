@@ -11,6 +11,7 @@ import WebKit
 
 final class HomeViewNavigationHandler: WebViewNavigationHandler {
     let rootUrl: URL
+    /// The Certificate Pinning Feature of the navigation handler
     let certificatePinning: CertificatePinningFeature?
     let specialLinkHandler: any SpecialLinkProtocol
     weak var promotedUrls: PromotedUrlsFeature?

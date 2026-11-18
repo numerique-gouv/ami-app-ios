@@ -16,6 +16,7 @@ struct ServiceLinkViewModel {
     private let destinationUrl: URL
     private let dataStore: WKWebsiteDataStore
     private let sourceUrl: URL?
+    /// The Certificate Pinning Feature of the service link
     private let certificatePinning: CertificatePinningFeature?
     private let specialLinkHandler: any SpecialLinkProtocol
 
