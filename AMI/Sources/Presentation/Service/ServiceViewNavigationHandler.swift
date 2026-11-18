@@ -11,12 +11,15 @@ import WebKit
 
 final class ServiceViewNavigationHandler: WebViewNavigationHandler {
     let rootUrl: URL
+    let certificatePinning: CertificatePinningFeature?
     let specialLinkHandler: any SpecialLinkProtocol
     weak var promotedUrls: PromotedUrlsFeature?
     weak var viewModel: ServiceView.ViewModel?
 
-    init(rootUrl: URL, specialLinkHandler: any SpecialLinkProtocol) {
+    init(rootUrl: URL, certificatePinning: CertificatePinningFeature?,
+         specialLinkHandler: any SpecialLinkProtocol) {
         self.rootUrl = rootUrl
+        self.certificatePinning = certificatePinning
         self.specialLinkHandler = specialLinkHandler
     }
 
@@ -65,6 +68,7 @@ final class ServiceViewNavigationHandler: WebViewNavigationHandler {
             viewModel.selectedDestination = ServiceLinkViewModel(destinationUrl: domainUrl,
                                                                  dataStore: webViewViewModel.configuration.websiteDataStore,
                                                                  sourceUrl: webViewViewModel.webView?.url,
+                                                                 certificatePinning: nil,
                                                                  specialLinkHandler: specialLinkHandler) { [weak viewModel] in
                 viewModel?.destinationLinkViewDismissed()
             }
@@ -75,5 +79,13 @@ final class ServiceViewNavigationHandler: WebViewNavigationHandler {
         default:
             break
         }
+    }
+
+    func evaluateAuthChallenge(challenge: URLAuthenticationChallenge, for host: String) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
+        guard let certificatePinning else {
+            return (.performDefaultHandling, nil)
+        }
+
+        return await certificatePinning.evaluate(challenge: challenge, for: host)
     }
 }
