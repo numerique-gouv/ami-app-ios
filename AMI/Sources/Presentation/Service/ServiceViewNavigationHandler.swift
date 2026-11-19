@@ -82,11 +82,11 @@ final class ServiceViewNavigationHandler: WebViewNavigationHandler {
         }
     }
 
-    func evaluateAuthChallenge(challenge: URLAuthenticationChallenge, for host: String) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
+    func evaluateAuthChallenge(challenge: URLAuthenticationChallenge) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
         guard let certificatePinning else {
             return (.performDefaultHandling, nil)
         }
 
-        return await certificatePinning.evaluate(challenge: challenge, for: host)
+        return await certificatePinning.evaluate(challenge: challenge)
     }
 }

@@ -17,8 +17,8 @@ import Testing
 
 // MARK: - Decision table
 //
-// `CertificatePinningFeature.evaluate(challenge:for:)` is a pure function
-// `(challenge, host) → (disposition, credential)`. Every branch is pinned here:
+// `CertificatePinningFeature.evaluate(challenge:)` is a pure function
+// `(challenge) → (disposition, credential)`. Every branch is pinned here:
 //
 // | Scenario                                        | Expected disposition          |
 // |-------------------------------------------------|-------------------------------|
@@ -49,8 +49,7 @@ struct CertificatePinningFeatureTests {
     @Test func unpinnedHostFallsBackToSystemDefaultHandling() async {
         let feature = CertificatePinningFeature(pinRules: [Self.ecSpkiSha256Rule])
         let (disposition, credential) = await feature.evaluate(
-            challenge: ChallengeFactory.challenge(host: "localhost", trust: TrustFactory.untrusted([TestCerts.selfSignedCert])),
-            for: "localhost")
+            challenge: ChallengeFactory.challenge(host: "localhost", trust: TrustFactory.untrusted([TestCerts.selfSignedCert])))
 
         #expect(disposition == .performDefaultHandling)
         #expect(credential == nil)
@@ -62,8 +61,7 @@ struct CertificatePinningFeatureTests {
         let feature = CertificatePinningFeature(pinRules: [Self.ecSpkiSha256Rule])
         let trust = TrustFactory.trust([TestCerts.ecP256, TestCerts.ca])
         let (disposition, credential) = await feature.evaluate(
-            challenge: ChallengeFactory.challenge(host: "ec.example", trust: trust),
-            for: "ec.example")
+            challenge: ChallengeFactory.challenge(host: "ec.example", trust: trust))
 
         #expect(disposition == .useCredential)
         #expect(credential != nil)
@@ -82,8 +80,7 @@ struct CertificatePinningFeatureTests {
         let feature = CertificatePinningFeature(pinRules: [Self.ecSpkiSha256Rule])
         let (disposition, credential) = await feature.evaluate(
             challenge: ChallengeFactory.challenge(host: "ec.example",
-                                  trust: TrustFactory.untrusted([TestCerts.ecP256, TestCerts.ca])),
-            for: "ec.example")
+                                  trust: TrustFactory.untrusted([TestCerts.ecP256, TestCerts.ca])))
 
         #expect(disposition == .cancelAuthenticationChallenge)
         #expect(credential == nil)
@@ -96,8 +93,7 @@ struct CertificatePinningFeatureTests {
         ])
         let feature = CertificatePinningFeature(pinRules: [wrongPinRule])
         let (disposition, credential) = await feature.evaluate(
-            challenge: ChallengeFactory.challenge(host: "ec.example", trust: TrustFactory.trust([TestCerts.ecP256, TestCerts.ca])),
-            for: "ec.example")
+            challenge: ChallengeFactory.challenge(host: "ec.example", trust: TrustFactory.trust([TestCerts.ecP256, TestCerts.ca])))
 
         #expect(disposition == .cancelAuthenticationChallenge)
         #expect(credential == nil)
@@ -108,8 +104,7 @@ struct CertificatePinningFeatureTests {
     @Test func nonServerTrustChallengeIsLeftToTheSystem() async {
         let feature = CertificatePinningFeature(pinRules: [Self.ecSpkiSha256Rule])
         let (disposition, credential) = await feature.evaluate(
-            challenge: ChallengeFactory.nonServerTrustChallenge(host: "ec.example"),
-            for: "ec.example")
+            challenge: ChallengeFactory.nonServerTrustChallenge(host: "ec.example"))
 
         #expect(disposition == .performDefaultHandling)
         #expect(credential == nil)
@@ -118,8 +113,7 @@ struct CertificatePinningFeatureTests {
     @Test func missingServerTrustIsLeftToTheSystem() async {
         let feature = CertificatePinningFeature(pinRules: [Self.ecSpkiSha256Rule])
         let (disposition, credential) = await feature.evaluate(
-            challenge: ChallengeFactory.challenge(host: "ec.example", trust: nil),
-            for: "ec.example")
+            challenge: ChallengeFactory.challenge(host: "ec.example", trust: nil))
 
         #expect(disposition == .performDefaultHandling)
         #expect(credential == nil)

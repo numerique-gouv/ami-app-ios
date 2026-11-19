@@ -33,7 +33,11 @@ protocol WebViewNavigationHandler: AnyObject {
     /// Called before starting the navigation to destination.
     func prepareNavigation(to destination: WebViewNavigationType)
 
-    /// Called to check Certificate Pinning ofr instance.
-    /// - Returns: `(.performDefaultHandling, .none)` if it is Ok to continue navigation
-    func evaluateAuthChallenge(challenge: URLAuthenticationChallenge, for host: String) async -> (URLSession.AuthChallengeDisposition, URLCredential?)
+    /// Called to check certificate pinning for the challenged connection.
+    /// The host is derived from the challenge's protection space.
+    /// - Returns: the pair to pass to the delegate completion —
+    ///   `.useCredential` when a pin matched, `.performDefaultHandling`
+    ///   when the host is not pinned (or pinning is not configured),
+    ///   `.cancelAuthenticationChallenge` when validation or pinning fails.
+    func evaluateAuthChallenge(challenge: URLAuthenticationChallenge) async -> (URLSession.AuthChallengeDisposition, URLCredential?)
 }

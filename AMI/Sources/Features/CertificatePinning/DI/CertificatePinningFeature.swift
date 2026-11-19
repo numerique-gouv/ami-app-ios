@@ -28,15 +28,17 @@ final class CertificatePinningFeature: Sendable {
     ///
     /// Host contract: forward every `URLAuthenticationChallenge` here
     /// (from a web view navigation delegate or a `URLSession` delegate)
-    /// with the challenge's host, and pass the returned pair straight
-    /// to the delegate completion.
+    /// and pass the returned pair straight to the delegate completion.
+    /// The host is taken from the challenge's protection space — the
+    /// connection actually challenged (page or subresource), never the
+    /// web view's current URL.
     ///
     /// - Returns: `.useCredential` with the evaluated trust when the chain
     ///   validates and a pin matches; `.performDefaultHandling` for
     ///   non-server-trust challenges, a missing `SecTrust`, or unpinned
     ///   hosts; `.cancelAuthenticationChallenge` when a pinned host's
     ///   chain or pinning check fails.
-    func evaluate(challenge: URLAuthenticationChallenge, for host: String) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
+    func evaluate(challenge: URLAuthenticationChallenge) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
         let protectionSpace = challenge.protectionSpace
 
         guard protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust else {
@@ -48,7 +50,7 @@ final class CertificatePinningFeature: Sendable {
         }
 
         do {
-            if try await evaluator.evaluate(serverTrust, forHost: host) {
+            if try await evaluator.evaluate(serverTrust, forHost: challenge.protectionSpace.host.lowercased()) {
                 // The server certificate chain was successfully verified against a pinned certificate.
                 return (.useCredential, URLCredential(trust: serverTrust))
             } else {

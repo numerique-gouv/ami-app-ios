@@ -37,7 +37,7 @@ final class DefaultWebViewNavigationHandler: WebViewNavigationHandler {
     /// Called before starting the navigation to destination.
     func prepareNavigation(to destination: WebViewNavigationType) {}
 
-    func evaluateAuthChallenge(challenge: URLAuthenticationChallenge, for host: String) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
+    func evaluateAuthChallenge(challenge: URLAuthenticationChallenge) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
         (.performDefaultHandling, nil)
     }
 }
