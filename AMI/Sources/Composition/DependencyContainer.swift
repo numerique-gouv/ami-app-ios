@@ -6,6 +6,7 @@
 //  Copyright © 2026 DINUM. All rights reserved.
 //
 
+import CryptoKit
 import Foundation
 import WebKit
 
@@ -24,7 +25,10 @@ enum DependencyContainer {
         let rootUrl = URL(string: "https://numerique.gouv.fr")!
         let model = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
                                              websiteDataStore: .nonPersistent(),
-                                             navigationHandler: DefaultWebViewNavigationHandler(rootUrl: rootUrl, specialLinkHandler: specialLinkHandler),
+                                             navigationHandler: DefaultWebViewNavigationHandler(rootUrl: rootUrl,
+                                                                                                certificatePinning: nil,
+                                                                                                promotedUrls: nil,
+                                                                                                specialLinkHandler: specialLinkHandler),
                                              navigationState: DefaultWebViewNavigationState(),
                                              initialUserScripts: HomeUserScripts())
 
@@ -38,23 +42,43 @@ enum DependencyContainer {
     static func makePreviewHomeViewModel() -> HomeView.ViewModel {
         HomeView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
                            websiteDataStore: .nonPersistent(),
+                           certificatePinning: nil,
                            specialLinkHandler: specialLinkHandler,
                            notificationManager: notificationManager)
     }
 
     static func makePreviewServiceViewModel() -> ServiceView.ViewModel {
         ServiceView.ViewModel(rootUrl: URL(string: "https://numerique.gouv.fr")!,
+                              certificatePinning: nil,
                               websiteDataStore: .nonPersistent(),
                               specialLinkHandler: specialLinkHandler) {
             AppLog.viewModel.log("\(AppLog.logHeader()) Back to home called")
         }
     }
 
+    // Certificate pinning is only configured for PreProduction for the moment.
+    #if IS_AMI_PRODUCTION
+        private static let certificatePinningFeature: CertificatePinningFeature? = nil
+    #elseif IS_AMI_PREPRODUCTION
+        private static let certificatePinningFeature: CertificatePinningFeature? =
+            CertificatePinningFeature(pinRules: [
+                PinRule(pattern: Secrets.appPinnedDomainRegex,
+                        pins: Secrets.appPinnedDomainSpkiSha256Base64.map {
+                            PinFactory.spki.makePin(algorithm: .sha256, base64Representation: $0)
+                        }),
+            ])
+    #elseif IS_AMI_STAGING
+        private static let certificatePinningFeature: CertificatePinningFeature? = nil
+    #else
+        private static let certificatePinningFeature: CertificatePinningFeature? = nil
+    #endif
+
     #if IS_AMI_PRODUCTION || IS_AMI_PREPRODUCTION
 
         static func makeRootViewModel() -> HomeView.ViewModel {
             HomeView.ViewModel(rootUrl: Config.shared.BASE_URL,
                                websiteDataStore: commonWebsiteDataStore,
+                               certificatePinning: certificatePinningFeature,
                                specialLinkHandler: specialLinkHandler,
                                notificationManager: notificationManager)
         }
@@ -63,19 +87,14 @@ enum DependencyContainer {
 
         static func makeReviewAppsListViewModel() -> ReviewAppView.ViewModel {
             ReviewAppView.ViewModel(websiteDataStore: commonWebsiteDataStore,
+                                    certificatePinning: certificatePinningFeature,
                                     specialLinkHandler: specialLinkHandler,
                                     notificationManager: notificationManager)
         }
 
-        static func makeReviewAppHomeViewModel(for rootUrl: URL) -> HomeView.ViewModel {
-            HomeView.ViewModel(rootUrl: rootUrl,
-                               websiteDataStore: commonWebsiteDataStore,
-                               specialLinkHandler: specialLinkHandler,
-                               notificationManager: notificationManager)
-        }
-
         static func makePreviewReviewAppViewModel() -> ReviewAppView.ViewModel {
             ReviewAppView.ViewModel(websiteDataStore: .nonPersistent(),
+                                    certificatePinning: nil,
                                     specialLinkHandler: specialLinkHandler,
                                     notificationManager: notificationManager)
         }
