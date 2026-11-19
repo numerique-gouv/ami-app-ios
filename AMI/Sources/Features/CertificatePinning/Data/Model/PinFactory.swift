@@ -9,6 +9,7 @@
 import CryptoKit
 import Foundation
 
+/// Hash algorithm selectable for pin creation.
 enum PinHashingAlgorithmType {
     case sha256
     case sha384
@@ -18,6 +19,7 @@ enum PinHashingAlgorithmType {
     @available(iOS 26.0, *) case sha3_512
 }
 
+/// Key type for `.publicKey` pins.
 enum PublicKeyType {
     case p256
     case p384
@@ -25,6 +27,12 @@ enum PublicKeyType {
     case rsa
 }
 
+/// Builds `SendableTrustChainNode` pins from base64 representations.
+///
+/// `algorithm == nil` yields the unhashed node itself (whole certificate,
+/// raw key, or raw SPKI). Returns `nil` for a malformed representation or
+/// an algorithm unavailable on this OS (SHA-3 before iOS 26); `PinRule`
+/// turns a nil pin into a build-time precondition failure.
 enum PinFactory {
     case certificate
     case publicKey(PublicKeyType)

@@ -9,12 +9,12 @@
 import Foundation
 
 nonisolated protocol ServerTrustEvaluating {
-    /// Evaluate if a certificate pinnng need to be verified.
+    /// Evaluates a server trust against the host's pin rules.
     /// - Returns:
-    ///   true if a pinned certificate is successfully verified,
-    ///   false if no pinned certificate is associated with the host
-    ///
-    /// - Throws: throws an error if any stepin the evaluation
-    ///   of the server security chain evaluation failed.
+    ///   `true` if the chain validates and a pin matches,
+    ///   `false` if no pin rule is associated with the host
+    ///   (system validation then applies).
+    /// - Throws: `CertificatePinningError` if any step of the chain
+    ///   validation or pin matching fails.
     func evaluate(_ trust: SecTrust, forHost host: String) async throws -> Bool
 }

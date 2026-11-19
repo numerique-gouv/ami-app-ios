@@ -10,6 +10,10 @@ import Foundation
 
 /// Only use with regexes that contain no custom components or transform closures
 /// (plain literals or Regex(String)).
+///
+/// `Regex` is not `Sendable`; a plain literal or string-built regex holds
+/// no state beyond its pattern, so the wrapper is transfer-safe under
+/// that restriction.
 struct SendableRegex: @unchecked Sendable {
     let regex: Regex<AnyRegexOutput>
 

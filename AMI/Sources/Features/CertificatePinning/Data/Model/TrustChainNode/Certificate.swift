@@ -8,6 +8,9 @@
 
 import Foundation
 
+/// Trust chain node holding the certificate's full DER — a
+/// whole-certificate pin: strongest match, but does not survive
+/// re-issuance.
 struct Certificate: TrustChainNode, Sendable {
     let data: Data
 
@@ -22,6 +25,7 @@ struct Certificate: TrustChainNode, Sendable {
 }
 
 extension Certificate {
+    /// Creates a pin from the base64 of a full X.509 DER; nil when malformed.
     init?(base64Encoded base64String: String) {
         guard let data = Data(base64Encoded: base64String) else { return nil }
         guard SecCertificateCreateWithData(nil, data as CFData) != nil else { return nil }

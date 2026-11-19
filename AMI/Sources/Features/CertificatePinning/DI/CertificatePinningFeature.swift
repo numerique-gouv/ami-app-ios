@@ -9,6 +9,14 @@
 import CryptoKit
 import Foundation
 
+/// Certificate pinning entry point: decides, for a server-trust auth
+/// challenge (web view or URLSession), whether the server's certificate
+/// chain satisfies the host's pin rules.
+///
+/// Pinning layers on top of system validation, never replaces it:
+/// hosts without a matching pin rule fall through to
+/// `.performDefaultHandling`, and any evaluation error on a pinned host
+/// fails closed (`.cancelAuthenticationChallenge`).
 final class CertificatePinningFeature: Sendable {
     private let evaluator: ServerTrustEvaluator
 
@@ -16,6 +24,18 @@ final class CertificatePinningFeature: Sendable {
         evaluator = ServerTrustEvaluator(pinRules: pinRules)
     }
 
+    /// Resolves a URL auth challenge against the pin rules.
+    ///
+    /// Host contract: forward every `URLAuthenticationChallenge` here
+    /// (from a web view navigation delegate or a `URLSession` delegate)
+    /// with the challenge's host, and pass the returned pair straight
+    /// to the delegate completion.
+    ///
+    /// - Returns: `.useCredential` with the evaluated trust when the chain
+    ///   validates and a pin matches; `.performDefaultHandling` for
+    ///   non-server-trust challenges, a missing `SecTrust`, or unpinned
+    ///   hosts; `.cancelAuthenticationChallenge` when a pinned host's
+    ///   chain or pinning check fails.
     func evaluate(challenge: URLAuthenticationChallenge, for host: String) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
         let protectionSpace = challenge.protectionSpace
 
@@ -36,7 +56,7 @@ final class CertificatePinningFeature: Sendable {
                 return (.performDefaultHandling, .none)
             }
         } catch {
-            // An error arise during the validation of the server certificate chain
+            // An evaluation error arose during validation of the server certificate chain
             // against a pinned certificate.
             AppLog.viewModel.error("\(AppLog.logHeader(self)) Server Trust evaluation failed: \(error)")
             return (.cancelAuthenticationChallenge, .none)

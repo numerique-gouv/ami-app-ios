@@ -8,6 +8,7 @@
 
 import Foundation
 
+/// CryptoKit-style namespace for RSA public keys (CryptoKit ships EC curves only).
 enum RSA {
     enum Signing {
         /// An RSA public key stored as its DER-encoded SubjectPublicKeyInfo.

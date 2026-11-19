@@ -9,6 +9,12 @@
 import CryptoKit
 import Foundation
 
+/// Trust chain node holding raw public key material, in the exact shape
+/// `SecKeyCopyExternalRepresentation` returns: X9.63 uncompressed point
+/// for EC keys, PKCS#1 `RSAPublicKey` for RSA.
+///
+/// Storing that shape (not the DER wrapper) is what makes a pin built
+/// from a key equal to the node extracted from a live certificate.
 struct PublicKey: TrustChainNode, Sendable {
     let data: Data
 
@@ -24,6 +30,8 @@ struct PublicKey: TrustChainNode, Sendable {
 }
 
 extension PublicKey {
+    /// Creates a pin from the PKCS#1 material of an RSA key;
+    /// nil when that material cannot be derived from the stored SPKI.
     init?(from key: RSA.Signing.PublicKey) {
         guard let data = key.pkcs1Representation else { return nil }
         self.data = data
