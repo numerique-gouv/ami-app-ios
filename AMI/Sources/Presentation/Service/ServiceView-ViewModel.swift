@@ -25,12 +25,14 @@ extension ServiceView {
         var selectedDestination: ServiceLinkViewModel?
 
         init(rootUrl: URL,
+             certificatePinning: CertificatePinningFeature?,
              websiteDataStore: WKWebsiteDataStore,
              refererUrl: URL? = nil,
              specialLinkHandler: any SpecialLinkProtocol,
              backToHomeAction: BackToHomeAction?) {
             // Assign first to local variable to be able to use it to instantiate `settingsViewViewModel` without referencing `self`.
             let navigationHandler = ServiceViewNavigationHandler(rootUrl: rootUrl,
+                                                                 certificatePinning: certificatePinning,
                                                                  specialLinkHandler: specialLinkHandler)
             let defaultNavigationState = DefaultWebViewNavigationState()
 

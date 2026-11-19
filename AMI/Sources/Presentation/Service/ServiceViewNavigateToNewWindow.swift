@@ -18,10 +18,11 @@ extension ServiceView.ViewModel: @MainActor WebViewNavigateToNewWindow {
         .newWebView
     }
 
-    func loadInNewWebView(url: URL) {
+    func loadInNewWebView(url: URL, certificatePinning: CertificatePinningFeature?) {
         selectedDestination = ServiceLinkViewModel(destinationUrl: url,
                                                    dataStore: webViewViewModel.configuration.websiteDataStore,
                                                    sourceUrl: nil,
+                                                   certificatePinning: certificatePinning,
                                                    specialLinkHandler: webViewViewModel.navigationHandler.specialLinkHandler) { [weak self] in
             self?.destinationLinkViewDismissed()
         }

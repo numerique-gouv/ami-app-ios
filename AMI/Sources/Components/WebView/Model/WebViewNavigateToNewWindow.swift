@@ -23,5 +23,5 @@ protocol WebViewNavigateToNewWindow: AnyObject {
     /// Called when `destinationForNewWindow` returns `.newWebView`
     ///
     /// The protocol adopter must decide how to load the new webView with the destination url.
-    func loadInNewWebView(url: URL)
+    func loadInNewWebView(url: URL, certificatePinning: CertificatePinningFeature?)
 }

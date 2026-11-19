@@ -252,16 +252,7 @@ extension SwiftUIWebView.ViewModel: @MainActor WKNavigationDelegate {
 
     func webView(_ webView: WKWebView,
                  respondTo challenge: URLAuthenticationChallenge) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
-        #if DEBUG
-            if acceptSelfSignedCertificate,
-               challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-               let serverTrust = challenge.protectionSpace.serverTrust {
-                let credential = URLCredential(trust: serverTrust)
-                return (.useCredential, credential)
-            }
-        #endif
-
-        return (.performDefaultHandling, nil)
+        await navigationHandler.evaluateAuthChallenge(challenge: challenge)
     }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
@@ -318,7 +309,7 @@ extension SwiftUIWebView.ViewModel: WKUIDelegate {
         case .currentWebView:
             webView.load(URLRequest(url: destinationUrl))
         case .newWebView:
-            navigateToNewWindowManager.loadInNewWebView(url: destinationUrl)
+            navigateToNewWindowManager.loadInNewWebView(url: destinationUrl, certificatePinning: nil)
         case .externalBrowser:
             UIApplication.shared.open(destinationUrl, options: [:], completionHandler: nil)
         }

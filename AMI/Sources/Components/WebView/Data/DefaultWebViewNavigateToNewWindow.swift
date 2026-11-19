@@ -21,7 +21,7 @@ final class DefaultWebViewNavigateToNewWindow: WebViewNavigateToNewWindow {
     }
 
     /// Forbid loading of any link in new webview.
-    func loadInNewWebView(url: URL) {
+    func loadInNewWebView(url: URL, certificatePinning: CertificatePinningFeature?) {
         fatalError("Should never happen on base WebView-ViewModel.")
     }
 }
