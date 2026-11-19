@@ -32,7 +32,7 @@ sufficient for this app:
 ## What the programmatic implementation buys
 
 - **Covers both WKWebView and URLSession.** The feature is delegate-agnostic:
-  `evaluate(challenge:for:)` speaks the
+  `evaluate(challenge:)` speaks the
   `URLAuthenticationChallenge → (disposition, credential)` contract used by
   both `WKNavigationDelegate` and `URLSessionDelegate` callbacks. The web
   view path is wired through the navigation handlers
@@ -131,10 +131,10 @@ let pinning = CertificatePinningFeature(pinRules: [
 ])
 
 // WKWebView (navigation handler):
-func evaluateAuthChallenge(challenge: URLAuthenticationChallenge, for host: String) async
+func evaluateAuthChallenge(challenge: URLAuthenticationChallenge) async
     -> (URLSession.AuthChallengeDisposition, URLCredential?) {
     guard let pinning else { return (.performDefaultHandling, nil) }
-    return await pinning.evaluate(challenge: challenge, for: host)
+    return await pinning.evaluate(challenge: challenge)
 }
 
 // URLSession: install the same evaluate() in the session delegate's
@@ -146,6 +146,10 @@ func evaluateAuthChallenge(challenge: URLAuthenticationChallenge, for host: Stri
 build: an app with a broken pin set must not start.
 
 ## Pin extraction (openssl)
+
+The repository ships `scripts/ami-certificate-pinning-info.sh HOST
+leaf|intermediate|INDEX [PORT]`, which fetches the chain and prints the
+selected certificate's pins; the pipelines below are the manual equivalent.
 
 ```bash
 # The chain is fetched live from the host — leaf first, then
