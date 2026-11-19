@@ -1,26 +1,41 @@
 #!/usr/bin/env bash
-# Usage: cert-info.sh HOST leaf|intermediate [PORT]
-# Extracts the leaf or intermediate certificate sent by HOST and prints:
+# Usage: cert-info.sh HOST leaf|intermediate|INDEX [PORT]
+#   leaf         = 1st certificate sent by the server
+#   intermediate = 2nd certificate sent by the server
+#   INDEX        = position (1-based) in the chain as sent by the server
+# Extracts the selected certificate and prints:
 #   certificate, public key and SPKI in Base64 (64-char lines), and their SHA-256 digests in Base64
 set -euo pipefail
-usage() { echo "Usage: $0 HOST leaf|intermediate [PORT]" >&2; exit 64; }
+usage() { echo "Usage: $0 HOST leaf|intermediate|INDEX [PORT]   (INDEX: 1 = leaf, 2 = intermediate, ...)" >&2; exit 64; }
 HOST=${1:-}; LEVEL=${2:-}; PORT=${3:-443}
 [ -n "$HOST" ] || usage
 case "$LEVEL" in
-  leaf)         INDEX=1;;
-  intermediate) INDEX=2;;
-  *)            usage;;
+  leaf)            INDEX=1;;
+  intermediate)    INDEX=2;;
+  [1-9]|[1-9][0-9]) INDEX=$LEVEL;;
+  *)               usage;;
 esac
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 
 b64()    { openssl base64 -in "$1"; }                               # wrapped at 64 chars
 sha256() { openssl dgst -sha256 -binary "$1" | openssl base64 -A; } # single line
 
-# 1. Fetch the chain once, keep the requested certificate
+# 1. Fetch the chain once, then keep the requested certificate
 openssl s_client -connect "$HOST:$PORT" -servername "$HOST" -showcerts </dev/null 2>/dev/null \
-  | awk -v i="$INDEX" '/BEGIN CERT/{n++} n==i' \
-  | openssl x509 -out "$TMP/cert.pem" 2>/dev/null \
-  || { echo "Error: $HOST sent no $LEVEL certificate" >&2; exit 1; }
+  > "$TMP/chain.txt" || true
+COUNT=$(grep -c 'BEGIN CERTIFICATE' "$TMP/chain.txt" || true)
+[ "$COUNT" -gt 0 ] || { echo "Error: no certificate received from $HOST:$PORT" >&2; exit 1; }
+[ "$INDEX" -le "$COUNT" ] || {
+  echo "Error: $HOST sent $COUNT certificate(s); there is no certificate #$INDEX" >&2; exit 1; }
+awk -v i="$INDEX" '/BEGIN CERT/{n++} n==i' "$TMP/chain.txt" | openssl x509 -out "$TMP/cert.pem"
+
+# Role of the selected certificate
+SUBJ=$(openssl x509 -in "$TMP/cert.pem" -noout -subject | sed 's/^subject= *//')
+ISSU=$(openssl x509 -in "$TMP/cert.pem" -noout -issuer  | sed 's/^issuer= *//')
+if   [ "$INDEX" -eq 1 ];      then ROLE="leaf"
+elif [ "$SUBJ" = "$ISSU" ];   then ROLE="self-signed root"
+else                               ROLE="CA certificate (intermediate or cross-signed root)"
+fi
 
 # 2. Certificate (DER)
 openssl x509 -in "$TMP/cert.pem" -outform DER -out "$TMP/cert.der"
