@@ -46,12 +46,23 @@ struct ServerTrustEvaluator: ServerTrustEvaluating, Sendable {
 
         // 5. Evaluate the server certificate chain against the SSL policy (steps 3–4).
         //
-        // Revocation: this system evaluation already applies Apple's trust
-        // policy, which includes the revocation data the OS maintains
-        // (OCSP-based) and the Certificate Transparency requirement — the
-        // app does not consult an online list itself. If a stricter LIVE
-        // check is ever mandated, add a revocation policy in step 4
-        // (the `as CFArray` cast is required for multiple policies):
+        // Revocation: this system evaluation applies the system trust
+        // policy, and the app adds no separate online check. Apple's
+        // Security guide (https://support.apple.com/fr-fr/guide/security/sec100a75d12/web):
+        //
+        //  - CRT: Certificate Revocation Lists
+        //    "On devices with iOS 11 or later and macOS 10.13 or later,
+        //     Apple devices are periodically updated with a current list of
+        //     revoked and constrained certificates."
+        //  - CT: Certificate Transparency
+        //    "On devices with iOS 12.1, certificates issued after
+        //     October 15, 2018, from a system-trusted root certificate need
+        //     to be logged in a trusted Certificate Transparency log to be
+        //     allowed for TLS connections."
+        //
+        // If a stricter LIVE check is ever mandated, add a revocation
+        // policy in step 4 (the `as CFArray` cast is required for
+        // multiple policies):
         //
         //     guard let revocationPolicy = SecPolicyCreateRevocation(
         //         kSecRevocationOCSPMethod | kSecRevocationRequirePositiveResponse
