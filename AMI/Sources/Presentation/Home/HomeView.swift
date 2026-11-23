@@ -71,10 +71,10 @@ struct HomeView: View {
                 toolbarBackButton
             }
             .sheet(isPresented: $viewModel.showSettings) {
-                SettingsView(viewModel: viewModel.makeNotificationsSettingsViewViewModel())
+                SettingsView(viewModel: viewModel.makeSettingsViewModel())
             }
             .sheet(isPresented: $viewModel.isPresentingOnboardingView) {
-                OnboardingView(viewModel: viewModel.makeOnboardingViewViewModel())
+                OnboardingView(viewModel: viewModel.makeOnboardingViewModel())
             }
             .navigationTitle(AMIL10n.amiTitle)
             .navigationBarHidden(true)

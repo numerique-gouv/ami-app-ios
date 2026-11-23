@@ -58,6 +58,14 @@ enum DependencyContainer {
         }
     }
 
+    static func makePreviewSettingsViewModel() -> SettingsViewModel {
+        SettingsViewModel(notificationManager: notificationManager)
+    }
+
+    static func makePreviewOnboardingViewModel() -> OnboardingViewModel {
+        OnboardingViewModel(notificationManager: notificationManager)
+    }
+
     #if IS_AMI_PRODUCTION || IS_AMI_PREPRODUCTION
 
         static func makeRootViewModel() -> RootViewModel<HomeViewModel> {

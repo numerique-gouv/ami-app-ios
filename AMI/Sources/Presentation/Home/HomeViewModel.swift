@@ -255,11 +255,9 @@ class HomeViewModel: NSObject {
 
     // MARK: - View models builders
 
-    // TODO: move this method into a DI module.
-    /// View model built on-demand when the View need it.
-    /// - makeSettingsViewViewModel : the view model needed when accessing the Notifications settings panel.
-    func makeNotificationsSettingsViewViewModel() -> SettingsView.ViewModel {
-        SettingsView.ViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
+    /// Builds the view model for the notifications settings panel.
+    func makeSettingsViewModel() -> SettingsViewModel {
+        SettingsViewModel(notificationManager: notificationManager, notificationsSettingDidChangeAction: { newValue in
             AppLog.viewModel.notice("\(AppLog.logHeader(self)) notificationsSettingDidChangeAction")
             Task { @MainActor in
                 await self.webViewViewModel.localStorageManager?.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
@@ -267,12 +265,10 @@ class HomeViewModel: NSObject {
         })
     }
 
-    // TODO: move this method into a DI module.
-    /// View model built on-demand when the View need it.
-    /// - makeOnboardingViewViewModel : the view model needed when asking the user if receiving push notifications is allowed.
-    func makeOnboardingViewViewModel() -> OnboardingView.ViewModel {
-        let onboardingViewViewModel = OnboardingView.ViewModel(notificationManager: notificationManager)
-        onboardingViewViewModel.eventReceiver = { event in
+    /// Builds the view model for the onboarding panel.
+    func makeOnboardingViewModel() -> OnboardingViewModel {
+        let onboardingViewModel = OnboardingViewModel(notificationManager: notificationManager)
+        onboardingViewModel.eventReceiver = { event in
             switch event {
             case .isDismissed:
                 // Go back to root URL (to leave web page)
@@ -282,7 +278,7 @@ class HomeViewModel: NSObject {
                 }
             }
         }
-        return onboardingViewViewModel
+        return onboardingViewModel
     }
 
     // MARK: - Helpers
