@@ -52,10 +52,10 @@ enum PinFactory {
     // Certificates
     private func makeCertificatePin(algorithm: PinHashingAlgorithmType? = nil, base64Representation: String) -> (any SendableTrustChainNode)? {
         switch algorithm {
+        case .none: Certificate(base64Encoded: base64Representation)
         case .sha256: HashedPin<Certificate, SHA256>(base64Encoded: base64Representation)
         case .sha384: HashedPin<Certificate, SHA384>(base64Encoded: base64Representation)
         case .sha512: HashedPin<Certificate, SHA512>(base64Encoded: base64Representation)
-        case nil: Certificate(base64Encoded: base64Representation)
         case .sha3_256: if #available(iOS 26.0, *) {
                 HashedPin<Certificate, SHA3_256>(base64Encoded: base64Representation)
             } else {
@@ -78,9 +78,6 @@ enum PinFactory {
     // swiftlint:disable:next cyclomatic_complexity
     private func makePublicKeyPin(keyType: PublicKeyType, algorithm: PinHashingAlgorithmType? = nil, base64Representation: String) -> (any SendableTrustChainNode)? {
         switch algorithm {
-        case .sha256: HashedPin<PublicKey, SHA256>(base64Encoded: base64Representation)
-        case .sha384: HashedPin<PublicKey, SHA384>(base64Encoded: base64Representation)
-        case .sha512: HashedPin<PublicKey, SHA512>(base64Encoded: base64Representation)
         case .none:
             switch keyType {
             case .p256: PublicKey(from: P256.Signing.PublicKey(base64Encoded: base64Representation))
@@ -88,6 +85,9 @@ enum PinFactory {
             case .p521: PublicKey(from: P521.Signing.PublicKey(base64Encoded: base64Representation))
             case .rsa: PublicKey(from: RSA.Signing.PublicKey(base64Encoded: base64Representation))
             }
+        case .sha256: HashedPin<PublicKey, SHA256>(base64Encoded: base64Representation)
+        case .sha384: HashedPin<PublicKey, SHA384>(base64Encoded: base64Representation)
+        case .sha512: HashedPin<PublicKey, SHA512>(base64Encoded: base64Representation)
         case .sha3_256: if #available(iOS 26.0, *) {
                 HashedPin<PublicKey, SHA3_256>(base64Encoded: base64Representation)
             } else {
@@ -109,10 +109,10 @@ enum PinFactory {
     // SPKI keys
     private func makeSpkiPin(algorithm: PinHashingAlgorithmType? = nil, base64Representation: String) -> (any SendableTrustChainNode)? {
         switch algorithm {
+        case .none: SPKI(base64Encoded: base64Representation)
         case .sha256: HashedPin<SPKI, SHA256>(base64Encoded: base64Representation)
         case .sha384: HashedPin<SPKI, SHA384>(base64Encoded: base64Representation)
         case .sha512: HashedPin<SPKI, SHA512>(base64Encoded: base64Representation)
-        case nil: SPKI(base64Encoded: base64Representation)
         case .sha3_256: if #available(iOS 26.0, *) {
                 HashedPin<SPKI, SHA3_256>(base64Encoded: base64Representation)
             } else {
