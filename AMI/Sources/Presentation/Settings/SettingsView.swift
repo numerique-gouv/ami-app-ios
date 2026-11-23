@@ -12,7 +12,7 @@ struct SettingsView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dismiss) private var dismiss
 
-    @Bindable var viewModel: ViewModel
+    @Bindable var viewModel: SettingsViewModel
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
@@ -70,6 +70,5 @@ struct SettingsView: View {
 }
 
 #Preview {
-    let viewModel = SettingsView.ViewModel(notificationManager: DependencyContainer.makeNotificationManager())
-    SettingsView(viewModel: viewModel)
+    SettingsView(viewModel: DependencyContainer.makePreviewSettingsViewModel())
 }

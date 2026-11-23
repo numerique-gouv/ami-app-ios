@@ -78,7 +78,7 @@ nonisolated func awaitWithin<T: Sendable>(
     _ work: @escaping @Sendable () async -> T
 ) async -> T? {
     let completed = CompletionBox<T>()
-    let workTask = Task.detached(priority: .unspecified) { await completed.complete(work()) }
+    let workTask = Task.detached(priority: nil) { await completed.complete(work()) }
     defer { workTask.cancel() }
 
     let deadline = ContinuousClock.now + .seconds(seconds)

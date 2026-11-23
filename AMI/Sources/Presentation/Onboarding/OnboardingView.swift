@@ -11,7 +11,7 @@ import SwiftUI
 
 struct OnboardingView: View {
     @Environment(\.dismiss) private var dismiss
-    @Bindable var viewModel: ViewModel
+    @Bindable var viewModel: OnboardingViewModel
 
     @ViewBuilder
     private var title: some View {
@@ -91,5 +91,5 @@ struct OnboardingView: View {
 
 #Preview {
     OnboardingView(
-        viewModel: OnboardingView.ViewModel(notificationManager: DependencyContainer.makeNotificationManager()))
+        viewModel: DependencyContainer.makePreviewOnboardingViewModel())
 }
