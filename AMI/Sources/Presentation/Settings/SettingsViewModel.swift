@@ -9,6 +9,7 @@
 import Foundation
 import WebKit
 
+@MainActor
 @Observable
 final class SettingsViewModel: NSObject {
     typealias NotificationsSettingDidChangeAction = (Bool) -> Void

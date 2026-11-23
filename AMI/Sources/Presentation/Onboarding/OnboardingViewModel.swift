@@ -9,6 +9,7 @@
 import Combine
 import Foundation
 
+@MainActor
 @Observable
 final class OnboardingViewModel: NSObject {
     enum Action {
