@@ -9,7 +9,7 @@
 import Foundation
 import WebKit
 
-extension ServiceView.ViewModel: @MainActor WebViewNavigateToNewWindow {
+extension ServiceViewModel: @MainActor WebViewNavigateToNewWindow {
     /// Default behavior: open all links in new webview.
     func destinationForNewWindow(sourceWebView: WKWebView,
                                  configuration: WKWebViewConfiguration,
@@ -23,7 +23,7 @@ extension ServiceView.ViewModel: @MainActor WebViewNavigateToNewWindow {
                                                    dataStore: webViewViewModel.configuration.websiteDataStore,
                                                    sourceUrl: nil,
                                                    specialLinkHandler: webViewViewModel.navigationHandler.specialLinkHandler) { [weak self] in
-            self?.destinationLinkViewDismissed()
+            self?.backToHomeViewAction()
         }
     }
 }

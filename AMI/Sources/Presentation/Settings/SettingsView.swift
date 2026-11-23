@@ -70,6 +70,6 @@ struct SettingsView: View {
 }
 
 #Preview {
-    let viewModel = SettingsView.ViewModel(notificationManager: NotificationManager())
+    let viewModel = SettingsView.ViewModel(notificationManager: DependencyContainer.makeNotificationManager())
     SettingsView(viewModel: viewModel)
 }

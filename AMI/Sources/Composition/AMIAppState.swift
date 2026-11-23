@@ -50,9 +50,4 @@ class AMIAppState: NSObject {
             )
         }
     }
-
-    func notificationReceived(notification: Notification) {
-        /// Nothing to do for the moment in PreProduction or Production mode.
-        /// A Special treatment is done in Staging mode in `ReviewApp-ViewModel`.
-    }
 }
