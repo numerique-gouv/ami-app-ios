@@ -18,6 +18,63 @@
 # relies on environment variables Xcode sets in both cases.
 #
 # ---------------------------------------------------------------------------
+# CONVENTIONS (.env syntax)
+# ---------------------------------------------------------------------------
+#
+# Plain text file, CR / LF or CRLF line endings. Lines are trimmed of leading
+# and trailing spaces and tabs, and in an assignment the key and the value are trimmed
+# before processing. Each line is one of:
+#
+#   - a blank line: ignored
+#   - a '#' comment (leading spaces allowed): ignored entirely; a trailing
+#     '\' is just comment content (a comment never continues the next line)
+#     and a comment line may not interrupt a line continuation (error)
+#   - an assignment: KEY = value   (every other line must contain '=')
+#
+# Keys:
+#   - snake_case; converted to camelCase in the generated enum
+#
+# Line continuation:
+#   - a trailing '\' merges the line with the next one (the '\' is dropped);
+#     a list may span several physical lines, but after merging it is a
+#     single line (the closing ']' must be merged too)
+#
+# Values:
+#   - a scalar: kept verbatim; it may hold several strings and operators,
+#     e.g. 42.0, "example.org", 40.0 + 2.0 or "sub4" + ".example.org"
+#   - a list: [ item, item, ... ] — items are separated by ',' outside of
+#     double quotes; a trailing comma is allowed; the list ends at the first
+#     unquoted ']' (a ']' inside a string or a comment does not end it) and
+#     only a '//' comment may follow it (kept after the ']')
+#   - a double-quoted string may contain ',' and escaped quotes (\"), and
+#     may span a line continuation
+#   - a '//' outside quotes starts a comment that runs till the end of the
+#     merged line; the comment is kept in the output and everything inside
+#     it (',' included) is inert
+#
+# Verbatim output:
+#   - list items are emitted exactly as in the input, one per line: the
+#     generator adds no data to the input (a last item without a comma
+#     stays without one)
+#   - original line boundaries are never value separators: between plain
+#     values they are dropped (bad input stays bad); inside a quoted string
+#     they are dropped (the string spans the continuation); after a '//'
+#     comment they end the comment, whose fragment becomes its own item
+#
+# Errors (printed as file:line:column: error: message, clickable in the
+# Xcode build log; messages name the key only — secret values are never
+# printed):
+#   - a non-comment line without '='
+#   - an empty key
+#   - a value ending inside an unclosed double-quoted string (an escaped
+#     quote or a missing closing quote)
+#   - a '#' comment line interrupting a line continuation
+#   - a value starting with '[' is a list only when nothing but a '//'
+#     comment follows the first unquoted ']'; otherwise it is not an error —
+#     the value is printed verbatim as a scalar (bad input stays bad), unless
+#     that leaves it ending inside an unclosed string (the error above)
+#
+# ---------------------------------------------------------------------------
 # SANDBOXING
 # ---------------------------------------------------------------------------
 #
@@ -66,7 +123,7 @@
 #       MyApp:
 #         sources:
 #           - path: Sources
-#           - path: Generated/Secrets.swift
+#           - path: Generated/Secrets-Generated.swift
 #             optional: true      # absent on a fresh clone; it is gitignored
 #
 # `optional` applies to files, not directories — point at the file itself.
@@ -77,310 +134,381 @@
 # user script sandboxing is far more likely to reject it (see above), and
 # Xcode's change detection for outputs inside $SRCROOT is unreliable, so keep
 # "Based on dependency analysis" unchecked and let the cmp check below decide.
-#
-# ---------------------------------------------------------------------------
-# CONVENTIONS (.env syntax)
-# ---------------------------------------------------------------------------
-#
-# One `KEY=value` per line. Blank lines and lines starting with `#` are
-# skipped. Keys are converted from SNAKE_CASE to camelCase:
-#
-#     API_BASE_URL=…            ->  static let apiBaseUrl = …
-#
-# Quoted values become Swift string literals; unquoted values are emitted
-# verbatim, so numbers, booleans and identifiers keep their inferred type:
-#
-#     API_KEY="abc123"          ->  static let apiKey = "abc123"
-#     MAX_RETRY_COUNT=3         ->  static let maxRetryCount = 3
-#     ENABLE_LOGGING=true       ->  static let enableLogging = true
-#
-# `|# ` introduces a trailing comment, rendered as a Swift `//` comment:
-#
-#     API_KEY="abc" |# rotate   ->  static let apiKey = "abc" // rotate
-#
-# Comma-separated values become an array, one element per line, each with its
-# own optional comment:
-#
-#     PATHS="a.cer" |# first, "b.cer" |# second
-#
-#         static let paths = [
-#             "a.cer", // first
-#             "b.cer", // second
-#         ]
-#
-# Only commas *outside* quotes split a list, so a comma inside a string is
-# just a character — `GREETING="Hello, neighbours"` is a scalar. Escaped
-# quotes are understood too: `QUOTE="He said \"hello, world\""` is a single
-# string. Quote characters inside a `|#` comment are treated as prose, so
-# apostrophes are safe: `PATHS="a" |# don't rotate, "b" |# ok` still splits.
-#
-# The one thing to avoid is a comma inside a comment. It is indistinguishable
-# from a list separator (`"a" |# c1, "b"` has exactly that shape), so it splits
-# the value. That cannot be detected directly, but its effect can: every list
-# element must be a valid Swift literal and all elements must be of the same
-# kind (string / number / bool / identifier), since Swift arrays are homogeneous.
-# A violation aborts the build with a clickable
-#     <env-file>:<line>: error: …
-# rather than emitting Swift that fails to compile. The trade-off: a
-# deliberately mixed list such as `1.5, CGFloat.pi` is rejected too — write
-# every element in the same form.
-#
-# ---------------------------------------------------------------------------
 
 set -euo pipefail
 
+# Print the usage line (stderr: it is shown when the parameters are not ok).
 usage() {
-    echo "usage: $(basename "$0") <env-file> <output-file>" >&2
-    echo "  e.g. $(basename "$0") Config/.env.MyApp Generated/Secrets.swift" >&2
+    printf 'Usage: %s <env-file> <output-file>\n' "$0" >&2
 }
 
-if [[ $# -ne 2 ]]; then
-    echo "error: expected 2 arguments, got $#" >&2
+if [ "$#" -ne 2 ]; then
+    printf 'error: expected 2 arguments, got %d\n' "$#" >&2
     usage
+    exit 2
+fi
+
+input=$1
+output=$2
+
+if [ "$input" = "$output" ]; then
+    printf '%s:1:1: error: output file is the same as the input file\n' "$output" >&2
+    exit 2
+fi
+
+# From here on, any failure removes both the temporary file and the existing
+# output, so no (old or partial) output survives a failed run.
+# So a failed generation can never be compiled, even with "Continue building after errors" on.
+tmp="${output}.tmp"
+trap 'rm -f -- "$output" "$tmp" 2>/dev/null' EXIT
+
+if [ ! -f "$input" ] || [ ! -r "$input" ]; then
+    printf '%s:1:1: error: cannot read input file\n' "$input" >&2
+    exit 2
+fi
+
+if [ -d "$output" ]; then
+    printf '%s:1:1: error: output path is a directory\n' "$output" >&2
     exit 1
 fi
 
-ENV_FILE="$1"
-OUT="$2"
+output_dir=$(dirname -- "$output")
+if [ ! -d "$output_dir" ]; then
+    if ! mkdir -p -- "$output_dir" 2>/dev/null; then
+        printf '%s:1:1: error: cannot create directory\n' "$output_dir" >&2
+        exit 1
+    fi
+fi
 
-if [[ ! -f "$ENV_FILE" ]]; then
-    echo "error: env file not found: $ENV_FILE" >&2
+if ! { : > "$tmp"; } 2>/dev/null; then
+    printf '%s:1:1: error: cannot write to output file\n' "$output" >&2
     exit 1
 fi
 
-mkdir -p "$(dirname "$OUT")"
+awk '
+# --- helpers ---------------------------------------------------------------
 
-TMP="$OUT.tmp"
-trap 'rm -f "$TMP"' EXIT
-
-# ---------------------------------------------------------------------------
-# read_key: turn a single `KEY=value` line into Swift source on stdout.
-# ---------------------------------------------------------------------------
-
-AWK_READ_KEY=$(cat <<'AWK'
-# Split `s` on commas that are not inside quotes. Returns the element count.
-# Backslash escapes the following character while inside a quoted section.
-# Once an unquoted `|#` is seen, the rest of the element is comment text: quote
-# characters there are prose (apostrophes, quoted words) and must not open a
-# quoted section, or every later comma would look quoted and the list would
-# never split. Only a comma ends the comment and starts the next element.
-function unquoted_split(s, arr,   i, n, c, q, cur, len, inc) {
-    n = 0; q = ""; cur = ""; len = length(s); inc = 0
-    for (i = 1; i <= len; i++) {
-        c = substr(s, i, 1)
-        if (inc) {
-            if (c == ",") { arr[++n] = cur; cur = ""; inc = 0; continue }
-            cur = cur c
-            continue
-        }
-        if (q != "" && c == "\\" && i < len) {
-            cur = cur c substr(s, i + 1, 1)
-            i++
-            continue
-        }
-        if (q == "" && substr(s, i, 2) == "|#") {
-            inc = 1
-            cur = cur "|#"
-            i++
-            continue
-        }
-        if (c == "\"" || c == "'") {
-            if (q == "") q = c
-            else if (q == c) q = ""
-            cur = cur c
-            continue
-        }
-        if (c == "," && q == "") {
-            arr[++n] = cur
-            cur = ""
-            continue
-        }
-        cur = cur c
-    }
-    arr[++n] = cur
-    return n
+# Print an error in Xcode build log format and abort.
+function fail(lineno, message) {
+    printf("%s:%d:1: error: %s\n", FILENAME, lineno, message) > "/dev/stderr"
+    bad = 1
+    exit 1
 }
 
-# 1 if `s` contains a comma outside of quotes, 0 otherwise.
-function has_unquoted_comma(s,   parts) {
-    return (unquoted_split(s, parts) > 1)
-}
-
-# Position of `needle` in `s` outside of quotes, or 0.
-function unquoted_index(s, needle,   i, c, q, len, nlen) {
-    q = ""; len = length(s); nlen = length(needle)
-    for (i = 1; i <= len; i++) {
-        c = substr(s, i, 1)
-        if (q != "" && c == "\\" && i < len) { i++; continue }
-        if (c == "\"" || c == "'") {
-            if (q == "") q = c
-            else if (q == c) q = ""
-            continue
-        }
-        if (q == "" && substr(s, i, nlen) == needle) return i
-    }
-    return 0
-}
-
+# Remove leading and trailing spaces and tabs.
 function trim(s) {
-    gsub(/^[ \t\r]+|[ \t\r]+$/, "", s)
+    sub(/^[ \t]+/, "", s)
+    sub(/[ \t]+$/, "", s)
     return s
 }
 
-# Resolve .env-level escapes, then escape for a Swift string literal.
-function swift_escape(s,   i, c, nxt, out, len) {
-    out = ""; len = length(s)
+# Convert snake_case to camelCase.
+function to_camel(s,    n, parts, i, out) {
+    n = split(s, parts, "_")
+    out = tolower(parts[1])
+    for (i = 2; i <= n; i++)
+        out = out toupper(substr(parts[i], 1, 1)) tolower(substr(parts[i], 2))
+    return out
+}
+
+# Number of consecutive backslashes immediately before position pos in body.
+# An even count means the character at pos is real (string delimiter), an
+# odd count means it is escaped (\") and is string content.
+function backslashes_before(body, pos,    k) {
+    k = 0
+    while (pos - k - 1 >= 1 && substr(body, pos - k - 1, 1) == "\\")
+        k++
+    return k
+}
+
+# Single quote scanner — the only place that decides what is string content
+# and what is comment content (list detection and the error checks share it,
+# so they cannot disagree).
+# Returns -1 when the text ends inside an unclosed double-quoted string;
+# otherwise the position of the first unquoted closing "]" (0 if there is
+# none). The scan always runs to the end, so [1, 2] "dangling is
+# unterminated, not a list.
+#   - a quoted string may span line boundaries (sentinel S): a boundary does
+#     not close it
+#   - a "//" outside quotes starts a comment that runs till the next line
+#     boundary; every character inside it (quotes, commas, ]) is inert
+function scan_quote(text,    n, i, c, in_quote, in_comment, first) {
+    n = length(text)
+    in_quote = 0
+    in_comment = 0
+    first = 0
+    for (i = 1; i <= n; i++) {
+        c = substr(text, i, 1)
+        if (c == S) {
+            in_comment = 0            # a comment runs till the line boundary
+            continue
+        }
+        if (in_quote) {
+            if (c == "\"" && backslashes_before(text, i) % 2 == 0)
+                in_quote = 0
+        } else if (in_comment) {
+            # comment text: every character (quotes included) is inert
+        } else if (c == "\"" && backslashes_before(text, i) % 2 == 0) {
+            in_quote = 1
+        } else if (c == "/" && substr(text, i + 1, 1) == "/") {
+            in_comment = 1
+        } else if (c == "]" && first == 0) {
+            first = i                 # remember it and keep scanning: the
+        }                             # value must also be terminated
+    }
+    if (in_quote)
+        return -1
+    return first
+}
+
+# 1 if the text after a closing "]" holds nothing but blanks, at most
+# one line boundary and a trailing "//" comment: only a comment may follow
+# the list (a comment runs till the next line boundary, nothing else may).
+function ok_list_suffix(t,    i, n, c) {
+    n = length(t)
+    i = 1
+    while (i <= n && (substr(t, i, 1) == " " || substr(t, i, 1) == "\t"))
+        i++
+    if (i <= n && substr(t, i, 1) == S)
+        i++
+    while (i <= n && (substr(t, i, 1) == " " || substr(t, i, 1) == "\t"))
+        i++
+    if (i > n)
+        return 1
+    if (substr(t, i, 2) != "//")
+        return 0
+    i += 2
+    while (i <= n && substr(t, i, 1) != S)
+        i++
+    # after that line boundary: only blanks or empty continuations
+    i++
+    while (i <= n) {
+        c = substr(t, i, 1)
+        if (c == " " || c == "\t" || c == S)
+            i++
+        else
+            return 0
+    }
+    return 1
+}
+
+# Split the body of a list into items. Rules:
+#   - a comma outside double quotes terminates the current item and stays
+#     part of it (emitted verbatim); a comma inside quotes ("a,b") is
+#     content; quote tracking handles several strings per item ("a" + "b")
+#     and escaped quotes (\")
+#   - an unquoted "]" ends the list: the open item is finalized and the rest
+#     of the (merged) line (a trailing comment) is ignored
+#   - an original line boundary (sentinel S) is never a value separator:
+#     between plain values it is dropped (bad input stays bad); inside a
+#     quoted string it is dropped (the string spans the continuation);
+#     after a "//" comment it ends the comment and the comment fragment
+#     becomes its own item
+#   - a "//" outside quotes starts a comment: it runs from there till the
+#     next line boundary; everything it contains (',', quotes, even text
+#     that looks like values) is content of the current item
+# nl[n] is 1 when item n starts on its own line (previous boundary was a
+# line boundary) and 0 when it follows a comma on the same line.
+function split_list(body, values, nl,    n, i, c, len, in_quote, in_comment, item, flag) {
+    n = 0
+    item = ""
+    len = length(body)
+    in_quote = 0
+    in_comment = 0
+    flag = 0
     for (i = 1; i <= len; i++) {
-        c = substr(s, i, 1)
-        if (c == "\\" && i < len) {
-            nxt = substr(s, i + 1, 1)
-            if (nxt == "\"" || nxt == "'" || nxt == "\\") {
-                c = nxt
-                i++
+        c = substr(body, i, 1)
+        if (c == S) {
+            if (in_quote) {
+                # a quoted string spans the boundary: drop it, no split
+            } else if (in_comment) {
+                # a comment ends at the boundary: its fragment is an item
+                n++
+                values[n] = item
+                nl[n] = flag
+                flag = 1
+                item = ""
+            } else {
+                # a boundary between plain values: not a separator (dropped),
+                # but the next item starts on a new line
+                flag = 1
+            }
+            in_comment = 0
+            continue
+        }
+        if (in_quote) {
+            item = item c
+            if (c == "\"" && backslashes_before(body, i) % 2 == 0)
+                in_quote = 0            # a \" inside a string is content
+        } else if (in_comment) {
+            item = item c               # comment content: quotes are inert
+        } else if (c == "\"" && backslashes_before(body, i) % 2 == 0) {
+            in_quote = 1
+            item = item c
+        } else if (c == "/" && substr(body, i + 1, 1) == "/") {
+            in_comment = 1
+            item = item c               # the second '/' is appended on the next step
+        } else if (c == "]") {
+            # an unquoted "]" ends the list: finalize the open item and
+            # ignore the rest of the (merged) line (a trailing comment)
+            n++
+            values[n] = item
+            nl[n] = flag
+            return n
+        } else if (c == ",") {
+            item = item c            # the comma belongs to this item
+            n++
+            values[n] = item
+            nl[n] = flag
+            flag = 0
+            item = ""
+        } else {
+            item = item c
+        }
+    }
+    n++
+    values[n] = item
+    nl[n] = flag
+    return n
+}
+
+# Process one (already merged) logical line. Line boundaries are marked with
+# the sentinel S so that comment handling can see the original lines.
+function emit(line, lineno,    pos, key, value, n, values, nl, i, item, out, m, epos, list_suffix) {
+    if (line == "")
+        return
+    if (index(line, "=") == 0)
+        fail(lineno, "line does not contain \"=\"")
+    pos   = index(line, "=")
+    key   = to_camel(trim(substr(line, 1, pos - 1)))
+    gsub(S, "", key)
+    value = trim(substr(line, pos + 1))
+    # A continuation may start the value on the next physical line: drop the
+    # leading line boundaries (and the blanks around them) so a list still
+    # begins with "[" and is recognised.
+    sub("^[ \t" S "]*", "", value)
+    if (key == "")
+        fail(lineno, "line has an empty key")
+
+    printf("    static let %s = ", key)
+
+    # A list is "[" ... "]" with nothing but a "//" comment after the
+    # closing "]" (scan_quote ignores what strings and comments hold, so a
+    # "]" or a quote inside them cannot end or break the list).
+    epos = 0
+    list_suffix = ""
+    if (substr(value, 1, 1) == "[") {
+        epos = scan_quote(value)
+        if (epos > 0 && ok_list_suffix(substr(value, epos + 1))) {
+            list_suffix = substr(value, epos + 1)
+            value = substr(value, 1, epos)
+        } else
+            epos = 0
+    }
+
+    if (epos > 0) {
+        # List value: strip the outer [ ] and split the body into items.
+        value = substr(value, 2, epos - 2)
+        n = split_list(value, values, nl)
+
+        # Merge comment-only fragments that follow a comma on the same line
+        # ("a", // c) back into the previous item; a comment standing on its
+        # own line is printed on its own line inside the array. Items are
+        # printed verbatim: no data is added to the input.
+        m = 0
+        for (i = 1; i <= n; i++) {
+            item = trim(values[i])
+            if (item == "")
+                continue
+            if (item ~ /^\/\// && nl[i] == 0 && m > 0)
+                out[m] = out[m] " " item
+            else {
+                m++
+                out[m] = item
             }
         }
-        if (c == "\\")          out = out "\\\\"
-        else if (c == "\"")     out = out "\\\""
-        else if (c == "\t")     out = out "\\t"
-        else                    out = out c
+
+        printf("[\n")
+        for (i = 1; i <= m; i++)
+            printf("        %s\n", out[i])
+        printf("    ]")
+        if (list_suffix != "") {
+            gsub(S, "", list_suffix)
+            list_suffix = trim(list_suffix)
+            if (list_suffix != "")
+                printf(" %s", list_suffix)
+        }
+    } else {
+        # Scalar value: kept verbatim (several strings and operators are
+        # allowed), only dropping the line-boundary sentinels. The scan
+        # doubles as the unterminated-string check (key only in the error).
+        epos = scan_quote(value)
+        if (epos < 0)
+            fail(lineno, "unterminated string in " key)
+        gsub(S, "", value)
+        printf("%s", value)
     }
-    return out
+    printf("\n")
 }
 
-# Shared value handling for both the scalar and the list path:
-# pulls off any `|#` comment (into the global `last_comment`), trims, and
-# either returns a quoted Swift string literal or the raw value verbatim.
-# An empty value returns "".
-function process_value(v,   idx, first, last) {
-    last_comment = ""
-    idx = unquoted_index(v, "|#")
-    if (idx > 0) {
-        last_comment = trim(substr(v, idx + 2))
-        v = substr(v, 1, idx - 1)
-    }
-    v = trim(v)
-    if (v == "") return ""
-    first = substr(v, 1, 1)
-    last = substr(v, length(v), 1)
-    if (length(v) >= 2 && ((first == "\"" && last == "\"") || (first == "'" && last == "'")))
-        return "\"" swift_escape(substr(v, 2, length(v) - 2)) "\""
-    return v
-}
+# --- main ------------------------------------------------------------------
 
-# Report a problem in Xcode's "<file>:<line>: error: <msg>" format so it is
-# clickable in the build log, and abort — a partially written Secrets.swift is
-# worse than no build. The caller discards the .tmp file, so $OUT is untouched.
-function fail(sk, msg) {
-    printf "%s:%s: error: %s (key %s)\n", ENVIRON["ENV_FILE"], ENVIRON["ENV_LINENO"], msg, sk \
-        > "/dev/stderr"
-    exit 2
-}
-
-# Classify an already-processed value so list elements can be checked for
-# consistency. Swift arrays are homogeneous, so a mixed list is always a bug.
-function classify(v) {
-    if (substr(v, 1, 1) == "\"")                     return "string"
-    if (v ~ /^-?[0-9]+(\.[0-9]+)?$/)                  return "number"
-    if (v == "true" || v == "false")                 return "bool"
-    if (v ~ /^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/) return "ident"
-    return "invalid"
-}
-
-function read_scalar_key(sk, rest,   val, line) {
-    val = process_value(rest)
-    if (val == "") return
-    if (classify(val) == "invalid")
-        fail(sk, "value is not a valid Swift literal: " val)
-    line = "    static let " sk " = " val
-    if (last_comment != "") line = line " // " last_comment
-    print line
-}
-
-function read_list_key(sk, rest,   parts, n, i, val, kind, kinds, vals, cmts, m, line) {
-    n = unquoted_split(rest, parts)
-
-    # Validate the whole list before emitting anything.
-    m = 0
-    for (i = 1; i <= n; i++) {
-        val = process_value(parts[i])
-        if (val == "") continue
-        kind = classify(val)
-        if (kind == "invalid")
-            fail(sk, "list element is not a valid Swift literal: " val)
-        m++
-        vals[m] = val; kinds[m] = kind; cmts[m] = last_comment
-        if (m > 1 && kind != kinds[1])
-            fail(sk, "list mixes " kinds[1] " and " kind " (" vals[1] ", " val ") — " \
-                     "a comma inside a |# comment splits the value; remove it")
-    }
-
-    print "    static let " sk " = ["
-    for (i = 1; i <= m; i++) {
-        line = "        " vals[i] ","
-        if (cmts[i] != "") line = line " // " cmts[i]
-        print line
-    }
-    print "    ]"
-}
-
-function camel_case(k,   parts, n, i, out) {
-    n = split(tolower(k), parts, "_")
-    out = parts[1]
-    for (i = 2; i <= n; i++) {
-        if (parts[i] == "") continue
-        out = out toupper(substr(parts[i], 1, 1)) substr(parts[i], 2)
-    }
-    return out
+BEGIN {
+    S = sprintf("%c", 1)
+    np = split(ARGV[1], p, "/")
+    input_base = p[np]
+    printf("// Generated from %s — do not edit\n\n", input_base)
+    printf("import Foundation\n\n")
+    printf("// swiftlint:disable all\n")
+    printf("// swiftformat:disable all\n\n")
+    printf("nonisolated enum Secrets {\n")
+    pending    = ""
+    start_line = 0
+    bad        = 0
 }
 
 {
-    line = trim($0)
-    if (line == "" || substr(line, 1, 1) == "#") next
+    sub(/\r$/, "")                      # normalize CRLF -> LF
+    line = trim($0)                     # trim each physical line
 
-    eq = index(line, "=")
-    if (eq == 0) next
+    if (line ~ /^#/) {                  # "#" comments never continue: a
+        if (pending != "")              # comment may not interrupt a merge
+            fail(FNR, "# comment interrupts a line continuation")
+        next
+    }
 
-    key = trim(substr(line, 1, eq - 1))
-    if (key == "") next
-    rest = substr(line, eq + 1)
+    if (line ~ /\\$/) {                 # a trailing backslash merges with the next line
+        if (pending == "")              # remember where the logical line starts
+            start_line = FNR
+        line = substr(line, 1, length(line) - 1)   # drop the trailing backslash
+        pending = pending line S        # S marks the original line boundary
+        next
+    }
 
-    sk = camel_case(key)
-    if (has_unquoted_comma(rest)) read_list_key(sk, rest)
-    else read_scalar_key(sk, rest)
+    emit(pending line, pending != "" ? start_line : FNR)
+    pending = ""
 }
-AWK
-)
 
-read_key() {
-    ENV_FILE="$ENV_FILE" ENV_LINENO="$2" awk "$AWK_READ_KEY" <<< "$1"
+END {
+    if (bad)
+        exit 1
+    if (pending != "")
+        emit(pending, start_line)       # trailing merged line with no newline
+    printf("}\n\n")
+    printf("// swiftformat:enable all\n")
+    printf("// swiftlint:enable all\n")
 }
+' "$input" > "$tmp" || exit 1
 
-# ---------------------------------------------------------------------------
-# Generate
-# ---------------------------------------------------------------------------
-
-{
-    echo "// swiftformat:disable all"
-    echo "// swiftlint:disable all"
-    echo "// Generated from $(basename "$ENV_FILE") — do not edit"
-    echo ""
-    echo "enum Secrets {"
-    lineno=0
-    while IFS= read -r line || [[ -n "$line" ]]; do
-        lineno=$(( lineno + 1 ))
-        read_key "$line" "$lineno"
-    done < "$ENV_FILE"
-    echo "}"
-} > "$TMP"
-
-if [[ -f "$OUT" ]] && cmp -s "$TMP" "$OUT"; then
-    echo "note: ♻️  $(basename "$OUT") unchanged, kept existing file: $OUT"
+# If the existing output is byte-identical to the new one, keep it: its
+# modification time is preserved, so Xcode's incremental builds can skip
+# recompiling the target. Otherwise rename the temporary file into place
+# (atomic on the same volume).
+if [ -f "$output" ] && cmp -s -- "$output" "$tmp"; then
+    echo "note: ♻️  $(basename "$output") unchanged, kept existing file: $output"
+    rm -f -- "$tmp"
 else
-    # rename(2): atomically replaces $OUT, so no separate rm is needed and the
-    # compiler never observes a missing or half-written file. $TMP is always a
-    # sibling of $OUT, hence same filesystem, hence a true rename rather than a
-    # copy. -f skips the prompt if an existing $OUT is not writable (only the
-    # directory's write permission actually matters to rename).
-    mv -f "$TMP" "$OUT"
-    echo "note: 🆕 generated $OUT from $ENV_FILE"
+    mv -f -- "$tmp" "$output" || exit 1
+    echo "note: 🆕 generated $output from $input"
 fi
+trap - EXIT
