@@ -68,8 +68,10 @@ enum DependencyContainer {
                         }),
             ])
     #elseif IS_AMI_STAGING
+        // No certificate pinning for the moment.
         private static let certificatePinningFeature: CertificatePinningFeature? = nil
     #else
+        // No certificate pinning for the moment.
         private static let certificatePinningFeature: CertificatePinningFeature? = nil
     #endif
 
