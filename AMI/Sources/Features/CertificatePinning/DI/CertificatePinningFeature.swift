@@ -52,6 +52,8 @@ final class CertificatePinningFeature: Sendable {
         do {
             if try await evaluator.evaluate(serverTrust, forHost: challenge.protectionSpace.host.lowercased()) {
                 // The server certificate chain was successfully verified against a pinned certificate.
+                // No need to apply the standard validation by returning `(.performDefaultHandling, .none)`
+                // because we already performed the complete system evaluation.
                 return (.useCredential, URLCredential(trust: serverTrust))
             } else {
                 // The host has no pinned certificate to verify against. Continue navigation normally.

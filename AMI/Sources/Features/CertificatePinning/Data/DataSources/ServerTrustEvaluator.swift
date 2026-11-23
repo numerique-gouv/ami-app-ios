@@ -77,6 +77,8 @@ struct ServerTrustEvaluator: ServerTrustEvaluating, Sendable {
         }
 
         // 6. Extract the server certificate chain from the trust management object.
+        //    Needed so the chain includes the root for pin matching.
+        //    (the server root certificate is usually not provided by the server)
         let serverCertificates: [SecCertificate] = SecTrustCopyCertificateChain(trust) as? [SecCertificate] ?? []
 
         guard !serverCertificates.isEmpty else {
