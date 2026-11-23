@@ -8,6 +8,8 @@
 
 import Foundation
 
+// Annotate this extension with @retroactive because it extends a type
+// belonging to a framework we don't own.
 extension SecKey: @retroactive CustomStringConvertible {
     /// A short human-readable description of the key,
     /// e.g. "RSA 2048-bit" or "EC 256-bit".
