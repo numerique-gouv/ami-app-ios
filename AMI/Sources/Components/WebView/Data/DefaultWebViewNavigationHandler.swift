@@ -12,13 +12,19 @@ import WebKit
 final class DefaultWebViewNavigationHandler: WebViewNavigationHandler {
     /// The root url of the webview.
     let rootUrl: URL
+    /// The Certificate Pinning Feature of the webview
+    var certificatePinning: CertificatePinningFeature?
     /// The promoted urls feature of the webview.
     var promotedUrls: PromotedUrlsFeature?
-    /// The
+    /// The handler to detect and activate special links.
     let specialLinkHandler: any SpecialLinkProtocol
 
-    init(rootUrl: URL, promotedUrls: PromotedUrlsFeature? = nil, specialLinkHandler: any SpecialLinkProtocol) {
+    init(rootUrl: URL,
+         certificatePinning: CertificatePinningFeature?,
+         promotedUrls: PromotedUrlsFeature?,
+         specialLinkHandler: any SpecialLinkProtocol) {
         self.rootUrl = rootUrl
+        self.certificatePinning = certificatePinning
         self.promotedUrls = promotedUrls
         self.specialLinkHandler = specialLinkHandler
     }
@@ -30,4 +36,8 @@ final class DefaultWebViewNavigationHandler: WebViewNavigationHandler {
 
     /// Called before starting the navigation to destination.
     func prepareNavigation(to destination: WebViewNavigationType) {}
+
+    func evaluateAuthChallenge(challenge: URLAuthenticationChallenge) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
+        (.performDefaultHandling, nil)
+    }
 }

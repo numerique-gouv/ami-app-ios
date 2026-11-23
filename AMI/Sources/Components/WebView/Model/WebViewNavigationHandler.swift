@@ -17,6 +17,8 @@ import WebKit
 protocol WebViewNavigationHandler: AnyObject {
     /// The root url of the webview.
     var rootUrl: URL { get }
+    /// The Certificate Pinning Feature of the webview
+    var certificatePinning: CertificatePinningFeature? { get }
     /// The promoted urls feature of the webview.
     var promotedUrls: PromotedUrlsFeature? { get }
     /// The handler to detect and activate special links.
@@ -30,4 +32,12 @@ protocol WebViewNavigationHandler: AnyObject {
 
     /// Called before starting the navigation to destination.
     func prepareNavigation(to destination: WebViewNavigationType)
+
+    /// Called to check certificate pinning for the challenged connection.
+    /// The host is derived from the challenge's protection space.
+    /// - Returns: the pair to pass to the delegate completion —
+    ///   `.useCredential` when a pin matched, `.performDefaultHandling`
+    ///   when the host is not pinned (or pinning is not configured),
+    ///   `.cancelAuthenticationChallenge` when validation or pinning fails.
+    func evaluateAuthChallenge(challenge: URLAuthenticationChallenge) async -> (URLSession.AuthChallengeDisposition, URLCredential?)
 }

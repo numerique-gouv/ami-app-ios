@@ -16,6 +16,8 @@ struct ServiceLinkViewModel {
     private let destinationUrl: URL
     private let dataStore: WKWebsiteDataStore
     private let sourceUrl: URL?
+    /// The Certificate Pinning Feature of the service link
+    private let certificatePinning: CertificatePinningFeature?
     private let specialLinkHandler: any SpecialLinkProtocol
 
     let model: ServiceView.ViewModel
@@ -23,14 +25,17 @@ struct ServiceLinkViewModel {
     init(destinationUrl: URL,
          dataStore: WKWebsiteDataStore,
          sourceUrl: URL? = nil,
+         certificatePinning: CertificatePinningFeature?,
          specialLinkHandler: any SpecialLinkProtocol,
          destinationViewDismissedAction: DismissedAction?) {
         self.destinationUrl = destinationUrl
         self.dataStore = dataStore
         self.sourceUrl = sourceUrl
+        self.certificatePinning = certificatePinning
         self.specialLinkHandler = specialLinkHandler
 
         model = ServiceView.ViewModel(rootUrl: destinationUrl,
+                                      certificatePinning: certificatePinning,
                                       websiteDataStore: dataStore,
                                       refererUrl: sourceUrl,
                                       specialLinkHandler: specialLinkHandler,

@@ -47,9 +47,11 @@ extension HomeView {
 
         init(rootUrl: URL,
              websiteDataStore: WKWebsiteDataStore,
+             certificatePinning: CertificatePinningFeature?,
              specialLinkHandler: any SpecialLinkProtocol,
              notificationManager: NotificationManager) {
             let navigationHandler = HomeViewNavigationHandler(rootUrl: rootUrl,
+                                                              certificatePinning: certificatePinning,
                                                               specialLinkHandler: specialLinkHandler)
             let userScripts = HomeUserScripts()
             let webViewViewModel = SwiftUIWebView.ViewModel(rootUrl: rootUrl,
