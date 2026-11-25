@@ -92,6 +92,6 @@ struct OnboardingView: View {
 #Preview {
     OnboardingView(
         viewModel: OnboardingView.ViewModel(
-            notificationManager: NotificationManager()
+            notificationManager: NotificationManager(registerDevice: RegisterDevice(trustedUrlSession: ServerTrustURLSession(handler: nil, configuration: .default)))
         ))
 }

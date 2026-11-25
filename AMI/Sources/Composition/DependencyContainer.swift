@@ -16,8 +16,14 @@ enum DependencyContainer {
     private static let specialLinkHandler = SpecialLinkHandler()
 
     static let appState = AMIAppState()
-    static let notificationManager = NotificationManager()
-    // This common website DataStore will be injected n root views to be shared with all child webviews.
+    /// App-wide notification manager. Device registration runs over a
+    /// `ServerTrustURLSession`: pinned in preproduction, system default elsewhere.
+    static let notificationManager = {
+        let trustedUrlSession = ServerTrustURLSession(handler: certificatePinningFeature, configuration: .default)
+        return NotificationManager(registerDevice: RegisterDevice(trustedUrlSession: trustedUrlSession))
+    }()
+
+    // This common website DataStore will be injected in root views to be shared with all child webviews.
     private static let commonWebsiteDataStore: WKWebsiteDataStore = .default()
 
     /// ViewModel used by `SwiftUIWebView` preview in Xcode.

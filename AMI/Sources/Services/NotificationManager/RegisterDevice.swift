@@ -26,6 +26,12 @@ private struct RegisterDeviceRequestInput: Encodable {
 }
 
 final actor RegisterDevice {
+    private let trustedUrlSession: ServerTrustURLSession
+
+    init(trustedUrlSession: ServerTrustURLSession) {
+        self.trustedUrlSession = trustedUrlSession
+    }
+
     func registerDevice(baseUrl: URL, apnsToken: String, userAuthenticationToken: String) async {
         let deviceId = await DeviceID.getOrCreateDeviceID()
         let deviceModel = await UIDevice.current.model
@@ -64,7 +70,7 @@ final actor RegisterDevice {
         do {
             request.httpBody = try JSONEncoder().encode(["subscription": input])
 
-            let (_, response) = try await URLSession.shared.data(for: request)
+            let (_, response) = try await trustedUrlSession.data(for: request)
 
             if let httpResponse = response as? HTTPURLResponse {
                 if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
