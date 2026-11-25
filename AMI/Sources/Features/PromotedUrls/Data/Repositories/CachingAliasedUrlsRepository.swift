@@ -62,8 +62,7 @@ actor CachingAliasedUrlsRepository {
 /// Conformance to the domain `AliasedUrlsRepository` role.
 ///
 /// Declared in a separate extension, not on the actor definition line:
-/// `actor CachingAliasedUrlsRepository: AliasedUrlsRepository` triggers
-/// `'nonisolated' modifier cannot be applied to this declaration` when
-/// archiving (not when simply building) — the protocol is `nonisolated`.
-/// Related report: https://github.com/nnabeyang/swift-atproto/releases/tag/0.45.0
+/// because of a bug in Swift 6.3 compiler in Release mode (`SWIFT_COMPILATION_MODE = wholemodule`).
+/// An actor that declares conformance on its definition line to a protocol
+/// explicitly marked `nonisolated` emits spurious diagnostics under whole-module optimization.
 extension CachingAliasedUrlsRepository: AliasedUrlsRepository {}
