@@ -3,7 +3,10 @@
 Pins the server certificate chains of the hosts the app talks to, on top of
 the system TLS validation. The feature is a pure decision function
 (`challenge + host → disposition + credential`) that the host installs in its
-auth-challenge delegates; it contains no networking of its own.
+auth-challenge delegates; it contains no networking of its own. In the app it
+is installed in two places: the web view navigation handlers (WKWebView) and
+`ServerTrustUrlSession` (`Data/Network`), the URLSession used by device
+registration.
 
 Largely inspired by:
 - [Apple documentation - Performing manual server trust authentication](https://developer.apple.com/documentation/foundation/performing-manual-server-trust-authentication)
@@ -41,8 +44,11 @@ sufficient for this app:
   `URLAuthenticationChallenge → (disposition, credential)` contract used by
   both `WKNavigationDelegate` and `URLSessionDelegate` callbacks. The web
   view path is wired through the navigation handlers
-  (`HomeViewNavigationHandler`, `ServiceViewNavigationHandler`); the same
-  `evaluate()` can be installed in any `URLSession` delegate.
+  (`HomeViewNavigationHandler`, `ServiceViewNavigationHandler`); the URLSession
+  path is provided by `ServerTrustUrlSession` (`Data/Network`), a session whose
+  delegate forwards every challenge to the feature — wired in
+  `DependencyContainer` for device registration, with a `nil` handler in
+  environments without pinning (plain system validation).
 - **Pinning layers on system validation, never replaces it.** Full chain +
   hostname validation runs first; a broken chain fails even if a pin would
   match.
@@ -191,8 +197,11 @@ func evaluateAuthChallenge(challenge: URLAuthenticationChallenge) async
     return await pinning.evaluate(challenge: challenge)
 }
 
-// URLSession: install the same evaluate() in the session delegate's
-// `urlSession(_:didReceive:completionHandler:)`.
+// URLSession (device registration): the feature conforms to the
+// `ServerTrustHandler` port (Core/Domain/Network); `ServerTrustUrlSession`
+// installs it as its challenge delegate. `nil` handler = system default.
+let session = ServerTrustUrlSession(handler: certificatePinningFeature,
+                                    configuration: .default)
 ```
 
 `PinRule` and `ServerTrustEvaluator` fail fast at build time
@@ -244,4 +253,7 @@ DI/             CertificatePinningFeature   (host-facing entry point)
 
 Dependencies point inward: Presentation holds the feature (optional, nil =
 pass-through); the feature owns the evaluator; the evaluator consumes
-`PinRule` and the pin nodes.
+`PinRule` and the pin nodes. Outward, the feature plays the
+`ServerTrustHandler` port (`Core/Domain/Network`) — the contract spoken by
+both the web view navigation handlers and the transport
+(`Data/Network/ServerTrustUrlSession`); `Composition/` wires them.
