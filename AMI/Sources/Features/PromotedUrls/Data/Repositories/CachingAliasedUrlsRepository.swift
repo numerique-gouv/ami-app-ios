@@ -8,12 +8,10 @@
 
 import Foundation
 
-/// `AliasedUrlsRepository` backed by a `AliasedUrlsDataSource`.
-///
-/// Combines the web page's alias/URL catalog with the local
-/// `PromotedAliases` catalog. Entries with unknown aliases are dropped;
-/// each entity's destination is derived from the alias's route.
-actor CachingAliasedUrlsRepository: AliasedUrlsRepository {
+/// Caches the alias/URL catalog, combining the web page's catalog with
+/// the local `PromotedAliases` catalog. Entries with unknown aliases are
+/// dropped; each entity's destination is derived from the alias's route.
+actor CachingAliasedUrlsRepository {
     private let dataSource: any AliasedUrlsDataSource
     private var catalog: [AliasedUrl]?
 
@@ -60,3 +58,12 @@ actor CachingAliasedUrlsRepository: AliasedUrlsRepository {
         }
     }
 }
+
+/// Conformance to the domain `AliasedUrlsRepository` role.
+///
+/// Declared in a separate extension, not on the actor definition line:
+/// `actor CachingAliasedUrlsRepository: AliasedUrlsRepository` triggers
+/// `'nonisolated' modifier cannot be applied to this declaration` when
+/// archiving (not when simply building) — the protocol is `nonisolated`.
+/// Related report: https://github.com/nnabeyang/swift-atproto/releases/tag/0.45.0
+extension CachingAliasedUrlsRepository: AliasedUrlsRepository {}
