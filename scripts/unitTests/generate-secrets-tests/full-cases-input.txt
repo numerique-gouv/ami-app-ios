@@ -1,0 +1,141 @@
+# ===========================================================================
+# full-cases.env: every supported construct of generate-secrets.sh
+# Lines marked [TAB] contain real tab characters.
+# ===========================================================================
+
+# --- 1. Scalars -------------------------------------------------------------
+INT_VALUE = 42
+NEGATIVE_VALUE = -7
+DOUBLE_VALUE = 3.14
+BOOL_VALUE = true
+STRING_VALUE = "hello"
+EMPTY_STRING = ""
+EXPRESSION_VALUE = 40.0 + 2.0
+CONCATENATION = "sub" + ".example.org"
+SCALAR_WITH_COMMENT = 42 // the answer
+
+# --- 2. Keys and spacing ----------------------------------------------------
+NO_SPACES="tight"
+   SPACED_KEY    =     "spaced"
+	TAB_INDENTED	=	"tabs"	
+MixedCase_KEY = "every part is lowercased first"
+DOUBLE__UNDERSCORE = "empty parts are skipped"
+KEY_WITH_DIGITS_2FA = "digits"
+EQUALS_IN_VALUE = "a=b&c=d"
+
+# --- 3. Comments ------------------------------------------------------------
+   # indented comment
+	# [TAB] tab-indented comment containing KEY = value
+# a comment ending with a backslash does not continue \
+AFTER_BACKSLASH_COMMENT = "still parsed"
+## double-hash comment
+
+# --- 4. Strings -------------------------------------------------------------
+URL_WITH_SLASHES = "https://example.org/path" // a real comment
+BRACKETS_IN_STRING = "[not] a list"
+STRING_STARTING_WITH_BRACKET = "[x]"
+ESCAPED_QUOTES = "say \"hi\"" // comment with \"quotes\"
+BACKSLASHES = "C:\\Users\\me"
+REGEX = "^(.+\\.)?app\\.example\\.org$"
+HASH_IN_STRING = "#not-a-comment"
+UNICODE = "café ☕️"
+
+# --- 5. Line continuations (scalars) ---------------------------------------
+STRING_ACROSS_LINES = "abc\
+    def"
+EXPRESSION_ACROSS_LINES = 40.0 + \
+    2.0
+VALUE_ON_NEXT_LINE = \
+    "value on next line"
+ESCAPED_BACKSLASH_AT_BREAK = "end\\\
+    tail"
+COMMENT_ACROSS_LINES = "value" // first part \
+    second part of the same comment
+COMMENT_MARKER_SPLIT = "value" /\
+/ split comment marker
+COMMA_INSIDE_STRING = "abcd,ef\
+    ghi" // comment with , (comma) \
+    // and a second marker
+
+# --- 6. Lists ---------------------------------------------------------------
+EMPTY_LIST = []
+INLINE_LIST = ["a", "b", "c"]
+INLINE_LIST_TRAILING_COMMA = [1, 2, 3,]
+INLINE_LIST_WITH_COMMENT = [1, 2] // trailing comment
+MULTILINE_LIST = [ \
+    "one", \
+    "two", \
+    "three" \
+]
+MULTILINE_TRAILING_COMMA = [ \
+    "one", \
+    "two", \
+]
+ITEMS_WITH_COMMENTS = [ \
+    "a", // after a \
+    "b" // after b, with a comma \
+]
+COMMENTS_ON_OWN_LINES = [ \
+    // leading comment \
+    "a", \
+    // between items \
+    "b", \
+]
+QUOTES_IN_COMMENTS = [ \
+    "a", // see "b", "c" \
+    "d", // weird \"x" \
+    "e" \
+]
+CLOSING_BRACKET_INSIDE = [ \
+    "]x", // has ] \
+    "y" \
+]
+COMMA_IN_STRING_ITEM = [ \
+    "a,b", \
+    "c" \
+]
+EXPRESSION_ITEMS = [ \
+    "sub4" + ".example.org", \
+    "sub5.example.org", \
+]
+NUMBER_ITEMS = [ \
+    1 + 2, \
+    40.0 \
+]
+STRING_ITEM_ACROSS_LINES = [ \
+    "long-\
+    value", \
+    "short" \
+]
+COMMENT_AFTER_CLOSING_SAME_LINE = [ \
+    "a", \
+    "b" \
+] // same-line tail
+COMMENT_AFTER_CLOSING_NEXT_LINE = [ \
+    "a", \
+    "b" \
+] \
+// next-line tail
+
+# --- 7. Values starting on the line after '=' -----------------------------
+LIST_ON_NEXT_LINE = \
+[ \
+    "a", // after a \
+    "b" \
+]
+INLINE_LIST_ON_NEXT_LINE = \
+    ["x", "y"]
+VALUE_AFTER_EMPTY_CONTINUATION = \
+\
+    "after an empty continuation line"
+
+# --- 8. Values starting with '[' that are not lists (kept as scalars) ------
+NESTED_INLINE = [[1, 2], [3]]
+LIST_PLUS_LIST = [1, 2] + [3]
+NOT_A_LIST_MULTILINE = [ \
+    "a", \
+    "b" \
+] + ["c"]
+
+# --- 9. End of file ---------------------------------------------------------
+LAST_LINE_CONTINUED = "end"\
