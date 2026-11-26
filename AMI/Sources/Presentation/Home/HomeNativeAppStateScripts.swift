@@ -20,11 +20,11 @@ class HomeNativeAppStateScripts {
 
     @MainActor
     required init() async {
-        let notificationsActivationState = await NotificationStatus.authorizationStatus()
+        let pushNotificationEnabled = await NotificationStatus.isEnabled()
 
         scripts = [
             UserScript(name: Script.getNativeAppState.rawValue,
-                       script: WKUserScript(source: Self.getNativeAppStateScript(pushNotificationEnabled: notificationsActivationState == .authorized),
+                       script: WKUserScript(source: Self.getNativeAppStateScript(pushNotificationEnabled: pushNotificationEnabled),
                                             injectionTime: .atDocumentStart,
                                             forMainFrameOnly: true)),
         ]
