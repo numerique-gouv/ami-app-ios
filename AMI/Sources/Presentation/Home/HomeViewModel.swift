@@ -30,8 +30,8 @@ class HomeViewModel: NSObject {
     // MARK: - States
 
     /// Flags observed by View to update its state
-    var showSettings = false
-    var isPresentingOnboardingView = false
+    var isPresentingSettings = false
+    var isPresentingNotificationsActivationDialog = false
     var selectedDestination: ServiceLinkViewModel?
     // Temporarily display back button when on OIDC page.
     var showBackButton = false
@@ -81,13 +81,20 @@ class HomeViewModel: NSObject {
         userScripts.userLoggedInAction = userLoginActions
         userScripts.userLoggedOutAction = userLogoutActions
         userScripts.webappIsReadyAction = webappIsReadyAction
+        userScripts.presentNotificationsActivationDialogAction = presentNotificationsActivationDialog
 
         // Set NotificationManager base URL to register the device to AMI backend to allow Push Notifications.
         setNotificationManagerBaseUrl(rootUrl)
 
         Task { @MainActor in
+            // Inject script presenting native infos to web application.
             let nativeInfosScript = await HomeNativeInfosScripts()
             webViewViewModel.addUserScripts(userScripts: nativeInfosScript)
+
+            // Inject script presenting application state (like Push Notifications activation) to web application.
+            let nativeAppStateScript = await HomeNativeAppStateScripts()
+            webViewViewModel.addUserScripts(userScripts: nativeAppStateScript)
+
             modelIsFullyConfigured = true
 
             // Load initial page now that viewModel is fully ready.
@@ -251,6 +258,17 @@ class HomeViewModel: NSObject {
             // Go to Notifications screen.
             webViewViewModel.webView?.load(URLRequest(url: notificationPageUrl))
         }
+    }
+
+    /// Dismiss the Notifications activation dialog and presents the Settings sheet.
+    func confirmActivateNotificationsDialog() {
+        isPresentingNotificationsActivationDialog = false
+        isPresentingSettings = true
+    }
+
+    /// Dismiss the Notifications activation dialog.
+    func cancelActivateNotificationsDialog() {
+        isPresentingNotificationsActivationDialog = false
     }
 
     // MARK: - View models builders

@@ -27,3 +27,8 @@ local_storage_authentication_prompt = "Reading sensitive data";
 error_system_is_unable_to_handle_link = "System doesn't handle link \"$0\"";
 alert_cant_handle_email_link = "No configured email client found on your device.";
 alert_cant_handle_phone_link = "No phone application found on your device.";
+
+// Activate notifications dialog
+activate_notifications_dialog_message = "Don't miss a thing in your administrative life!";
+activate_notifications_dialog_button_ok_title = "Enable notifications";
+activate_notifications_dialog_button_cancel_title = "Later";

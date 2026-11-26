@@ -70,11 +70,14 @@ struct HomeView: View {
             .toolbar {
                 toolbarBackButton
             }
-            .sheet(isPresented: $viewModel.showSettings) {
+            .sheet(isPresented: $viewModel.isPresentingSettings) {
                 SettingsView(viewModel: viewModel.makeNotificationsSettingsViewViewModel())
             }
-            .sheet(isPresented: $viewModel.isPresentingOnboardingView) {
-                OnboardingView(viewModel: viewModel.makeOnboardingViewViewModel())
+            .customDialog(isPresented: $viewModel.isPresentingNotificationsActivationDialog) {
+                HomeActivateNotificationsDialog(
+                    confirmAction: { viewModel.confirmActivateNotificationsDialog() },
+                    cancelAction: { viewModel.cancelActivateNotificationsDialog() }
+                )
             }
             .navigationTitle(AMIL10n.amiTitle)
             .navigationBarHidden(true)

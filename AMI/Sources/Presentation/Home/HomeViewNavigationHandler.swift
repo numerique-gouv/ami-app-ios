@@ -98,7 +98,7 @@ final class HomeViewNavigationHandler: WebViewNavigationHandler {
         case let .promotedUrl(appRoute):
             switch appRoute {
             case .amiNotificationsSettings:
-                viewModel.showSettings = true
+                viewModel.isPresentingSettings = true
                 // Although a promoted page will be presented, the initial navigation still occurs (Single Page Application side-effect?)
                 // So, go back to the previous page.
                 Task {

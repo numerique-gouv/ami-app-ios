@@ -52,8 +52,8 @@ include:
 packages:
   AMI-Design-System:
     url: https://github.com/numerique-gouv/ami-design-system-ios
-#    version: 0.2.0
-    revision: 6709605dc8c628414611fb8d57f0143ddb92fdd4
+    revision: c8e0c6d3183ab133dd014ecf45e1a204fdc7e1dc
+#    path: ../ami-design-system-ios
   Firebase:
     url: https://github.com/firebase/firebase-ios-sdk
 #    version: 12.7.0
