@@ -89,7 +89,8 @@ struct HomeView: View {
                 switch newPhase {
                 case .active:
                     Task {
-                        await viewModel.updateNativeAppStatePushNotificationEnabled()
+                        // Update NativeAppState variable`pushNotificationEnabled`when coming back from iOS settings.
+                       await viewModel.updateNativeAppStatePushNotificationEnabled()
                     }
                 case .inactive, .background:
                     break

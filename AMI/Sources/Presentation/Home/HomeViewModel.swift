@@ -217,6 +217,7 @@ class HomeViewModel: NSObject {
         isPresentingNotificationsActivationDialog = false
     }
 
+    /// Update NativeAppState variable`pushNotificationEnabled`when coming back from iOS settings.
     func updateNativeAppStatePushNotificationEnabled() async {
         let pushNotificationEnabled = await NotificationStatus.isEnabled()
         do {
