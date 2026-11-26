@@ -31,7 +31,8 @@ class HomeNativeInfosScripts {
     }
 
     #if IS_AMI_PRODUCTION
-        private static let environement = "production"
+        // Hide `environment` value in Production environment.
+        private static let environement = ""
     #elseif IS_AMI_PREPRODUCTION
         private static let environement = "preproduction"
     #elseif IS_AMI_STAGING
@@ -40,34 +41,23 @@ class HomeNativeInfosScripts {
         private static let environement = "unknown"
     #endif
 
-    #if DEBUG
-        private static let mode = "debug"
-    #else
-        private static let mode = "release"
-    #endif
-
     // This creates window.NativeBridge.getNativeVersion() HS function.
     private static func getNativeInfosScript(deviceID: DeviceID.DeviceIdType) -> String {
         // Private structure containing strucutured data passed to web page.
         struct NativeInfos: Encodable {
             let platform: String
-            let app_name: String
             let version: String
-            let build: String
-            let environment: String
-            let mode: String
             let device_id: String
             let promoted_url_aliases: [String]
         }
 
+        let environmentPrefix = if environement.count > 0 { " " } else { "" }
+
         // The data structure filled with actual values.
         let infos = NativeInfos(
             platform: "ios",
-            app_name: AppBundle.name,
-            version: AppBundle.version,
-            build: AppBundle.build,
-            environment: "\(environement)",
-            mode: "\(mode)",
+            // Concatenate version informations in a single string for display in web application.
+            version: "ios \(AppBundle.version) (\(AppBundle.build))\(environmentPrefix)\(environement)",
             device_id: deviceID,
             promoted_url_aliases: PromotedAliases.allCases.map(\.rawValue)
         )
