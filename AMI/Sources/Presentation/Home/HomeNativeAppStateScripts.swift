@@ -30,14 +30,24 @@ class HomeNativeAppStateScripts {
         ]
     }
 
+    /// Builds the javascript call to update `pushNotificationEnabled` variable with new value.
+    static func javascriptToUpdatePushNotificationEnabled(_ enabled: Bool) -> String {
+        "window.NativeAppState?.setPushNotificationEnabled(\(enabled))"
+    }
+
     // This creates window.NativeAppState.isPushNotificationEnabled() function.
     private static func getNativeAppStateScript(pushNotificationEnabled: Bool) -> String {
         """
         (function() {
             window.NativeAppState = window.NativeAppState || {};
 
+            let pushNotificationEnabled = \(pushNotificationEnabled);
+
             window.NativeAppState.isPushNotificationEnabled = function() {
-                return \(pushNotificationEnabled);
+                return pushNotificationEnabled;
+            };
+            window.NativeAppState.setPushNotificationEnabled = function(v) {
+                pushNotificationEnabled = Boolean(v);
             };
         })();
         console.log('NativeAppState initialized');

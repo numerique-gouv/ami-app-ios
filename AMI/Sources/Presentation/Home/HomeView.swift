@@ -10,6 +10,7 @@ import SwiftUI
 import WebKit
 
 struct HomeView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dismiss) var dismiss
     @Bindable var viewModel: HomeViewModel
 
@@ -83,6 +84,18 @@ struct HomeView: View {
             .navigationBarHidden(true)
             .navigationDestination(item: $viewModel.selectedDestination) { destination in
                 ServiceView(viewModel: destination.model)
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                switch newPhase {
+                case .active:
+                    Task {
+                        await viewModel.updateNativeAppStatePushNotificationEnabled()
+                    }
+                case .inactive, .background:
+                    break
+                @unknown default:
+                    break
+                }
             }
     }
 

@@ -217,6 +217,15 @@ class HomeViewModel: NSObject {
         isPresentingNotificationsActivationDialog = false
     }
 
+    func updateNativeAppStatePushNotificationEnabled() async {
+        let pushNotificationEnabled = await NotificationStatus.isEnabled()
+        do {
+            try await webViewViewModel.webView?.evaluateJavaScript(HomeNativeAppStateScripts.javascriptToUpdatePushNotificationEnabled(pushNotificationEnabled))
+        } catch {
+            AppLog.viewModel.notice("\(AppLog.logHeader(self)) Error updating NativeAppAppState `pushNotificationEnabled`: \(error)")
+        }
+    }
+
     // MARK: - View models builders
 
     // TODO: move this method into a DI module.
