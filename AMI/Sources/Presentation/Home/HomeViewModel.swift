@@ -16,8 +16,6 @@ import WebKit
 class HomeViewModel: NSObject {
     /// The name of the cookie containing the authentication token.
     private static let AUTHENTICATION_COOKIE_NAME = "token"
-    /// Don't present Onboarding panel more than once a day.
-    private static let MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION = Double(24 * 60 * 60)
 
     // MARK: - Dependencies
 
@@ -35,8 +33,6 @@ class HomeViewModel: NSObject {
     var selectedDestination: ServiceLinkViewModel?
     // Temporarily display back button when on OIDC page.
     var showBackButton = false
-
-    private var lastOnboardingPresentationTime = Date.distantPast
 
     /// Flag to know if we can load initial page when coming back to webview, to reset initial state.
     /// Only used in `webViewReplacedAction` when we reset its state to Home state.
@@ -154,19 +150,12 @@ class HomeViewModel: NSObject {
             // Set NotificationManager `userAuthenticationToken` now we have it
             // because a token renew can happen anytime if user already allowed notifications.
             setNotificationManagerUserAuthentificationToken(userAuthenticationToken)
-
-            // Now that user is logged and we have its authentication token, we can proceed to
-            // check its notification status and register to backend if needed.
-            await checkNotificationStatus()
         }
     }
 
     private func userLogoutActions() {
         // Reset NotificationManager `userAuthenticationToken`.
         resetNotificationManagerUserAuthentificationToken()
-
-        // Reset Notification status check when on logout to recheck it on next login.
-        resetLastOnboardingPresentationTime()
 
         Task { @MainActor in
             // Remove all session data to avoid reusing automatically them on next connection.
@@ -185,54 +174,11 @@ class HomeViewModel: NSObject {
         }
     }
 
-    // MARK: - Onboarding (allow push notifications) panel presentation management
-
-    /// Check if Push Notifications are allowed and present Onboarding panel if necessary.
-    /// Called by `userLoginAction`.
-    private func checkNotificationStatus() async {
-        var shouldPresentOnboardingView = false
-
-        switch await NotificationStatus.notificationsAuthorizationStatus() {
-        case .notDetermined:
-            // User logged event is called too often.
-            // Only check Notifications Status once par session.
-            shouldPresentOnboardingView = lastOnboardingPresentationTimeIsExpired()
-        case .denied:
-            // No need to present Onboarding view: user already made its choice.
-            break
-        case .authorized, .provisional, .ephemeral:
-            // Always call `registerForRemoteNotifications` to refresh Apns token if necessary.
-            // Apple recommends it ("Each time your app launches, it must register with APNs")
-            //   https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/HandlingRemoteNotifications.html
-            await MainActor.run {
-                UIApplication.shared.registerForRemoteNotifications()
-            }
-        @unknown default:
-            AppLog.viewModel.warning("\(AppLog.logHeader(self)) Unknown Notification Authorization Status")
-        }
-
-        // Only check Notifications Status once par session.
-        guard shouldPresentOnboardingView else {
-            return
-        }
-        setLastOnboardingPresentationTimeToNow()
-
-        Task { @MainActor in
-            isPresentingOnboardingView = true
-        }
+    private func presentNotificationsActivationDialog() {
+        isPresentingNotificationsActivationDialog = true
     }
 
-    private func lastOnboardingPresentationTimeIsExpired() -> Bool {
-        Date.now.timeIntervalSince(lastOnboardingPresentationTime) > Self.MINIMUM_TIME_IMTERVAL_BETWEEN_ONBOARDING_NOTIFICATION
-    }
-
-    private func setLastOnboardingPresentationTimeToNow() {
-        lastOnboardingPresentationTime = .now
-    }
-
-    private func resetLastOnboardingPresentationTime() {
-        lastOnboardingPresentationTime = .distantPast
-    }
+    // MARK: - Notifications (allow push notifications) management
 
     private func setNotificationManagerBaseUrl(_ url: URL) {
         notificationManager.setBaseUrl(url)
@@ -283,24 +229,6 @@ class HomeViewModel: NSObject {
                 await self.webViewViewModel.localStorageManager?.writeInLocalStorage(key: "notifications_enabled", value: "\(newValue)")
             }
         })
-    }
-
-    // TODO: move this method into a DI module.
-    /// View model built on-demand when the View need it.
-    /// - makeOnboardingViewViewModel : the view model needed when asking the user if receiving push notifications is allowed.
-    func makeOnboardingViewViewModel() -> OnboardingView.ViewModel {
-        let onboardingViewViewModel = OnboardingView.ViewModel(notificationManager: notificationManager)
-        onboardingViewViewModel.eventReceiver = { event in
-            switch event {
-            case .isDismissed:
-                // Go back to root URL (to leave web page)
-                Task { @MainActor in
-                    self.webViewViewModel.goBackToRootUrl()
-                    self.isPresentingOnboardingView = false
-                }
-            }
-        }
-        return onboardingViewViewModel
     }
 
     // MARK: - Helpers
