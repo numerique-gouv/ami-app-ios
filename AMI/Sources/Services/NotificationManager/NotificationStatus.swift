@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-enum NotificationStatus {
+enum NotificationStatus: Sendable {
     static func openSettings() {
         Task { @MainActor in
             let urlString =
@@ -24,11 +24,11 @@ enum NotificationStatus {
         }
     }
 
-    static func notificationsAuthorizationStatus() async -> UNAuthorizationStatus {
+    static func authorizationStatus() async -> UNAuthorizationStatus {
         await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
     }
 
-    static func requestNotificationsActivation() async {
+    static func requestActivation() async {
         do {
             if try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) {
                 AppLog.service.notice("\(AppLog.logHeader(self)) Notification authorization granted: \(true)")
@@ -44,13 +44,13 @@ enum NotificationStatus {
 
     static func requestPermission() {
         Task {
-            switch await notificationsAuthorizationStatus() {
+            switch await authorizationStatus() {
             case .denied:
                 AppLog.service.notice("\(AppLog.logHeader(self)) Permission denied - opening settings")
                 openSettings()
             case .notDetermined:
                 AppLog.service.notice("\(AppLog.logHeader(self)) Permission not determined, trying to open the OS popup")
-                await requestNotificationsActivation()
+                await requestActivation()
             default:
                 AppLog.service.notice("\(AppLog.logHeader(self)) Permission already granted or provisional")
             }
@@ -61,8 +61,8 @@ enum NotificationStatus {
         openSettings()
     }
 
-    static func isNotificationEnabled() async -> Bool {
-        let status = await notificationsAuthorizationStatus()
+    static func isEnabled() async -> Bool {
+        let status = await authorizationStatus()
         AppLog.service.notice("\(AppLog.logHeader(self)) Authorization status: \(status.rawValue) (\(status))")
         return status == .authorized
     }

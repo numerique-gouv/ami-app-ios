@@ -26,7 +26,7 @@ extension SettingsView {
         }
 
         func updateNotificationAuthorizationStatus(autoUpdate: Bool) async {
-            let notificationsActiveNewValue = await NotificationStatus.isNotificationEnabled()
+            let notificationsActiveNewValue = await NotificationStatus.isEnabled()
             if notificationsActiveNewValue != isNotificationsActive {
                 isAutoUpdated = autoUpdate
             }
