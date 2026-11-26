@@ -166,6 +166,12 @@ class HomeViewModel: NSObject {
 
     private func webappIsReadyAction() {
         Task {
+            // Push the current value whenever the web app reports itself ready, so a
+            // fresh document (page reload or web process crash) gets the actual value
+            // instead of the one baked in at web view setup (see
+            // `SwiftUIWebView.ViewModel.webViewWebContentProcessDidTerminate`).
+            await updateNativeAppStatePushNotificationEnabled()
+
             // PromotedUrls Feature
             //
             // Prepare the PromotedUrls Feature viewModel when the web app is ready.
@@ -217,13 +223,13 @@ class HomeViewModel: NSObject {
         isPresentingNotificationsActivationDialog = false
     }
 
-    /// Update NativeAppState variable`pushNotificationEnabled`when coming back from iOS settings.
+    /// Pushes the current push-notification state to the web app's `NativeAppState.pushNotificationEnabled`.
     func updateNativeAppStatePushNotificationEnabled() async {
         let pushNotificationEnabled = await NotificationStatus.isEnabled()
         do {
             try await webViewViewModel.webView?.evaluateJavaScript(HomeNativeAppStateScripts.javascriptToUpdatePushNotificationEnabled(pushNotificationEnabled))
         } catch {
-            AppLog.viewModel.notice("\(AppLog.logHeader(self)) Error updating NativeAppAppState `pushNotificationEnabled`: \(error)")
+            AppLog.viewModel.notice("\(AppLog.logHeader(self)) Error updating NativeAppState `pushNotificationEnabled`: \(error)")
         }
     }
 
