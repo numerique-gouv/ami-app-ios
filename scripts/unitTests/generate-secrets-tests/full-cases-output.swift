@@ -38,6 +38,8 @@ nonisolated enum Secrets {
     static let commentAcrossLines = "value" // first part second part of the same comment
     static let commentMarkerSplit = "value" // split comment marker
     static let commaInsideString = "abcd,efghi" // comment with , (comma) // and a second marker
+    static let emptyList = [
+    ]
     static let inlineList = [
         "a",
         "b",

@@ -58,6 +58,7 @@ COMMA_INSIDE_STRING = "abcd,ef\
     // and a second marker
 
 # --- 6. Lists ---------------------------------------------------------------
+EMPTY_LIST = []
 INLINE_LIST = ["a", "b", "c"]
 INLINE_LIST_TRAILING_COMMA = [1, 2, 3,]
 INLINE_LIST_WITH_COMMENT = [1, 2] // trailing comment
