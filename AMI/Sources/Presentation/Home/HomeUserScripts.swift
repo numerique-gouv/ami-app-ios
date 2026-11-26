@@ -1,5 +1,5 @@
 //
-//  HomeView-UserScripts.swift
+//  HomeUserScripts.swift
 //  AMI-Production
 //
 //  Created by Nicolas Buquet on 13/02/2026.
@@ -24,16 +24,19 @@ class HomeUserScripts {
         case notificationPermissionRequested = "notification_permission_requested"
         case notificationPermissionRemoved = "notification_permission_removed"
         case webappBridgeReady
+        case showPushNotificationConsentDialog = "show_push_notification_consent_dialog"
     }
 
     typealias UserLoggedInAction = () -> Void
     typealias UserLoggedOutAction = () -> Void
     typealias WebappIsReadyAction = () -> Void
+    typealias PresentNotificationsActivationAction = () -> Void
 
     var scripts: [UserScript]
     var userLoggedInAction: UserLoggedInAction?
     var userLoggedOutAction: UserLoggedOutAction?
     var webappIsReadyAction: WebappIsReadyAction?
+    var presentNotificationsActivationDialogAction: PresentNotificationsActivationAction?
 
     required init() {
         scripts = [
@@ -167,6 +170,8 @@ extension HomeUserScripts: WebViewUserScripts {
                 NotificationStatus.openSettings()
             case .webappBridgeReady:
                 webappIsReadyAction?()
+            case .showPushNotificationConsentDialog:
+                presentNotificationsActivationDialogAction?()
             default:
                 break
             }
