@@ -27,3 +27,9 @@ local_storage_authentication_prompt = "Lecture de données sensibles";
 error_system_is_unable_to_handle_link = "Le système ne gère pas le lien \"%s\"";
 alert_cant_handle_email_link = "Aucun client email correctement configuré n'a été trouvé sur votre appareil.";
 alert_cant_handle_phone_link = "Aucune application téléphonique n'a été trouvée sur votre appareil.";
+
+// Activate notifications dialog
+activate_notifications_dialog_message = "Ne manquez rien de votre vie administrative !";
+activate_notifications_dialog_button_ok_title = "Activer les notifications";
+activate_notifications_dialog_button_cancel_title = "Plus tard";
+

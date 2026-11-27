@@ -46,9 +46,9 @@ class NotificationManager: NSObject {
     }
 
     func registerForRemoteNotifications() async {
-        switch await NotificationStatus.notificationsAuthorizationStatus() {
+        switch await NotificationStatus.authorizationStatus() {
         case .notDetermined:
-            await NotificationStatus.requestNotificationsActivation()
+            await NotificationStatus.requestActivation()
         case .authorized, .ephemeral:
             await MainActor.run {
                 UIApplication.shared.registerForRemoteNotifications()

@@ -1,5 +1,5 @@
 //
-//  HomeView-NativeInfosScript.swift
+//  HomeNativeInfosScripts.swift
 //  AMI-Production
 //
 //  Created by Nicolas Buquet on 13/02/2026.

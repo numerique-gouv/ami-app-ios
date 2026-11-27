@@ -10,6 +10,7 @@ import SwiftUI
 import WebKit
 
 struct HomeView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dismiss) var dismiss
     @Bindable var viewModel: HomeViewModel
 
@@ -70,16 +71,32 @@ struct HomeView: View {
             .toolbar {
                 toolbarBackButton
             }
-            .sheet(isPresented: $viewModel.showSettings) {
+            .sheet(isPresented: $viewModel.isPresentingSettings) {
                 SettingsView(viewModel: viewModel.makeNotificationsSettingsViewViewModel())
             }
-            .sheet(isPresented: $viewModel.isPresentingOnboardingView) {
-                OnboardingView(viewModel: viewModel.makeOnboardingViewViewModel())
+            .customDialog(isPresented: $viewModel.isPresentingNotificationsActivationDialog) {
+                HomeActivateNotificationsDialog(
+                    confirmAction: { viewModel.confirmActivateNotificationsDialog() },
+                    cancelAction: { viewModel.cancelActivateNotificationsDialog() }
+                )
             }
             .navigationTitle(AMIL10n.amiTitle)
             .navigationBarHidden(true)
             .navigationDestination(item: $viewModel.selectedDestination) { destination in
                 ServiceView(viewModel: destination.model)
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                switch newPhase {
+                case .active:
+                    Task {
+                        // Live update NativeAppState variable`pushNotificationEnabled` when coming back from iOS settings.
+                        await viewModel.updateNativeAppStatePushNotificationEnabled()
+                    }
+                case .inactive, .background:
+                    break
+                @unknown default:
+                    break
+                }
             }
     }
 

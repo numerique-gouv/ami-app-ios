@@ -47,7 +47,6 @@ struct SettingsView: View {
             }
             .navigationTitle(AMIL10n.settingsTitle)
             .navigationBarTitleDisplayMode(.inline)
-            // Use deprecated version of `onChange` to handle iOS back to iOS 15.
             .onChange(of: scenePhase) { _, newPhase in
                 switch newPhase {
                 case .active:
